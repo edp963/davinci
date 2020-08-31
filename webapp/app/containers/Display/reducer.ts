@@ -195,7 +195,8 @@ const displayReducer = (
           draft.slideLayersOperationInfo[slideId][layer.id] = {
             selected: false,
             resizing: false,
-            dragging: false
+            dragging: false,
+            editing: false
           }
 
           if (Array.isArray(action.payload.widgets)) {
@@ -365,7 +366,8 @@ const displayReducer = (
             if (action.payload.selected && action.payload.exclusive) {
               draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
                 ...layerOperationInfo,
-                selected: false
+                selected: false,
+                editing: false
               }
             }
             if (+id === action.payload.layerId) {

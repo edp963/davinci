@@ -55,7 +55,8 @@ import {
   makeSelectCurrentOperatingLayerList,
   makeSelectCurrentOtherLayerList,
   makeSelectClipboardLayers,
-  makeSelectCurrentOperateItemParams
+  makeSelectCurrentOperateItemParams,
+  makeSelectCurrentEditLayerOperationInfo
 } from './selectors'
 import { makeSelectFormedViews } from 'containers/View/selectors'
 import { bringToFront, sendToBottom, bringToUpper, sendToNext } from './util'
@@ -67,7 +68,8 @@ import {
 import { computeEditorBaselines, setLayersAlignment } from './components/util'
 import { DefaultDisplayParams } from './components/Setting/constants'
 import { IDisplayFormed } from '../Viz/types'
-
+import { OperationInfo } from './components/Layer/types'
+import { SecondaryGraphTypes } from './components/Setting'
 export function* getSlideDetail(action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SLIDE_DETAIL) {
     return
@@ -226,6 +228,10 @@ export function* deleteSlideLayers(action: DisplayActionType) {
   const { displayId, slideId } = action.payload
   const { slideLayersDeleted, deleteSlideLayersFail } = DisplayActions
   const selectedLayerIds: number[] = yield select(makeSelectCurrentSelectedLayerIds())
+  const editedLayerInfo: Array<OperationInfo> = yield select(makeSelectCurrentEditLayerOperationInfo())
+  if(editedLayerInfo.length){
+    return
+  }
   if (!selectedLayerIds.length) {
     return
   }
@@ -254,18 +260,21 @@ export function* dragLayer(action: DisplayActionType) {
   const movingLayers: ILayerFormed[] = yield select((state) =>
     makeSelectCurrentOperatingLayerList()(state, layerId)
   )
+  const editedLayerInfo: Array<OperationInfo> = yield select(makeSelectCurrentEditLayerOperationInfo())
+  
   if (!movingLayers.length) {
     return
   }
-
+  if(editedLayerInfo.length){
+    return
+  }
   const operateItemParams = yield select(makeSelectCurrentOperateItemParams())
 
   const operateParamsMap = new Map()
-
   operateItemParams.forEach((item) => {
     operateParamsMap.set(item.id, item)
   })
-
+  
   const updateMovingLayers = movingLayers.map((layer) => {
     const id = layer.id
     if (operateParamsMap.has(id)) {
@@ -283,7 +292,8 @@ export function* dragLayer(action: DisplayActionType) {
     config: { displayParams }
   }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
-
+  const [ updateMovingLayerItem ] = updateMovingLayers
+  const { subType } = updateMovingLayerItem
   const baselines = computeEditorBaselines(
     updateMovingLayers,
     otherLayers,
@@ -311,8 +321,9 @@ export function* dragLayer(action: DisplayActionType) {
       finish
     )
   )
-  yield put(DisplayActions.showEditorBaselines(baselines))
-
+  if(subType !== SecondaryGraphTypes.Label){
+    yield put(DisplayActions.showEditorBaselines(baselines))
+  }
   if (finish) {
     const updateLayers = produce(updateMovingLayers, (draft) => {
       draft.forEach((layer) => {
@@ -350,7 +361,8 @@ export function* resizeLayer(action: DisplayActionType) {
     config: { displayParams }
   }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
-
+  const [ resizingLayerItem ] = resizingLayers
+  const { subType } = resizingLayerItem
   const baselines = computeEditorBaselines(
     resizingLayers,
     otherLayers,
@@ -380,7 +392,9 @@ export function* resizeLayer(action: DisplayActionType) {
     yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
     yield put(DisplayActions.clearEditorBaselines())
   } else {
-    yield put(DisplayActions.showEditorBaselines(baselines))
+    if(subType !== SecondaryGraphTypes.Label){
+      yield put(DisplayActions.showEditorBaselines(baselines))
+    }
   }
   yield put(
     DisplayActions.resizeLayerAdjusted(

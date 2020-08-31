@@ -19,6 +19,7 @@
  */
 
 import React, { useContext, useMemo, useCallback, useEffect } from 'react'
+
 import classnames from 'classnames'
 
 import { useClientRect } from 'utils/hooks'
@@ -29,7 +30,8 @@ import { DISPLAY_CONTAINER_PADDING } from './constants'
 import { LayerOperations } from '../../constants'
 import { DeltaPosition } from '../../Layer'
 import { DragTriggerTypes } from 'app/containers/Display/constants'
-
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
+import { editorSelectedRange } from 'app/containers/Display/components/Layer/RichText/util'
 type KeyDownKeys =
   | 'ArrowUp'
   | 'ArrowDown'
@@ -75,12 +77,10 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     fullscreen,
     onChangeLayersPosition,
     onDoLayerOperation,
-    onRemoveLayerSelection,
     onRemoveLayerOperationInfo
   } = props
   const { slideParams } = useContext(SlideContext)
   const { width: slideWidth, height: slideHeight, scaleMode } = slideParams
-
   const containerContextValue = useContext(ContainerContext)
   const {
     scale,
@@ -91,7 +91,6 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
     slideTranslateChange
   } = containerContextValue
   const [rect, refBackground] = useClientRect<HTMLDivElement>()
-
   const [containerWidth, containerHeight] = useMemo(() => {
     if (!fullscreen && !rect) {
       return []
@@ -279,12 +278,9 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
   }, [refBackground.current, onDoLayerOperation])
 
   const removeLayerOperationInfo = useCallback(() => {
-    const { anchorNode: { parentNode } } = window.getSelection()
-    if(!parentNode && parentNode.className){
-      return
-    }
-    if (onRemoveLayerOperationInfo) {
-      onRemoveLayerOperationInfo({selected: false, editing: false})
+    onRemoveLayerOperationInfo({selected: false})
+    if(!editorSelectedRange() && onRemoveLayerOperationInfo){
+      onRemoveLayerOperationInfo({editing: false})
     }
   }, [onRemoveLayerOperationInfo])
 

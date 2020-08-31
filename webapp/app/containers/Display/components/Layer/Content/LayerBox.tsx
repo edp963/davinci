@@ -153,15 +153,17 @@ const LayerBox: React.FC = (props: ILayerBoxProps) => {
   const editLabelChange = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation()
-      onEditLabelChange(layerId, { editing: true })
+      if(labelText){
+        onEditLabelChange(layerId, { editing: true })
+      }
     },
     [onEditLabelChange,layerId]
   )
 
   const boxCls = classnames({
     'display-slide-layer': true,
-    'display-slide-layer-editing': !labelText && operationInfo,
-    'display-slide-layer-selected': !labelText && operationInfo && operationInfo.selected,
+    'display-slide-layer-editing': !operationInfo.editing && operationInfo,
+    'display-slide-layer-selected': !operationInfo.editing && operationInfo && operationInfo.selected,
     [className]: !!className
   })
 

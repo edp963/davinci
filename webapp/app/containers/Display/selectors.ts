@@ -71,6 +71,7 @@ const makeSelectCurrentLayerList = () =>
     (currentLayers) =>
       Object.values(currentLayers).sort((l1, l2) => l2.index - l1.index)
   )
+
 const makeSelectCurrentLayerIds = () =>
   createSelector(
     selectCurrentLayers,
@@ -122,6 +123,16 @@ const makeSelectCurrentSelectedLayerList = () =>
         ({ id }) => currentLayersOperationInfo[id].selected
       )
   )
+
+const makeSelectCurrentEditLayerOperationInfo = () =>
+  createSelector(
+    makeSelectCurrentLayersOperationInfo(),
+    (currentEditOperationInfo) =>
+    Object.values(currentEditOperationInfo).filter(
+        (layerInfo) => layerInfo.editing
+      )
+  )
+  
 const makeSelectCurrentSelectedLayerIds = () =>
   createSelector(
     makeSelectCurrentLayersOperationInfo(),
@@ -222,6 +233,7 @@ export {
   makeSelectCurrentLayersMaxIndex,
   makeSelectCurrentLayersOperationInfo,
   makeSelectCurrentSelectedLayerList,
+  makeSelectCurrentEditLayerOperationInfo,
   makeSelectCurrentSelectedLayerIds,
   //
   makeSelectCurrentOperatingLayerList,

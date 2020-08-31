@@ -78,22 +78,20 @@ export interface ILayerParams {
   timeDuration: number
 
 }
+
 export interface ILayerOperationInfo {
   dragging: boolean,
   resizing: boolean,
   selected: boolean,
   editing: boolean
 }
+
 export interface IRichTextConfig {
   content: string | RichTextNode[]
 } 
-
 
 export type ILayerFormed = LayerBase & {
   params: ILayerParams
 }
 
-
-
 export type Layer = ILayerRaw | ILayerFormed
-
