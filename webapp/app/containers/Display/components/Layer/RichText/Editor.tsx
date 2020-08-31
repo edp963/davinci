@@ -19,7 +19,6 @@
  */
 
 import React, { useMemo, useImperativeHandle, useCallback } from 'react'
-import { useDispatch } from 'react-redux'
 import classnames from 'classnames'
 import { Editable, withReact, Slate, RenderLeafProps } from 'slate-react'
 import { createEditor, Node } from 'slate'
@@ -73,7 +72,6 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
     () => withElements(withHtml(withReact(withHistory(createEditor())))),
     []
   )
- 
   const renderLeaf = useCallback(
     (props: RenderLeafProps) => {
       return <Leaf {...props} onFormatText={onFormatText} />

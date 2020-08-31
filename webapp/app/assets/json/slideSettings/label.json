@@ -4,6 +4,7 @@
   "params": [{
     "name": "size",
     "title": "矩形尺寸",
+    "visible": false,
     "items": [{
       "name": "width",
       "title": "宽度（像素）",
@@ -17,6 +18,7 @@
   }, {
     "name": "position",
     "title": "标签位置",
+    "visible": false,
     "items": [{
       "name": "positionX",
       "title": "x轴位置（像素）",
@@ -33,6 +35,7 @@
   }, {
     "name": "content",
     "title": "文本",
+    "visible": false,
     "items": [{
       "name": "richText",
       "tip": "输入文本",
@@ -44,6 +47,7 @@
   }, {
     "name": "font",
     "title": "文字",
+    "visible": false,
     "items": [{
       "name": "fontFamily",
       "title": "字体",
@@ -197,6 +201,7 @@
   }, {
     "name": "padding",
     "title": "内边距（像素）",
+    "visible": false,
     "items": [{
       "name": "paddingTop",
       "tip": "px",
@@ -237,6 +242,7 @@
   }, {
     "name": "background",
     "title": "背景",
+    "visible": true,
     "items": [{
       "name": "backgroundColor",
       "title": "背景颜色",
@@ -248,6 +254,7 @@
   }, {
     "name": "border",
     "title": "边框",
+    "visible": true,
     "items": [{
       "name": "borderColor",
       "title": "边框颜色",

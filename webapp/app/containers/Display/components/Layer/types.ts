@@ -33,8 +33,9 @@ export type DeltaSize = { deltaWidth: number, deltaHeight: number }
 export type DragInfo = { dragging: boolean }
 export type ResizeInfo = { resizing: boolean }
 export type SelectionInfo = { selected: boolean }
+export type EditorInfo = { editing: boolean }
 
-export type OperationInfo = DragInfo & ResizeInfo & SelectionInfo
+export type OperationInfo = DragInfo & ResizeInfo & SelectionInfo & EditorInfo
 export type LayersOperationInfo = { [layerId: number]: OperationInfo }
 
 export type DraggableChildrenProps = {

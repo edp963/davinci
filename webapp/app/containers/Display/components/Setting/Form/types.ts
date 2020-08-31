@@ -77,11 +77,13 @@ export type SettingItem = {
 export type SettingParam = {
   name: string
   title: string
+  visible: boolean
   items: SettingItem[]
 }
 
 export type SlideLayerSetting = {
   name: string
   title: string
+  visible: boolean
   params: SettingParam[]
 }

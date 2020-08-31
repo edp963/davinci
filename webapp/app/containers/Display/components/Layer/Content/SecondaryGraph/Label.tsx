@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useContext } from 'react'
+import React from 'react'
 
 const Label: React.FC = (props) => {
   return <div>

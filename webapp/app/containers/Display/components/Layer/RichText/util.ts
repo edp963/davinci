@@ -19,7 +19,7 @@
  */
 
 import { ElementTypes } from 'components/RichText/Element'
-import { ElementStylesType } from './types'
+import { ElementStylesType, Selection } from './types'
 import { RichTextNode } from 'components/RichText'
 
 export const getDefaultContent = (sectionStyle?: Partial<ElementStylesType>, text?: string) => [
@@ -39,3 +39,13 @@ export const editorStylesChange = (propPath: string[], value: string | RichTextN
   }, unitRange)
   return unitRange
   }
+
+export const editorSelectedRange = () => {
+  const { anchorNode } = window.getSelection() as Selection
+  if(!anchorNode || !anchorNode.parentNode){
+    return false
+  }
+  if(anchorNode.parentNode as Node){
+    return anchorNode.parentElement.hasAttribute('data-slate-string')
+  }
+}

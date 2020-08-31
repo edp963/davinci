@@ -49,6 +49,7 @@ import SlideBaselines from './SlideBaselines'
 import { LayerOperations } from '../components/constants'
 import { DeltaPosition } from '../components/types'
 import { DragTriggerTypes } from '../constants'
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
 
 const SlideEditor: React.FC = (props) => {
   const dispatch = useDispatch()
@@ -114,10 +115,6 @@ const SlideEditor: React.FC = (props) => {
     [slideParams]
   )
 
-  const removeLayerSelection = useCallback(() => {
-    dispatch(DisplayActions.clearLayersSelection())
-  }, [])
-
   const commandLayers = useCallback((operation) => {
     dispatch(DisplayActions.changeLayersStack(operation))
   }, [])
@@ -129,7 +126,7 @@ const SlideEditor: React.FC = (props) => {
     []
   )
   
-  const onLayerOperationInfoChange = useCallback((changedInfo: Pick< Partial<ILayerOperationInfo>, 'selected'| 'editing'>) => {
+  const onLayerOperationInfoChange = useCallback((changedInfo: Pick<Partial<ILayerOperationInfo>, 'selected'| 'editing'>) => {
     dispatch(DisplayActions.clearLayersOperationInfo(changedInfo))
   }, [])
   
@@ -149,6 +146,7 @@ const SlideEditor: React.FC = (props) => {
   const grid = useMemo(() => displayParams && displayParams.grid, [
     displayParams
   ])
+
   return (
     <SplitPane
       className="display-layout-content"

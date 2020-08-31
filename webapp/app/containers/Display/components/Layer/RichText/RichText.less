@@ -18,39 +18,44 @@
  * >>
  */
 
- @import '~antd/lib/style/themes/default';
+@import '~antd/lib/style/themes/default';
 
- :global {
-   .richtext {
-     flex: 1;
-     overflow: hidden;
-     display: flex;
-     flex-direction: column;
- 
-     & > div:not(&-toolbar) {
-       flex: 1;
-       overflow-y: auto;
-     }
-     
-     &-editor-indenpendece {
-       border-top: @border-width-base @border-style-base @border-color-base;
-       border-radius: @border-radius-base;
-     }
- 
-     ol {
-       li {
-         list-style-type: decimal;
-       }
-     }
- 
-     ul {
-       padding-left: 1.5em;
- 
-       li {
-         margin-left: 1.5em;
-         list-style-type: disc;
-       }
-     }
-   }
- }
- 
+:global {
+  .richtext {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    & > div:not(&-toolbar) {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    &-editor-indenpendece {
+      border-radius: @border-radius-base;
+      .richtext {
+        &-toolbar {
+          border: @border-width-base @border-style-base @border-color-base;
+          user-select: none;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    ol {
+      li {
+        list-style-type: decimal;
+      }
+    }
+
+    ul {
+      padding-left: 1.5em;
+
+      li {
+        margin-left: 1.5em;
+        list-style-type: disc;
+      }
+    }
+  }
+}
