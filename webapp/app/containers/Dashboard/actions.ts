@@ -279,12 +279,11 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardShareLink(id, authUser?) {
+  loadDashboardShareLink (params) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
       payload: {
-        id,
-        authUser
+        params
       }
     }
   },
@@ -307,19 +306,27 @@ export const DashboardActions = {
     }
   },
 
+  dashboardPasswordShareLinkLoaded(pwdToken, pwd) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_PASSWORD_SHARE_LINK_SUCCESS,
+      payload: {
+        pwdToken,
+        pwd
+      }
+    }
+  },
+
   loadDashboardShareLinkFail() {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE
     }
   },
 
-  loadWidgetShareLink(id, itemId, authUser?) {
+  loadWidgetShareLink(params) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK,
       payload: {
-        id,
-        itemId,
-        authUser
+        params
       }
     }
   },
@@ -334,11 +341,22 @@ export const DashboardActions = {
     }
   },
 
-  widgetAuthorizedShareLinkLoaded(shareToken, itemId) {
+  widgetAuthorizedShareLinkLoaded(authorizedShareToken, itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
       payload: {
-        shareToken,
+        authorizedShareToken,
+        itemId
+      }
+    }
+  },
+
+  widgetPasswordShareLinkLoaded(pwdToken, pwd, itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_PASSWORD_SHARE_LINK_SUCCESS,
+      payload: {
+        pwdToken,
+        pwd,
         itemId
       }
     }

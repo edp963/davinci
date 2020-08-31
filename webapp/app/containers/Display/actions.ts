@@ -369,12 +369,11 @@ export const DisplayActions = {
     }
   },
 
-  loadDisplayShareLink(id: number, authUser: string) {
+  loadDisplayShareLink(params) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
       payload: {
-        id,
-        authUser
+        params
       }
     }
   },
@@ -393,6 +392,16 @@ export const DisplayActions = {
       type: ActionTypes.LOAD_DISPLAY_AUTHORIZED_SHARE_LINK_SUCCESS,
       payload: {
         authorizedShareToken
+      }
+    }
+  },
+
+  displayPasswordShareLinkLoaded(pwdToken, pwd) {
+    return {
+      type: ActionTypes.LOAD_DISPLAY_PASSWORD_SHARE_LINK_SUCCESS,
+      payload: {
+        pwdToken,
+        pwd
       }
     }
   },

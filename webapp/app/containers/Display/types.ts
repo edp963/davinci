@@ -55,6 +55,8 @@ interface IDisplayLoading {
 export interface IDisplayState {
   currentDisplayShareToken: string
   currentDisplayAuthorizedShareToken: string
+  currentDisplayPasswordShareToken: string
+  currentDisplayPasswordPassword: string
   currentDisplaySelectOptions: object
 
   currentSlideId: number

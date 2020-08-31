@@ -147,9 +147,7 @@ export function* addDashboardItems(action: DashboardActionType) {
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.portal}/${portalId}/dashboards/${
-        items[0].dashboardId
-      }/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/${items[0].dashboardId}/widgets`,
       data: items
     })
     const widgets: IWidgetFormed[] = yield select(makeSelectWidgets())
@@ -319,9 +317,10 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
       globalControlFormValues,
       formValues
     )
-    const globalControlConditionsByItemEntries: Array<
-      [string, IGlobalControlConditions]
-    > = Object.entries(
+    const globalControlConditionsByItemEntries: Array<[
+      string,
+      IGlobalControlConditions
+    ]> = Object.entries(
       globalControlConditionsByItem as IGlobalControlConditionsByItem
     )
     while (globalControlConditionsByItemEntries.length) {
@@ -487,46 +486,101 @@ export function* getDashboardShareLink(action: DashboardActionType) {
   const {
     dashboardAuthorizedShareLinkLoaded,
     dashboardShareLinkLoaded,
+    dashboardPasswordShareLinkLoaded,
     loadDashboardShareLinkFail
   } = DashboardActions
-  const { id, authUser } = action.payload
+
+  const {id, mode, permission, roles, viewerIds} = action.payload.params
+
+  let requestData = null
+  switch(mode) {
+    case 'AUTH':
+        requestData = { mode, permission, roles, viewers: viewerIds }
+        break
+      case 'PASSWORD':
+        requestData = { mode }
+        break
+      case 'NORMAL':
+        requestData = { mode }
+        break
+      default:
+        break
+  }
+
   try {
     const result = yield call(request, {
-      method: 'get',
+      method: 'post',
       url: `${api.portal}/dashboards/${id}/share`,
-      params: { username: authUser || '' }
+      data: requestData
     })
-    if (authUser) {
-      yield put(dashboardAuthorizedShareLinkLoaded(result.payload))
-    } else {
-      yield put(dashboardShareLinkLoaded(result.payload))
+
+    const { token, password} = result.payload
+    switch (mode) {
+      case 'AUTH':
+        yield put(dashboardAuthorizedShareLinkLoaded(token))
+        break
+      case 'PASSWORD':
+        yield put(dashboardPasswordShareLinkLoaded(token, password))
+        break
+      case 'NORMAL':
+        yield put(dashboardShareLinkLoaded(token))
+        break
+      default:
+        break
     }
+
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
     errorHandler(err)
   }
 }
 
-export function* getWidgetShareLink(action: DashboardActionType) {
+export function* getWidgetShareLink (action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGET_SHARE_LINK) {
     return
   }
   const {
     widgetAuthorizedShareLinkLoaded,
+    widgetPasswordShareLinkLoaded,
     widgetShareLinkLoaded,
     loadWidgetShareLinkFail
   } = DashboardActions
-  const { id, authUser, itemId } = action.payload
+  const {id, itemId,  mode, permission, roles, viewerIds} = action.payload.params
+
+  let requestData = null
+  switch(mode) {
+    case 'AUTH':
+        requestData = { mode, permission, roles, viewers: viewerIds }
+        break
+      case 'PASSWORD':
+        requestData = { mode }
+        break
+      case 'NORMAL':
+        requestData = { mode }
+        break
+      default:
+        break
+  }
+
   try {
     const result = yield call(request, {
-      method: 'get',
+      method: 'post',
       url: `${api.widget}/${id}/share`,
-      params: { username: authUser || '' }
+      data: requestData
     })
-    if (authUser) {
-      yield put(widgetAuthorizedShareLinkLoaded(result.payload, itemId))
-    } else {
-      yield put(widgetShareLinkLoaded(result.payload, itemId))
+    const { token, password } = result.payload
+    switch (mode) {
+      case 'AUTH':
+        yield put(widgetAuthorizedShareLinkLoaded(token, itemId))
+        break
+      case 'PASSWORD':
+        yield put(widgetPasswordShareLinkLoaded(token, password, itemId))
+        break
+      case 'NORMAL':
+        yield put(widgetShareLinkLoaded(token, itemId))
+        break
+      default:
+        break
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))
