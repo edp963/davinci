@@ -22,7 +22,7 @@
 <mapper namespace="edp.davinci.dao.RelRoleUserMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelRoleUser">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
-            SELECT id from rel_role_user where role_id = ${roleId} and user_id = ${userId}
+            SELECT id from rel_role_user where role_id = #{roleId} and user_id = #{userId}
         </selectKey>
         insert ignore rel_role_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -32,10 +32,10 @@
             `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            ${userId,jdbcType=BIGINT},
-            ${roleId,jdbcType=BIGINT},
-            ${createBy,jdbcType=BIGINT},
-            ${createTime,jdbcType=TIMESTAMP}
+            #{userId,jdbcType=BIGINT},
+            #{roleId,jdbcType=BIGINT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
@@ -50,33 +50,33 @@
         VALUES
         <foreach collection="relRoleUsers" item="record" index="index" separator=",">
             <trim prefix="(" suffix=")" suffixOverrides=",">
-                ${record.userId,jdbcType=BIGINT},
-                ${record.roleId,jdbcType=BIGINT},
-                ${record.createBy,jdbcType=BIGINT},
-                ${record.createTime,jdbcType=TIMESTAMP}
+                #{record.userId,jdbcType=BIGINT},
+                #{record.roleId,jdbcType=BIGINT},
+                #{record.createBy,jdbcType=BIGINT},
+                #{record.createTime,jdbcType=TIMESTAMP}
             </trim>
         </foreach>
     </insert>
 
     <select id="getUserIdsByIdAndMembers" resultType="Long">
-        select user_id from rel_role_user where role_id = ${roleId} and user_id in
+        select user_id from rel_role_user where role_id = #{roleId} and user_id in
         <foreach collection="userList" item="item" index="index" open="(" close=")" separator=",">
-            ${item}
+            #{item}
         </foreach>
     </select>
 
     <select id="getByIds" resultType="edp.davinci.model.RelRoleUser">
         select * from rel_role_user where user_id in
         <foreach collection="userList" item="item" index="index" open="(" close=")" separator=",">
-            ${item}
+            #{item}
         </foreach>
     </select>
     <select id="selectByUserAndRoles" resultType="edp.davinci.model.RelRoleUser">
-        select * from rel_role_user where user_id = ${userId}
+        select * from rel_role_user where user_id = #{userId}
         <if test="roleIds != null and roleIds.size > 0">
             and role_id in
             <foreach collection="roleIds" item="item" index="index" open="(" close=")" separator=",">
-                ${item}
+                #{item}
             </foreach>
         </if>
         <if test="roleIds == null or roleIds.size == 0">
@@ -85,11 +85,11 @@
     </select>
 
     <delete id="deleteByRoleIdAndMemberIds">
-        delete from rel_role_user where role_id = ${roleId}
+        delete from rel_role_user where role_id = #{roleId}
         <if test="userIds != null and userIds.size > 0">
             and user_id in
             <foreach collection="userIds" item="item" index="index" open="(" close=")" separator=",">
-                ${item}
+                #{item}
             </foreach>
         </if>
         <if test="userIds == null or userIds.size == 0">

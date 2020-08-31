@@ -185,7 +185,7 @@ public class ShareAuthAspect {
                     throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
                 }
                 if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-                    if (!user.getId().equals(shareFactor.getSharerId())) {
+                    if (!shareFactor.getViewers().contains(user.getId())) {
                         throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
                     }
                 } else {
