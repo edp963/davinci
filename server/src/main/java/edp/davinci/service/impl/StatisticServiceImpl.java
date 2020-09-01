@@ -5,6 +5,7 @@ import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import edp.davinci.service.StatisticService;
 import edp.davinci.service.elastic.ElasticOperationService;
 import edp.davinci.service.kafka.KafkaOperationService;
@@ -67,8 +68,9 @@ public class StatisticServiceImpl implements StatisticService {
         if(StringUtils.isNotBlank(mysqlUrl)) {
             String mysqlUsername = environment.getProperty("statistic.mysql_username");
             String mysqlPassword = environment.getProperty("statistic.mysql_password");
-
-            this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
+            // Password encryption
+            String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
+            this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
             List<Map<String, Object>> values = entityConvertIntoMap(infoList);
             Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
@@ -88,8 +90,9 @@ public class StatisticServiceImpl implements StatisticService {
         mysqlUrl = environment.getProperty("spring.datasource.url");
         String mysqlUsername = environment.getProperty("spring.datasource.username");
         String mysqlPassword = environment.getProperty("spring.datasource.password");
-
-        this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, mysqlPassword, null, null, false);
+        // Password encryption
+        String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
+        this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
         List<Map<String, Object>> values = entityConvertIntoMap(infoList);
         Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);

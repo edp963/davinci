@@ -183,3 +183,7 @@ statistic:
   java.security.krb5.conf:
   java.security.keytab:
   java.security.principal:
+
+encryption:
+  maxEncryptSize: 1024
+  type: AES # Off is to turn off encryption, to enable encryption, please select AES or RSA
