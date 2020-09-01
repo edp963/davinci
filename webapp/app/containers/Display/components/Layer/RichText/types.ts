@@ -18,13 +18,17 @@
  * >>
  */
 export interface ElementStylesType {
-  bold: boolean,
-  italic: boolean,
-  underline: boolean,
-  fontFamily: string,
-  fontSize: number,
-  color: string,
-  backgroundColor: string
+  bold?: boolean,
+  italic?: boolean,
+  underline?: boolean,
+  fontFamily?: string,
+  fontSize?: string,
+  lineHeight?: string,
+  textIndent?: string,
+  color?: string,
+  backgroundColor?: string,
+  textAlign?: string,
+  fontWeight?: string | number
 }
 
 export interface Selection {

@@ -34,9 +34,10 @@ import Styles from './RichText.less'
 const RichTextEditor: React.FC = () => {
   const dispatch = useDispatch()
   const { layer: { params: { richText }, id: layerId, params },  operationInfo: { editing } } = useContext(LayerContext)
-  const richTextRecorder = displayRichTextMigrationRecorder(params)
+  // const richTextRecorder = displayRichTextMigrationRecorder(params)
+
   const editorContent = useMemo(
-    () => richText ? richText.content : buildLabelText( { fontSize: 40 } ),
+    () => richText ? richText.content : buildLabelText({ fontSize: '40px' }),
     [richText]
   )
 
