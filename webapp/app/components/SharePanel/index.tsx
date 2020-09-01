@@ -293,7 +293,6 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
   )
 
   const changePermission = (event: RadioChangeEvent) => {
-    console.log(event.target.value)
     setPermission(event.target.value)
   }
 
