@@ -115,16 +115,14 @@ public class ShareServiceImpl implements ShareService {
         if (null == loginUser) {
             throw new NotFoundException("user is not found");
         }
-        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-            if (!shareFactor.getViewers().contains(loginUser.getId())) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
-            }
-        } else {
+
+        if (!shareFactor.getViewers().contains(loginUser.getId())) {
             Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(loginUser.getId(), shareFactor.getRoles());
-            if (!shareFactor.getViewers().contains(loginUser.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
+            if (CollectionUtils.isEmpty(relRoleUsers)) {
                 throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
             }
         }
+
         //是否激活
         if (!loginUser.getActive()) {
             throw new ServerException("this user is not active");
