@@ -23,19 +23,20 @@ import React, { useContext, useCallback, useState, useMemo, useEffect } from 're
 import { useDispatch } from 'react-redux'
 import Toolbar from 'components/RichText/Toolbar'
 import { RichTextNode } from 'components/RichText'
-import { getDefaultContent, editorStylesChange } from './util'
+import { buildLabelText, editorStylesChange } from './util'
 import { LayerContext } from '../util'
 import DisplayActions from '../../../actions'
+import { displayRichTextMigrationRecorder } from 'utils/migrationRecorders'
 
 import Editor  from './Editor'
 import Styles from './RichText.less'
 
 const RichTextEditor: React.FC = () => {
   const dispatch = useDispatch()
-  const { layer: { params: { richText }, id: layerId },  operationInfo: { editing } } = useContext(LayerContext)
-
+  const { layer: { params: { richText }, id: layerId, params },  operationInfo: { editing } } = useContext(LayerContext)
+  const richTextRecorder = displayRichTextMigrationRecorder(params)
   const editorContent = useMemo(
-    () => richText ? richText.content : getDefaultContent( { fontSize: 40 } ),
+    () => richText ? richText.content : buildLabelText( { fontSize: 40 } ),
     [richText]
   )
 

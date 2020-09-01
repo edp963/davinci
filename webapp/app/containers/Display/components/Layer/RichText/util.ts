@@ -22,7 +22,7 @@ import { ElementTypes } from 'components/RichText/Element'
 import { ElementStylesType, Selection } from './types'
 import { RichTextNode } from 'components/RichText'
 
-export const getDefaultContent = (sectionStyle?: Partial<ElementStylesType>, text?: string) => [
+export const buildLabelText = (sectionStyle?: Partial<ElementStylesType>, text?: string) => [
   {
     type: ElementTypes.Paragraph,
     children: [{ text: text || '', ...sectionStyle }]
