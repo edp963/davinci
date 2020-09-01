@@ -93,7 +93,17 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         viewerIds
       })
     }
-  }, [id, type, visible, shareToken, itemId, mode, permission, roles, viewerIds])
+  }, [
+    id,
+    type,
+    visible,
+    shareToken,
+    itemId,
+    mode,
+    permission,
+    roles,
+    viewerIds
+  ])
 
   useEffect(() => {
     if (id && visible && !pwdToken && mode === 'PASSWORD') {
@@ -106,7 +116,18 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         viewerIds
       })
     }
-  }, [pwdToken, type, pwd, id, visible, mode, itemId, permission, roles, viewerIds])
+  }, [
+    pwdToken,
+    type,
+    pwd,
+    id,
+    visible,
+    mode,
+    itemId,
+    permission,
+    roles,
+    viewerIds
+  ])
 
   const getShareToken = (type: TShareVizsType, params: IGetTokenParams) => {
     switch (type) {
@@ -271,12 +292,9 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
     [viewerIds, roles]
   )
 
-  const changePermission = useCallback(
-    (event: RadioChangeEvent) => {
-      setPermission(event.target.value)
-    },
-    [permission]
-  )
+  const changePermission = (event: RadioChangeEvent) => {
+    setPermission(event.target.value)
+  }
 
   const authButton = useMemo(() => {
     const isAuthorizedCanSend: boolean = !(roles?.length || viewerIds?.length)
@@ -290,7 +308,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
         确定
       </Button>
     )
-  }, [roles, viewerIds])
+  }, [id, itemId, mode, permission, roles, viewerIds, type])
 
   const Auth: ReactElement = useMemo(() => {
     if (authorizedShareToken) {
@@ -339,6 +357,7 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
     itemId,
     shareToken,
     type,
+    permission,
     mode,
     roles,
     viewerIds,
@@ -360,7 +379,17 @@ const SharePanel: React.FC<ISharePanelProps> = (props) => {
       default:
         return Regular
     }
-  }, [id, itemId, type, loading, mode, roles, viewerIds, AuthOptions])
+  }, [
+    id,
+    itemId,
+    permission,
+    type,
+    loading,
+    mode,
+    roles,
+    viewerIds,
+    AuthOptions
+  ])
 
   const setSType = useCallback(
     (val: Tmode) => {
