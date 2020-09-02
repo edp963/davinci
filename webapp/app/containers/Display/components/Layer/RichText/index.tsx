@@ -37,7 +37,7 @@ const RichTextEditor: React.FC = () => {
   const { boxStyles } = buildLabelRichTextStyles(params)
 
   const editorContent = useMemo(
-    () => richText ? richText.content : params.contentText ? buildLabelRichTextConetntChildren({ fontSize: 40}) : displayRichTextMigrationRecorder(params).richText.content,
+    () => richText ? richText.content : displayRichTextMigrationRecorder(params).richText.content,
     [richText, params]
   )
   const [value, setValue] = useState(editorContent)
