@@ -17,12 +17,68 @@
  * limitations under the License.
  * >>
  */
-
+import React from 'react'
 import { ElementTypes } from 'components/RichText/Element'
 import { ElementStylesType, Selection } from './types'
 import { RichTextNode } from 'components/RichText'
+import { ILayerParams } from '../../types'
 
-export const buildLabelText = (sectionInnerStyle?: Partial<ElementStylesType>, text?: string, sectionWrapStyle?:Partial<ElementStylesType>,) => [
+export const buildLabelRichTextContent = () => {
+  return {
+    content: []
+  }
+}
+
+export const buildLabelRichTextStyles = (params: ILayerParams) => {
+  const {
+    fontWeight,
+    fontFamily,
+    fontColor,
+    fontSize,
+    textAlign,
+    textStyle,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight
+  } = params
+
+  const innerStyles: ElementStylesType = {
+    fontFamily,
+    fontWeight,
+    color: `rgba(${fontColor.join()})`,
+    fontSize: Number(`${fontSize}`)
+  }
+
+  const wrapStyles: ElementStylesType = {
+    textAlign: textAlign as React.CSSProperties['textAlign'],
+    // lineHeight: `${lineHeight}px`,
+    // textIndent: `${textIndent}px`,
+  }
+
+  const boxStyles: React.CSSProperties  = {
+    paddingTop: `${paddingTop}px`,
+    paddingRight: `${paddingRight}px`,
+    paddingBottom: `${paddingBottom}px`,
+    paddingLeft: `${paddingLeft}px`
+  }
+  
+  if(fontWeight){
+    innerStyles.bold = fontWeight == 'bold' || fontWeight == 700
+  }
+  if (textStyle) {
+    innerStyles.italic = textStyle.indexOf('italic') > -1
+    innerStyles.underline = textStyle.indexOf('underline') > -1
+  }
+
+  return { 
+    innerStyles,
+    wrapStyles,
+    boxStyles
+  }
+}
+
+export const buildLabelRichTextConetntChildren = (sectionInnerStyle?: Partial<ElementStylesType>, text?: string, sectionWrapStyle?:Partial<ElementStylesType>,) => [
   {
     type: ElementTypes.Paragraph,
     children: [{ text: text || '', ...sectionInnerStyle }],
@@ -30,7 +86,7 @@ export const buildLabelText = (sectionInnerStyle?: Partial<ElementStylesType>, t
   }
 ]
 
-export const editorStylesChange = (propPath: string[], value: string | RichTextNode[]) => {
+export const onLabelEditorStylesChange = (propPath: string[], value: string | RichTextNode[]) => {
   const unitRange = {}
   propPath.reduce((subObj, propName, idx) => {
     if (idx === propPath.length -1) {
@@ -41,7 +97,7 @@ export const editorStylesChange = (propPath: string[], value: string | RichTextN
   return unitRange
   }
 
-export const editorSelectedRange = () => {
+export const onLabelEditorSelectedRange = () => {
   const { anchorNode } = window.getSelection() as Selection
   if(!anchorNode || !anchorNode.parentNode){
     return false
@@ -50,3 +106,4 @@ export const editorSelectedRange = () => {
     return anchorNode.parentElement.hasAttribute('data-slate-string')
   }
 }
+

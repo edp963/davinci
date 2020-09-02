@@ -31,7 +31,7 @@ import { LayerOperations } from '../../constants'
 import { DeltaPosition } from '../../Layer'
 import { DragTriggerTypes } from 'app/containers/Display/constants'
 import { ILayerOperationInfo } from 'app/containers/Display/components/types'
-import { editorSelectedRange } from 'app/containers/Display/components/Layer/RichText/util'
+import { onLabelEditorSelectedRange } from 'app/containers/Display/components/Layer/RichText/util'
 type KeyDownKeys =
   | 'ArrowUp'
   | 'ArrowDown'
@@ -279,7 +279,7 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
 
   const removeLayerOperationInfo = useCallback(() => {
     onRemoveLayerOperationInfo({selected: false})
-    if(!editorSelectedRange() && onRemoveLayerOperationInfo){
+    if(!onLabelEditorSelectedRange() && onRemoveLayerOperationInfo){
       onRemoveLayerOperationInfo({editing: false})
     }
   }, [onRemoveLayerOperationInfo])

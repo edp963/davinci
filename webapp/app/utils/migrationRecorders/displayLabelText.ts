@@ -1,20 +1,17 @@
-import { ILayerParams } from 'app/containers/Display/components/types'
 import { IMigrationRecorder } from '.'
-import { buildLabelText } from 'app/containers/Display/components/Layer/RichText/util'
-import { useRecorderLabelStyle } from 'app/containers/Display/components/Layer/RichText/hooks'
+import { ILayerParams } from 'app/containers/Display/components/types'
+import { buildLabelRichTextConetntChildren, buildLabelRichTextContent } from 'app/containers/Display/components/Layer/RichText/util'
+import { buildLabelRichTextStyles } from 'app/containers/Display/components/Layer/RichText/util'
 
 const displayLabelText: IMigrationRecorder<ILayerParams> = {
   versions: ['beta6'],
   recorder: {
     beta6(layerParams) {
-      const { richText } = layerParams as ILayerParams
-      const { innerStyles, wrapStyles } = useRecorderLabelStyle(layerParams)
-      if(!richText){
-        const newText = buildLabelText(innerStyles, Reflect.get(layerParams,'contentText'), wrapStyles)
-        const success = Reflect.set(layerParams, 'richText', newText)
-        if(success){
-          Reflect.deleteProperty(layerParams, 'contentText')
-        }
+      const { innerStyles, wrapStyles } = buildLabelRichTextStyles(layerParams)
+      if(!layerParams.richText){
+        layerParams.richText = buildLabelRichTextContent()
+        layerParams.richText.content = buildLabelRichTextConetntChildren(innerStyles, Reflect.get(layerParams,'contentText'), wrapStyles)
+        Reflect.deleteProperty(layerParams, 'contentText')
       }
       return layerParams
     }

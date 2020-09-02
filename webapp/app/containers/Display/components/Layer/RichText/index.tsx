@@ -23,24 +23,23 @@ import React, { useContext, useCallback, useState, useMemo, useEffect } from 're
 import { useDispatch } from 'react-redux'
 import Toolbar from 'components/RichText/Toolbar'
 import { RichTextNode } from 'components/RichText'
-import { buildLabelText, editorStylesChange } from './util'
+import { displayRichTextMigrationRecorder } from 'utils/migrationRecorders'
+import { buildLabelRichTextStyles } from 'app/containers/Display/components/Layer/RichText/util'
+import { onLabelEditorStylesChange, buildLabelRichTextConetntChildren } from './util'
 import { LayerContext } from '../util'
 import DisplayActions from '../../../actions'
-import { displayRichTextMigrationRecorder } from 'utils/migrationRecorders'
-
 import Editor  from './Editor'
 import Styles from './RichText.less'
 
 const RichTextEditor: React.FC = () => {
   const dispatch = useDispatch()
   const { layer: { params: { richText }, id: layerId, params },  operationInfo: { editing } } = useContext(LayerContext)
-  // const richTextRecorder = displayRichTextMigrationRecorder(params)
+  const { boxStyles } = buildLabelRichTextStyles(params)
 
   const editorContent = useMemo(
-    () => richText ? richText.content : buildLabelText({ fontSize: '40px' }),
-    [richText]
+    () => richText ? richText.content : params.contentText ? buildLabelRichTextConetntChildren({ fontSize: 40}) : displayRichTextMigrationRecorder(params).richText.content,
+    [richText, params]
   )
-
   const [value, setValue] = useState(editorContent)
 
   const editorChange = useCallback(
@@ -54,13 +53,14 @@ const RichTextEditor: React.FC = () => {
   )
 
   useEffect(() => {
-    dispatch(DisplayActions.editSlideLayerParams(layerId, editorStylesChange(['richText', 'content'], value)))
-  },[value, editorStylesChange])
+    dispatch(DisplayActions.editSlideLayerParams(layerId, onLabelEditorStylesChange(['richText', 'content'], value)))
+  },[value, onLabelEditorStylesChange])
     
   return (
     <Editor
       className={Styles.editor}
-			value={value}
+      styles ={boxStyles}
+      value={value}
 			toolbar={
 				!editing ? false: <Toolbar.Toolbar>
 					<Toolbar.Font />

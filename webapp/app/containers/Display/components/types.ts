@@ -68,7 +68,8 @@ export interface ILayerParams {
   paddingLeft: number
   paddingRight: number
   richText: IRichTextConfig
-
+  contentText: string,
+  
   src: string
   controlSetting: string[]
   start?: number
