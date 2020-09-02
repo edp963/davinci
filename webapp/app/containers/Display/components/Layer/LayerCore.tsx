@@ -23,9 +23,9 @@ import React, { useContext } from 'react'
 import { LayerContext } from './util'
 import { GraphTypes, SecondaryGraphTypes } from '../Setting'
 
-import { Chart, Rectangle, Label, Video, Timer } from './Content'
+import { Chart, Rectangle, Video, Timer } from './Content'
 
-import RichTextEditor from './RichText'
+import LabelEditor from './RichText'
 const LayerCore: React.FC = () => {
   const { layer } = useContext(LayerContext)
   const { type, subType } = layer
@@ -37,7 +37,7 @@ const LayerCore: React.FC = () => {
       case SecondaryGraphTypes.Rectangle:
         return <Rectangle />
       case SecondaryGraphTypes.Label:
-        return <Label> <RichTextEditor /> </Label>
+        return <LabelEditor />
       case SecondaryGraphTypes.Video:
         return <Video />
       case SecondaryGraphTypes.Timer:

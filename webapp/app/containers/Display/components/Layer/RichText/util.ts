@@ -19,13 +19,14 @@
  */
 import React from 'react'
 import { ElementTypes } from 'components/RichText/Element'
-import { ElementStylesType, Selection } from './types'
 import { RichTextNode } from 'components/RichText'
+import { EDITOR_DEFAULT_TEXT_ALIGN, EDITOR_DEFAULT_FONT_WEIGHT, EDITOR_DEFAULT_FONT_COLOR, EDITOR_DEFAULT_FONT_WEIGHT_BOLD } from './contants'
 import { ILayerParams } from '../../types'
+import { ElementStylesType, Selection } from './types'
 
-export const buildLabelRichTextContent = () => {
+export const buildLabelRichTextContent = (content: string | RichTextNode[]) => {
   return {
-    content: []
+    content
   }
 }
 
@@ -43,18 +44,11 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
     paddingRight
   } = params
 
-  const innerStyles: ElementStylesType = {
-    fontFamily,
-    fontWeight,
-    color: `rgba(${fontColor.join()})`,
+  const fontStyles: ElementStylesType = {
     fontSize: Number(`${fontSize}`)
   }
 
-  const wrapStyles: ElementStylesType = {
-    textAlign: textAlign as React.CSSProperties['textAlign'],
-    // lineHeight: `${lineHeight}px`,
-    // textIndent: `${textIndent}px`,
-  }
+  const textStyles: ElementStylesType = {}
 
   const boxStyles: React.CSSProperties  = {
     paddingTop: `${paddingTop}px`,
@@ -62,23 +56,34 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
     paddingBottom: `${paddingBottom}px`,
     paddingLeft: `${paddingLeft}px`
   }
-  
-  if(fontWeight){
-    innerStyles.bold = fontWeight == 'bold' || fontWeight == 700
+  if(fontColor.toString() !== EDITOR_DEFAULT_FONT_COLOR){
+    fontStyles.color = `rgba(${fontColor.join()})`
   }
-  if (textStyle) {
-    innerStyles.italic = textStyle.indexOf('italic') > -1
-    innerStyles.underline = textStyle.indexOf('underline') > -1
+  if(fontFamily){
+    fontStyles.fontFamily = fontFamily
+  }
+  if(fontWeight !== EDITOR_DEFAULT_FONT_WEIGHT) {
+    fontStyles.fontWeight = fontWeight
+    fontStyles.bold = fontWeight == EDITOR_DEFAULT_FONT_WEIGHT_BOLD
+  }
+  if (textStyle.includes('italic')) {
+    fontStyles.italic = textStyle.indexOf('italic') > -1
+  }
+  if(textStyle.includes('underline')){
+    fontStyles.underline = textStyle.indexOf('underline') > -1
   }
 
+  if(textAlign !== EDITOR_DEFAULT_TEXT_ALIGN){
+    textStyles.textAlign = textAlign
+  }
   return { 
-    innerStyles,
-    wrapStyles,
+    fontStyles,
+    textStyles,
     boxStyles
   }
 }
 
-export const buildLabelRichTextConetntChildren = (sectionInnerStyle?: Partial<ElementStylesType>, text?: string, sectionWrapStyle?:Partial<ElementStylesType>,) => [
+export const buildLabelRichTextContentChildren = (sectionInnerStyle?: Partial<ElementStylesType>, text?: string, sectionWrapStyle?:Partial<ElementStylesType>,) => [
   {
     type: ElementTypes.Paragraph,
     children: [{ text: text || '', ...sectionInnerStyle }],
@@ -95,7 +100,7 @@ export const onLabelEditorStylesChange = (propPath: string[], value: string | Ri
     return subObj[propName] = {}
   }, unitRange)
   return unitRange
-  }
+}
 
 export const onLabelEditorSelectedRange = () => {
   const { anchorNode } = window.getSelection() as Selection
