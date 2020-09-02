@@ -698,26 +698,33 @@ export class ControlConfig extends PureComponent<
                 const paramsByViewId = relatedViewMap.reduce(
                   (
                     obj,
-                    [viewId, { fields }]: [string, IControlRelatedViewFormValue]
+                    [viewId, { fieldType, fields }]: [
+                      string,
+                      IControlRelatedViewFormValue
+                    ]
                   ) => {
-                    obj[viewId] = { columns: [fields] }
+                    if (fieldType === ControlFieldTypes.Column) {
+                      obj[viewId] = { columns: [fields] }
+                    }
                     return obj
                   },
                   {}
                 )
-                this.setState({ defaultValueLoading: true })
-                onGetOptions(paramsByViewId, (options) => {
-                  message.success('加载成功！')
-                  this.setState({ defaultValueLoading: false })
-                  if (options) {
-                    this.setState({
-                      defaultValueOptions: transformOptions(
-                        { ...editingControlBase, ...values },
-                        options
-                      )
-                    })
-                  }
-                })
+                if (Object.keys(paramsByViewId).length) {
+                  this.setState({ defaultValueLoading: true })
+                  onGetOptions(paramsByViewId, (options) => {
+                    message.success('加载成功！')
+                    this.setState({ defaultValueLoading: false })
+                    if (options) {
+                      this.setState({
+                        defaultValueOptions: transformOptions(
+                          { ...editingControlBase, ...values },
+                          options
+                        )
+                      })
+                    }
+                  })
+                }
               }
               break
             case ControlOptionTypes.Manual:

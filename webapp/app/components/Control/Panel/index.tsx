@@ -225,12 +225,14 @@ class ControlPanel extends PureComponent<
 
         switch (optionType) {
           case ControlOptionTypes.Auto:
-            requestParams[viewId] = {
-              columns: [(relatedView.fields as IControlRelatedField).name],
-              filters,
-              variables,
-              cache,
-              expired
+            if (relatedView.fieldType === ControlFieldTypes.Column) {
+              requestParams[viewId] = {
+                columns: [(relatedView.fields as IControlRelatedField).name],
+                filters,
+                variables,
+                cache,
+                expired
+              }
             }
             break
           case ControlOptionTypes.Manual:
