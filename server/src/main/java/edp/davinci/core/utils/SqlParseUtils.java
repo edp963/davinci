@@ -461,33 +461,36 @@ public class SqlParseUtils {
             return sql;
         }
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_ID.getKey())) {
-            sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR,
-                    SystemVariableEnum.USER_ID.getRegex()),
-                    user == null ? condition : user.getId().toString());
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_ID.getRegex())
+                    : SystemVariableEnum.USER_ID.getRegex();
+            String repl = user == null ? condition : user.getId().toString();
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey())) {
-            sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR,
-                    SystemVariableEnum.USER_NAME.getRegex()),
-                    user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName()));
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex())
+                    : SystemVariableEnum.USER_NAME.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey())) {
-            sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR,
-                    SystemVariableEnum.USER_USERNAME.getRegex()),
-                    user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername()));
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex())
+                    : SystemVariableEnum.USER_USERNAME.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey())) {
-            sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR,
-                    SystemVariableEnum.USER_EMAIL.getRegex()),
-                    user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getEmail()));
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex())
+                    : SystemVariableEnum.USER_EMAIL.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
-            sql = sql.replaceAll(REG_IGNORE_CASE + String.format(REG_SYSVAR,
-                    SystemVariableEnum.USER_DEPARTMENT.getRegex()),
-                    user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getDepartment()));
+            String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex())
+                    : SystemVariableEnum.USER_DEPARTMENT.getRegex();
+            String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
+            sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
-        if (SystemVariableEnum.isContains(sql)) {
-            throw new ServerException("Illegal system variables, only supports \"=\" or \"!=\"");
-        }
+
         return sql;
     }
 }
