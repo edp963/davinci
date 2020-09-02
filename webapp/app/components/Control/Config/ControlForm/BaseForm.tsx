@@ -68,7 +68,7 @@ const BaseForm: FC<IBaseFormProps> = ({
   onCommonPropChange
 }) => {
   const { getFieldDecorator } = form
-  const { type, multiple, visibility } = controlBase
+  const { key, type, multiple, visibility } = controlBase
   const datePickerFormatOptions = getDatePickerFormatOptions(type, multiple)
   const colSpan = { xxl: 12, xl: 18 }
   const itemCols = {
@@ -264,7 +264,7 @@ const BaseForm: FC<IBaseFormProps> = ({
   }
 
   const selectTypeControls = controls.filter(
-    (c) => c.type === ControlTypes.Select
+    (c) => c.type === ControlTypes.Select && c.key !== key
   )
 
   return (
