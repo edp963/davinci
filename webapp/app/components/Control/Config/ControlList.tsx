@@ -113,7 +113,7 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
   }
 
   private dragEnter = (info) => {
-    // console.log(info)
+
   }
 
   private drop = (info) => {

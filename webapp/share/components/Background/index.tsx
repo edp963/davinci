@@ -18,33 +18,24 @@
  * >>
  */
 
-import { IWidgetConfig } from './components/Widget'
+import React from 'react'
+import Helmet from 'react-helmet'
 
-export interface IWidgetBase {
-  id: number
-  name: string
-  description: string
-  publish: boolean
-  type: number
-  viewId: number
-  projectId: number
+import styles from './index.less'
+
+export function Background(props) {
+  return (
+    <div className={`${styles.container} ${styles.share}`}>
+      <Helmet title="Login" />
+      <img
+        className={styles.logo}
+        src={require('assets/images/logo_light.svg')}
+      />
+      <div className={`${styles.window} ${styles.wrapper}`}>
+        {props.children}
+      </div>
+    </div>
+  )
 }
 
-export interface IWidgetRaw extends IWidgetBase {
-  config: string
-}
-
-export interface IWidgetFormed extends IWidgetBase {
-  config: IWidgetConfig
-  dataToken?: string
-  password?: string
-}
-
-export interface IWidgetState {
-  widgets: IWidgetFormed[]
-  currentWidget: IWidgetRaw
-  loading: boolean
-  dataLoading: boolean
-  columnValueLoading: boolean
-  distinctColumnValues: any[]
-}
+export default Background

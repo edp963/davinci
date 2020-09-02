@@ -30,8 +30,6 @@ import {
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  GET_LOGIN_USER,
-  GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   CHECK_NAME,
@@ -59,7 +57,10 @@ import {
   GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE,
   RESET_PASSWORD_UNLOGGED,
   RESET_PASSWORD_UNLOGGED_ERROR,
-  RESET_PASSWORD_UNLOGGED_SUCCESS
+  RESET_PASSWORD_UNLOGGED_SUCCESS,
+  GET_USER_BY_TOKEN,
+  GET_USER_BY_TOKEN_SUCCESS,
+  GET_USER_BY_TOKEN_FAIL
 } from './constants'
 
 import { IGetgetCaptchaParams, IResetPasswordParams } from '../FindPassword/types'
@@ -200,21 +201,6 @@ export function joinOrganizationSuccess(user) {
 export function joinOrganizationError() {
   return {
     type: JOIN_ORGANIZATION_ERROR
-  }
-}
-
-export function getLoginUser(resolve) {
-  return {
-    type: GET_LOGIN_USER,
-    payload: {
-      resolve
-    }
-  }
-}
-
-export function getLoginUserError() {
-  return {
-    type: GET_LOGIN_USER_ERROR
   }
 }
 
@@ -418,6 +404,33 @@ export function resetPasswordUnloggedSuccess (result) {
 export function resetPasswordUnloggedFail (error) {
   return {
     type: RESET_PASSWORD_UNLOGGED_ERROR,
+    payload: {
+      error
+    }
+  }
+}
+
+export function getUserByToken (token) {
+  return {
+    type: GET_USER_BY_TOKEN,
+    payload: {
+      token
+    }
+  }
+}
+
+export function getUserByTokenSuccess (user) {
+  return {
+    type: GET_USER_BY_TOKEN_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function getUserByTokenFail (error) {
+  return {
+    type: GET_USER_BY_TOKEN_FAIL,
     payload: {
       error
     }

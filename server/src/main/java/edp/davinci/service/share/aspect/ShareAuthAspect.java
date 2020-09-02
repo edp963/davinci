@@ -184,13 +184,9 @@ public class ShareAuthAspect {
                 if (user == null) {
                     throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_AUTHENTICATION);
                 }
-                if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-                    if (!user.getId().equals(shareFactor.getSharerId())) {
-                        throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
-                    }
-                } else {
+                if (!shareFactor.getViewers().contains(user.getId())) {
                     Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(user.getId(), shareFactor.getRoles());
-                    if (!shareFactor.getViewers().contains(user.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
+                    if (CollectionUtils.isEmpty(relRoleUsers)) {
                         throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
                     }
                 }

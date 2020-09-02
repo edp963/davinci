@@ -45,7 +45,6 @@ import { RouteComponentWithParams } from 'utils/types'
 import Container from 'components/Container'
 import Toolbar from './components/Toolbar'
 import DashboardItemForm from './components/DashboardItemForm'
-import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
@@ -61,9 +60,7 @@ import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Menu, message } from 'antd'
-import { uuid } from 'utils/util'
 import FullScreenPanel from './FullScreenPanel'
-import { decodeMetricName } from 'containers/Widget/components/util'
 import { DashboardActions } from './actions'
 const {
   loadDashboardDetail,

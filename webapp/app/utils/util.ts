@@ -181,3 +181,7 @@ export function isImagePath(pathname: string) {
 export function hasProperty<T extends object, U extends keyof T> (obj: T, key: U) {
   return obj[key] ? obj[key] : false
 }
+
+export const tuple = <T extends string[]>(...args: T) => args
+
+export const tupleNum = <T extends number[]>(...args: T) => args

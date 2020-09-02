@@ -36,14 +36,19 @@ import {
   makeSelectItemInfo
 } from './selectors'
 import {
+  makeSelectShareType
+} from 'share/containers/App/selectors'
+import {
   makeSelectGlobalControlPanelFormValues,
   makeSelectLocalControlPanelFormValues
 } from 'app/containers/ControlPanel/selectors'
 import { ControlPanelTypes } from 'app/components/Control/constants'
+import { ActionTypes as AppActions } from 'share/containers/App/constants'
 import {
   globalControlMigrationRecorder,
   localControlMigrationRecorder
 } from 'app/utils/migrationRecorders'
+
 import {
   getRequestParams,
   getRequestBody,
@@ -79,6 +84,8 @@ import { errorHandler, getErrorMessage } from 'utils/util'
 import api from 'utils/api'
 import { message } from 'antd'
 import { DownloadTypes } from 'app/containers/App/constants'
+import { localStorageCRUD, getPasswordUrl } from '../../util'
+
 
 export function* getDashboard(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DASHBOARD) {
@@ -86,8 +93,13 @@ export function* getDashboard(action: DashboardActionType) {
   }
   const { dashboardGetted, loadDashboardFail } = DashboardActions
   const { token, reject } = action.payload
+
+  const shareType = yield select(makeSelectShareType())
+  const baseUrl = `${api.share}/dashboard/${token}`
+  const requestUrl = getPasswordUrl(shareType, token, baseUrl)
+
   try {
-    const result = yield call(request, `${api.share}/dashboard/${token}`)
+    const result = yield call(request, requestUrl)
     const {
       widgets,
       relations,
@@ -141,8 +153,11 @@ export function* getWidget(action: DashboardActionType) {
   }
   const { widgetGetted } = DashboardActions
   const { token, resolve, reject } = action.payload
+  const shareType = yield select(makeSelectShareType())
+  const baseUrl = `${api.share}/widget/${token}`
+  const requestUrl = getPasswordUrl(shareType, token, baseUrl)
   try {
-    const result = yield call(request, `${api.share}/widget/${token}`)
+    const result = yield call(request, requestUrl)
     const widget: IShareWidgetRaw = result.payload
     const { model, variable, config, ...rest } = widget
     const parsedConfig: IWidgetConfig = JSON.parse(config)
@@ -200,7 +215,7 @@ function* getData(
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.share}/data/${relatedWidget.dataToken}`,
+      url: `${api.share}/data/${relatedWidget.dataToken}?password=${relatedWidget.password}`,
       data: getRequestBody(requestParams)
     })
     const { resultList } = result.payload
@@ -372,10 +387,15 @@ export function* getDownloadList(action: DashboardActionType) {
   }
   const { downloadListLoaded, loadDownloadListFail } = DashboardActions
   const { shareClinetId, token } = action.payload
+
+  const shareType = yield select(makeSelectShareType())
+  const baseUrl =  `${api.download}/share/page/${shareClinetId}/${token}`
+  const requestUrl = getPasswordUrl(shareType, token, baseUrl)
+
   try {
     const result = yield call(
       request,
-      `${api.download}/share/page/${shareClinetId}/${token}`
+      requestUrl
     )
     yield put(downloadListLoaded(result.payload))
   } catch (err) {

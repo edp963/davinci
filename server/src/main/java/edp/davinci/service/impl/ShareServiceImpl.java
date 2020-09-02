@@ -115,16 +115,14 @@ public class ShareServiceImpl implements ShareService {
         if (null == loginUser) {
             throw new NotFoundException("user is not found");
         }
-        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-            if (!loginUser.getId().equals(shareFactor.getSharerId())) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
-            }
-        } else {
+
+        if (!shareFactor.getViewers().contains(loginUser.getId())) {
             Set<RelRoleUser> relRoleUsers = relRoleUserMapper.selectByUserAndRoles(loginUser.getId(), shareFactor.getRoles());
-            if (!shareFactor.getViewers().contains(loginUser.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
+            if (CollectionUtils.isEmpty(relRoleUsers)) {
                 throw new ForbiddenExecption(ErrorMsg.ERR_MSG_PERMISSION);
             }
         }
+
         //是否激活
         if (!loginUser.getActive()) {
             throw new ServerException("this user is not active");
@@ -248,15 +246,22 @@ public class ShareServiceImpl implements ShareService {
     @Override
     public Paginate<Map<String, Object>> getShareData(ViewExecuteParam executeParam, User user)
             throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
+
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
-
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceByWidgetId(widget.getId());
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareFactor.getUser(), false);
-        boolean maintainer = projectService.isMaintainer(projectDetail, shareFactor.getUser());
+        ProjectDetail projectDetail = null;
+        boolean maintainer = false;
+        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
+            projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareFactor.getUser(), false);
+            maintainer = projectService.isMaintainer(projectDetail, shareFactor.getUser());
+        } else {
+            projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), user, false);
+            maintainer = projectService.isMaintainer(projectDetail, user);
+        }
 
-        Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, shareFactor.getUser());
+        Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, user);
         return paginate;
     }
 

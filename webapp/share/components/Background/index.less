@@ -1,6 +1,45 @@
 @import "~assets/less/variable";
 
-.window {
+.container {
+  background: @secondary-color;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  &.share {
+    background: linear-gradient(135deg, @primary-color, @secondary-color) transparent;
+
+    .window {
+      background-color: transparent;
+    }
+  }
+
+  .logo {
+    width: 200px;
+    height: 40px;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+
+    .window {
+      width: 80%;
+      padding-top: 32px;
+      margin-bottom: 0;
+    }
+  }
+}
+
+.wrapper {
   width: 320px;
   background-color: fade(@secondary-color, 50%);
   padding-top: 64px;
@@ -10,24 +49,21 @@
   align-items: center;
   position: relative;
   z-index: 1;
-
-  
 }
 
-.form {
-  width: 320px;
-  text-align: center;
-}
-
-.input {
+.inputs {
   height: 45px;
-  border-bottom: 1px solid @white;
+  border-bottom: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
 
   &:last-of-type {
-    border-bottom: 0;
+    margin-bottom: 18px;
+  }
+
+  &:first-of-type {
+    border-bottom: 1px solid @white;
   }
 
   i {
@@ -65,11 +101,15 @@
   }
 }
 
-.submit {
+.forms {
+  width: 320px;
+  text-align: center;
+}
+.submits {
   width: 75%;
   height: 36px;
   background-color: transparent;
-  margin-top: 16px;
+  margin-top: 38px;
   border: 1px solid @white;
   border-radius: 3px;
   color: @white;
@@ -85,29 +125,4 @@
   }
 }
 
-.tips {
-  width: 75%;
-  margin-top: 16px;
-  text-align: center;
 
-  span {
-    color: @light-bg;
-  }
-
-  a {
-    font-weight: bold;
-
-    &.register {
-      float: left;
-    }
-
-    &.forgetPassword {
-      float: right;
-    }
-  }
-}
-
-.joinOrganizationLoadingContent {
-  padding: 20px 0;
-  color: @white;
-}
