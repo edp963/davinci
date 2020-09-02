@@ -16,8 +16,8 @@ interface IToolbarProps {
   currentDashboard: IDashboard
   showAddDashboardItem: () => void
   onOpenSharePanel: () => void
-  onToggleLinkageVisibility: (visible: boolean) => () => void
-  onToggleGlobalFilterVisibility: (visible: boolean) => () => void
+  onOpenLinkageConfig: () => void
+  onOpenGlobalControlConfig: () => void
   onDownloadDashboard: () => void
 }
 
@@ -31,8 +31,8 @@ export class Toolbar extends React.PureComponent<IToolbarProps> {
       currentProject,
       showAddDashboardItem,
       onOpenSharePanel,
-      onToggleLinkageVisibility,
-      onToggleGlobalFilterVisibility,
+      onOpenLinkageConfig,
+      onOpenGlobalControlConfig,
       onDownloadDashboard
     } = this.props
 
@@ -89,7 +89,7 @@ export class Toolbar extends React.PureComponent<IToolbarProps> {
           type="primary"
           icon="link"
           style={{marginLeft: '8px'}}
-          onClick={onToggleLinkageVisibility(true)}
+          onClick={onOpenLinkageConfig}
         />
       </Tooltip>
     )
@@ -99,7 +99,7 @@ export class Toolbar extends React.PureComponent<IToolbarProps> {
           type="primary"
           icon="filter"
           style={{marginLeft: '8px'}}
-          onClick={onToggleGlobalFilterVisibility(true)}
+          onClick={onOpenGlobalControlConfig}
         />
       </Tooltip>
     )

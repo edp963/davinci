@@ -42,17 +42,17 @@
   }
 }
 
-.antFormItemLabelSmall {
+.antFormItemLabelCustom(@fontSize, @lineHeight, @marginBottom) {
   :global {
     .ant-form-item {
-      margin-bottom: 4px;
+      margin-bottom: @marginBottom;
     }
     .ant-form-item-label {
-      line-height: 1em;
+      line-height: @lineHeight;
   
       label {
         color: @disabled-text-color;
-        font-size: 12px;
+        font-size: @fontSize;
         font-weight: bold;
       }
     }

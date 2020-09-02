@@ -20,41 +20,42 @@
 
 import React, { PureComponent, GetDerivedStateFromProps } from 'react'
 import {
-  IGlobalControl,
-  ILocalControl,
-  IControlRelatedField,
+  IControl,
   OnGetControlOptions,
   IMapControlOptions,
   IRenderTreeItem,
-  IGlobalRenderTreeItem,
-  ILocalRenderTreeItem,
-  GlobalControlQueryMode
+  IControlRelatedField
 } from '../types'
 import {
   getVariableValue,
   getModelValue,
   getAllChildren,
   getParents,
-  getPanelRenderState
+  getPanelRenderState,
+  getCustomOptionVariableValues,
+  cleanInvisibleConditionalControlValues
 } from '../util'
 import {
   SHOULD_LOAD_OPTIONS,
   CHANGE_IMMEDIATELY,
   ControlPanelTypes,
-  ControlPanelLayoutTypes
+  ControlPanelLayoutTypes,
+  ControlQueryMode,
+  ControlFieldTypes,
+  ControlOptionTypes
 } from '../constants'
 import DashboardControlPanelLayout from './Layouts/Dashboard'
 import DashboardItemControlPanelLayout from './Layouts/DashboardItem'
 import FullScreenControlPanelLayout from './Layouts/FullScreen'
 
 interface IControlPanelProps {
-  controls: IGlobalControl[] | ILocalControl[]
+  controls: IControl[]
   items: string
   type: ControlPanelTypes
   layoutType: ControlPanelLayoutTypes
   viewId?: number
   reload: boolean
-  queryMode: GlobalControlQueryMode
+  queryMode: ControlQueryMode
   formValues: object
   mapOptions: IMapControlOptions
   onGetOptions: OnGetControlOptions
@@ -68,11 +69,14 @@ interface IControlPanelStates {
     [key: string]: IRenderTreeItem
   }
   defaultValues: object
-  prevControls: IGlobalControl[] | ILocalControl[]
+  prevControls: IControl[]
   prevItems: string
 }
 
-class ControlPanel extends PureComponent<IControlPanelProps, IControlPanelStates> {
+class ControlPanel extends PureComponent<
+  IControlPanelProps,
+  IControlPanelStates
+> {
   public state: IControlPanelStates = {
     renderTree: [],
     flatTree: {},
@@ -143,145 +147,134 @@ class ControlPanel extends PureComponent<IControlPanelProps, IControlPanelStates
     flatTree: { [key: string]: IRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
-    const { type, viewId, items, onGetOptions } = this.props
+    const { type, items, onGetOptions } = this.props
     const {
       key,
-      interactionType,
       parent,
       cache,
       expired,
+      optionType,
+      valueViewId,
+      valueField,
+      textField,
+      parentField,
       customOptions,
-      options
+      relatedViews
     } = renderControl
 
-    if (customOptions) {
+    if (optionType === ControlOptionTypes.Custom) {
       onGetOptions(
         key,
         true,
-        options,
+        customOptions,
         type === ControlPanelTypes.Local ? Number(items) : void 0
       )
     } else {
-      const parents = getParents<IGlobalControl | ILocalControl>(
-        parent,
-        flatTree
-      )
+      const parents = getParents(parent, flatTree)
       const requestParams = {}
 
-      if (type === ControlPanelTypes.Global) {
-        const { relatedViews } = renderControl as IGlobalRenderTreeItem
+      Object.entries(relatedViews).forEach(([viewId, relatedView]) => {
+        let filters = []
+        let variables = []
 
-        Object.entries(relatedViews).forEach(([relatedViewId, fields]) => {
-          let filters = []
-          let variables = []
+        parents.forEach((parentControl) => {
+          const parentValue = controlValues[parentControl.key]
 
-          parents.forEach((parentControl: IGlobalControl) => {
-            const parentValue = controlValues[parentControl.key]
-            Object.entries(parentControl.relatedViews).forEach(
-              ([parentViewId, parentFields]) => {
-                if (relatedViews[parentViewId]) {
-                  if (parentControl.interactionType === 'column') {
-                    filters = filters.concat(
-                      getModelValue(
+          Object.entries(parentControl.relatedViews).forEach(
+            ([parentViewId, parentRelatedView]) => {
+              if (viewId === parentViewId) {
+                if (
+                  optionType === ControlOptionTypes.Auto ||
+                  (optionType === ControlOptionTypes.Manual &&
+                    valueViewId === Number(parentViewId))
+                ) {
+                  if (parentControl.optionWithVariable) {
+                    variables = variables.concat(
+                      getCustomOptionVariableValues(
                         parentControl,
-                        parentFields as IControlRelatedField,
+                        Number(parentViewId),
                         parentValue
                       )
                     )
                   } else {
-                    variables = variables.concat(
-                      getVariableValue(parentControl, parentFields, parentValue)
-                    )
+                    if (
+                      parentRelatedView.fieldType === ControlFieldTypes.Column
+                    ) {
+                      filters = filters.concat(
+                        getModelValue(
+                          parentControl,
+                          parentRelatedView.fields as IControlRelatedField,
+                          parentValue
+                        )
+                      )
+                    } else {
+                      variables = variables.concat(
+                        getVariableValue(
+                          parentControl,
+                          parentRelatedView.fields,
+                          parentValue
+                        )
+                      )
+                    }
                   }
                 }
               }
-            )
-          })
-
-          if (interactionType === 'column') {
-            requestParams[relatedViewId] = {
-              columns: [(fields as IControlRelatedField).name],
-              filters,
-              variables,
-              cache,
-              expired
             }
-          } else {
-            if ((fields as IControlRelatedField).optionsFromColumn) {
-              requestParams[relatedViewId] = {
-                columns: [(fields as IControlRelatedField).column],
+          )
+        })
+
+        switch (optionType) {
+          case ControlOptionTypes.Auto:
+            if (relatedView.fieldType === ControlFieldTypes.Column) {
+              requestParams[viewId] = {
+                columns: [(relatedView.fields as IControlRelatedField).name],
                 filters,
                 variables,
                 cache,
                 expired
               }
             }
-          }
-        })
-
-        if (Object.keys(requestParams).length) {
-          onGetOptions(key, false, requestParams)
-        }
-      } else {
-        const { fields } = renderControl as ILocalRenderTreeItem
-        let filters = []
-        let variables = []
-
-        parents.forEach((parentControl: ILocalControl) => {
-          const parentValue = controlValues[parentControl.key]
-          if (parentControl.interactionType === 'column') {
-            filters = filters.concat(
-              getModelValue(
-                parentControl,
-                parentControl.fields as IControlRelatedField,
-                parentValue
-              )
-            )
-          } else {
-            variables = variables.concat(
-              getVariableValue(parentControl, parentControl.fields, parentValue)
-            )
-          }
-        })
-
-        if (interactionType === 'column') {
-          requestParams[viewId] = {
-            columns: [(fields as IControlRelatedField).name],
-            filters,
-            variables,
-            cache,
-            expired
-          }
-        } else {
-          if ((fields as IControlRelatedField).optionsFromColumn) {
-            requestParams[viewId] = {
-              columns: [(fields as IControlRelatedField).column],
+            break
+          case ControlOptionTypes.Manual:
+            requestParams[valueViewId] = {
+              columns: [valueField, textField, parentField].filter((f) => !!f),
               filters,
               variables,
               cache,
               expired
             }
-          }
+            break
         }
+      })
 
-        if (Object.keys(requestParams).length) {
-          onGetOptions(key, false, requestParams, Number(items))
-        }
+      if (Object.keys(requestParams).length) {
+        onGetOptions(
+          key,
+          false,
+          requestParams,
+          type === ControlPanelTypes.Local ? Number(items) : void 0
+        )
       }
     }
   }
 
-  private change = (control: IGlobalControl | ILocalControl, val) => {
-    const { queryMode, formValues, onChange, onSearch } = this.props
+  private change = (control: IControl, val) => {
+    const { controls, queryMode, formValues, onChange, onSearch } = this.props
     const { flatTree } = this.state
     const { key, type } = control
     const childrenKeys = getAllChildren(key, flatTree)
     const controlValue = {
       [key]: val
     }
+    const cleanedInvisibleValues = cleanInvisibleConditionalControlValues(
+      controls,
+      control,
+      formValues
+    )
     const updatedFormValues = {
       ...formValues,
-      ...controlValue
+      ...controlValue,
+      ...cleanedInvisibleValues
     }
 
     if (childrenKeys.length) {
@@ -296,7 +289,7 @@ class ControlPanel extends PureComponent<IControlPanelProps, IControlPanelStates
     onChange(updatedFormValues)
 
     if (
-      queryMode === GlobalControlQueryMode.Immediately &&
+      queryMode === ControlQueryMode.Immediately &&
       CHANGE_IMMEDIATELY[type]
     ) {
       onSearch(controlValue)
@@ -307,13 +300,19 @@ class ControlPanel extends PureComponent<IControlPanelProps, IControlPanelStates
     const { queryMode, onChange, onSearch } = this.props
     const { defaultValues } = this.state
     onChange(defaultValues)
-    if (queryMode === GlobalControlQueryMode.Immediately) {
+    if (queryMode === ControlQueryMode.Immediately) {
       onSearch(defaultValues)
     }
   }
 
   public render() {
-    const { layoutType, queryMode, formValues, mapOptions, onSearch } = this.props
+    const {
+      layoutType,
+      queryMode,
+      formValues,
+      mapOptions,
+      onSearch
+    } = this.props
 
     const { renderTree } = this.state
 

@@ -8,7 +8,7 @@ import Filters from './Filters'
 
 import { ViewModelTypes, ViewModelVisualTypes } from 'containers/View/constants'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
-import { SettingTypes, ItemTypes, ItemValueTypes } from './type'
+import { SettingTypes, ItemTypes, ItemValueTypes } from './types'
 
 import { Menu } from 'antd'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu

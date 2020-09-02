@@ -113,8 +113,30 @@ const viewReducer = (
         break
       case ActionTypes.LOAD_VIEWS_SUCCESS:
         draft.views = action.payload.views
-        draft.formedViews = {}
+        draft.formedViews = Object.entries(draft.formedViews).reduce(
+          (obj, [viewId, formedView]) => {
+            const existView = action.payload.views.find(
+              (v) => v.id === Number(viewId)
+            )
+            if (existView) {
+              obj[viewId] = formedView
+            }
+            return obj
+          },
+          {}
+        )
         draft.loading.view = false
+        break
+      case ActionTypes.LOAD_VIEWS_DETAIL:
+        draft.formedViews = action.payload.viewIds.reduce((acc, id) => {
+          if (!acc[id]) {
+            acc[id] = {
+              model: {},
+              variable: []
+            }
+          }
+          return acc
+        }, draft.formedViews)
         break
       case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
         const detailedViews = action.payload.views

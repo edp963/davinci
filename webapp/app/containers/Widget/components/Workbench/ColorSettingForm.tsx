@@ -19,7 +19,6 @@ interface IColorProp {
 interface IColorSettingFormProps {
   mode: WidgetMode
   list: string[]
-  loading: boolean
   metrics: IDataParamSource[]
   config: IDataParamConfig
   onSave: (config) => void
@@ -116,7 +115,7 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
   }
 
   public render () {
-    const { mode, loading, metrics, onCancel } = this.props
+    const { mode, metrics, onCancel } = this.props
     const { actOn, list, selected } = this.state
 
     const metricRadioButtons = [{ name: 'all' }].concat(metrics).map((m) => (

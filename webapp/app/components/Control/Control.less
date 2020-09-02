@@ -1,49 +1,15 @@
 @import "~assets/less/variable";
 
-.controlConfig {
+.container {
   flex: 1;
 
-  .configForm {
+  .controlForm {
     flex: 1;
     display: flex;
-    flex-direction: row;
-    .formTitle;
 
-    .title {
-      .rightSide {
-        position: absolute;
-        top: 10px
-      }
-
-      .interactionType {
-        .rightSide;
-        right: 8px;
-      }
-
-      .checkAll {
-        .rightSide;
-        right: 0;
-        color: @light-text-color;
-        font-weight: normal;
-      }
-
-      &.subTitle {
-        border-top: 1px solid @border-color-split;
-      }
-    }
-  }
-}
-
-.formTitle {
-  .title {
-    flex-shrink: 0;
-    padding: 0 8px;
-    position: relative;
-
-    h2 {
-      color: @light-text-color;
-      font-size: 14px;
-      line-height: 3em;
+    .splitPanel {
+      flex: 1;
+      display: flex;
     }
   }
 }
@@ -78,17 +44,41 @@
   // }
 }
 
-.itemSelector {
+.relatedForm {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
 
-  .itemList {
-    flex: 2;
+  .title {
+    flex-shrink: 0;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+
+    h2 {
+      flex: 1;
+      color: @light-text-color;
+      font-size: 1.143em;
+      line-height: 3em;
+    }
+
+    .action {
+      flex-shrink: 0;
+    }
+  }
+
+  .itemContainer {
+    flex: 3;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    min-height: 0;
+
+    .title {
+      .checkAll {
+        color: @light-text-color;
+      }
+    }
 
     ul {
       flex: 1;
@@ -107,98 +97,84 @@
     }
   }
 
-  .viewSet {
-    flex: 1;
-    overflow-y: auto;
+  .viewContainer {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 
-    .related {
-      padding: 0 16px 8px;
+    .title {
+      border-top: 1px solid @border-color-split;
     }
 
-    .empty {
-      margin: 8px 0;
+    .views {
+      flex: 1;
+      overflow-y: auto;
+
+      &.empty {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
     }
+  }
+}
+
+.relatedView {
+  padding: 8px 0;
+  margin: 0 16px;
+
+  .name {
+    height: 40px;
+    display: flex;
+    align-items: center;
 
     h4 {
-      position: relative;
+      flex: 1;
       color: @light-text-color;
       .ellipsis;
-
-      &.variableSelect {
-        padding-right: 116px;
-      }
-
-      .checkbox {
-        position: absolute;
-        top: 0;
-        right: 0;
-        color: @light-text-color;
-        font-weight: normal;
-      }
     }
 
-    .formItem {
-      margin: 2px 0 0 0;
+    .fieldType {
+      flex-shrink: 0;
     }
+  }
 
-    .selector {
-      width: 100%;
-    }
-
-    :global(.ant-form-item-label) {
-      line-height: 32px;
-
-      label {
-        color: @light-text-color;
-      }
-    }
-    :global(.ant-form-item-control) {
-      line-height: 32px;
+  :global {
+    .ant-form-item {
+      margin-bottom: 0;
     }
   }
 }
 
-.controlFormAntdOverride {
-  .formBody {
-    padding: 0 16px;
-  }
-  .antFormItemLabelSmall;
-}
-
-.localConfigForm {
-  flex: 1;
-  .formTitle;
-}
-
-.baseForm {
-  flex-shrink: 0;
-  .controlFormAntdOverride;
-
-  .selector {
-    width: 100%;
-  }
-}
-
-.controlForm {
+.commonForm {
   flex: 1;
   overflow-y: auto;
-  .controlFormAntdOverride;
 
-  .optionList {
-    flex: 1;
-    padding: 0 16px 16px;
-    overflow-y: auto;
+  :global {
+    .ant-form-item {
+      margin-bottom: 8px;
+    }
+    .ant-divider {
+      color: @light-text-color !important;
+    }
   }
 }
 
 .optionsModal {
-  .formItem {
-    margin: 0;
-  }
-
-  :global(.ant-modal-header),
-  :global(.ant-modal-body) {
-    padding: 16px;
+  :global {
+    .ant-form-item {
+      margin-bottom: 0;
+    }
+    .ant-modal-header,
+    .ant-modal-body  {
+      padding: 16px;
+    }
+    .ant-divider {
+      color: @light-text-color !important;
+      font-size: 1em !important;
+    }
   }
 }
 

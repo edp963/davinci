@@ -26,7 +26,8 @@ import {
   IDisplayRaw,
   IDisplayFormed,
   ISlideFormed,
-  ISlideParams
+  ISlideParams,
+  IDashboard
 } from './types'
 
 export const VizActions = {
@@ -357,20 +358,25 @@ export const VizActions = {
     }
   },
 
-  editCurrentDashboard (dashboard, resolve) {
+  editCurrentDashboard (
+    dashboard: IDashboard,
+    type: 'linkage' | 'control',
+    resolve: () => void) {
     return {
       type: ActionTypes.EDIT_CURRENT_DASHBOARD,
       payload: {
         dashboard,
+        type,
         resolve
       }
     }
   },
-  currentDashboardEdited (result) {
+  currentDashboardEdited (result: IDashboard, type: 'linkage' | 'control') {
     return {
       type: ActionTypes.EDIT_CURRENT_DASHBOARD_SUCCESS,
       payload: {
-        result
+        result,
+        type
       }
     }
   },
