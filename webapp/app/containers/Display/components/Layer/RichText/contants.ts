@@ -18,12 +18,7 @@
  * >>
  */
 
-import React from 'react'
-
-const Label: React.FC = (props) => {
-  return <div>
-    {props.children}
-  </div>
-}
-
-export default Label
+export const EDITOR_DEFAULT_TEXT_ALIGN = 'justify'
+export const EDITOR_DEFAULT_FONT_WEIGHT = 'normal'
+export const EDITOR_DEFAULT_FONT_WEIGHT_BOLD = 'bold' || 700
+export const EDITOR_DEFAULT_FONT_COLOR = '0,0,0'

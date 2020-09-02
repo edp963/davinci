@@ -18,7 +18,7 @@
  * >>
  */
 
- export interface ElementStylesType {
+export interface ElementStylesType {
   bold?: boolean,
   italic?: boolean,
   underline?: boolean,

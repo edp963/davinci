@@ -25,13 +25,13 @@ import Toolbar from 'components/RichText/Toolbar'
 import { RichTextNode } from 'components/RichText'
 import { displayRichTextMigrationRecorder } from 'utils/migrationRecorders'
 import { buildLabelRichTextStyles } from 'app/containers/Display/components/Layer/RichText/util'
-import { onLabelEditorStylesChange, buildLabelRichTextConetntChildren } from './util'
+import { onLabelEditorStylesChange, buildLabelRichTextContentChildren } from './util'
 import { LayerContext } from '../util'
 import DisplayActions from '../../../actions'
 import Editor  from './Editor'
 import Styles from './RichText.less'
 
-const RichTextEditor: React.FC = () => {
+const LabelEditor: React.FC = () => {
   const dispatch = useDispatch()
   const { layer: { params: { richText }, id: layerId, params },  operationInfo: { editing } } = useContext(LayerContext)
   const { boxStyles } = buildLabelRichTextStyles(params)
@@ -76,4 +76,4 @@ const RichTextEditor: React.FC = () => {
     )
   }
 
-export default RichTextEditor
+export default LabelEditor
