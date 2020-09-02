@@ -43,13 +43,14 @@ interface IEditorProps {
   value?: Node[] | string
   className?: string
   readOnly?: boolean
-  toolbar?: React.ReactNode
+  toolbar?: React.ReactNode,
+  styles?: React.CSSProperties,
   onFormatText?: (text: string) => string
   onChange?: (newVal: Node[]) => void
 }
 
 const Editor: React.FC<IEditorProps> = (props, ref) => {
-  const { value, className, readOnly, toolbar, onFormatText, onChange } = props
+  const { value, className, readOnly, toolbar, onFormatText, onChange, styles } = props
 
   const initialValue = useMemo(() => {
     let parsedValue: Node[]
@@ -99,6 +100,7 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
       >
         {toolbar === false ? null : toolbar || <Toolbar.Toolbar />}
         <Editable
+          style={styles}
           renderElement={Element}
           renderLeaf={renderLeaf}
           readOnly={readOnly}

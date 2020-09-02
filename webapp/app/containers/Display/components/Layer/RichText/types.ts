@@ -17,12 +17,13 @@
  * limitations under the License.
  * >>
  */
-export interface ElementStylesType {
+
+ export interface ElementStylesType {
   bold?: boolean,
   italic?: boolean,
   underline?: boolean,
   fontFamily?: string,
-  fontSize?: string,
+  fontSize?: number,
   lineHeight?: string,
   textIndent?: string,
   color?: string,
@@ -55,4 +56,5 @@ export interface Selection {
   setPosition(node: Node | null, offset?: number): void;
   toString(): string;
 }
+
 
