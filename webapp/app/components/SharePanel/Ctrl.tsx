@@ -24,7 +24,7 @@ import {Radio} from 'antd'
 import {RadioChangeEvent} from 'antd/lib/radio'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-import {ICtrl} from './type'
+import {ICtrl} from './types'
 
 const Contrl: React.FC<ICtrl> = ({ mode, setSType }) => {
   const radioChange = useCallback(

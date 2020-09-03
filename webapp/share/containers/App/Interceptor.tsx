@@ -36,7 +36,7 @@ import {
 } from '../../util'
 import reducer from './reducer'
 import saga from './sagas'
-import { Tmode } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/types'
 import { message } from 'antd'
 import { makeSelectLoginLoading } from '../App/selectors'
 

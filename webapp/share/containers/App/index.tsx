@@ -34,7 +34,7 @@ import injectReducer, { useInjectReducer } from 'utils/injectReducer'
 import injectSaga, { useInjectSaga } from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import { Tmode } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/types'
 import { makeSelectShareType } from './selectors'
 
 import { Display } from 'share/containers/Display/Loadable'

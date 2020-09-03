@@ -20,7 +20,7 @@
 
 import produce from 'immer'
 import { ActionTypes } from './constants'
-import { Tmode } from 'app/components/SharePanel/type'
+import { Tmode } from 'app/components/SharePanel/types'
 
 interface IState {
   loading: boolean,
