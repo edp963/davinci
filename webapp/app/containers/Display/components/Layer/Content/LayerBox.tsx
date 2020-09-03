@@ -162,8 +162,8 @@ const LayerBox: React.FC = (props: ILayerBoxProps) => {
 
   const boxCls = classnames({
     'display-slide-layer': true,
-    'display-slide-layer-editing': !operationInfo.editing && operationInfo,
-    'display-slide-layer-selected': !operationInfo.editing && operationInfo && operationInfo.selected,
+    'display-slide-layer-editing': operationInfo && !operationInfo.editing,
+    'display-slide-layer-selected': operationInfo && !operationInfo.editing && operationInfo.selected,
     [className]: !!className
   })
 

@@ -41,7 +41,9 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
     paddingTop,
     paddingBottom,
     paddingLeft,
-    paddingRight
+    paddingRight,
+    textIndent,
+    lineHeight
   } = params
 
   const fontStyles: ElementStylesType = {
@@ -54,7 +56,9 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
     paddingTop: `${paddingTop}px`,
     paddingRight: `${paddingRight}px`,
     paddingBottom: `${paddingBottom}px`,
-    paddingLeft: `${paddingLeft}px`
+    paddingLeft: `${paddingLeft}px`,
+    textIndent: `${textIndent}px`,
+    lineHeight: `${lineHeight}px`
   }
   if(fontColor.toString() !== EDITOR_DEFAULT_FONT_COLOR){
     fontStyles.color = `rgba(${fontColor.join()})`

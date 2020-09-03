@@ -30,6 +30,7 @@ import { getPasswordUrl } from 'share/util'
 import {
   makeSelectShareType
 } from 'share/containers/App/selectors'
+import { displayParamsMigrationRecorder } from 'app/utils/migrationRecorders'
 export function* getDisplay (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
 
@@ -54,7 +55,8 @@ export function* getDisplay (action: ShareDisplayActionType) {
     slides.sort((s1, s2) => s1.index - s2.index).forEach((slide) => {
       slide.config = JSON.parse(slide.config)
       slide.relations.forEach((layer) => {
-        layer.params = JSON.parse(layer.params)
+        const parsedParams = JSON.parse(layer.params)
+        layer.params = displayParamsMigrationRecorder(parsedParams)
       })
     })
     if (Array.isArray(widgets)) {

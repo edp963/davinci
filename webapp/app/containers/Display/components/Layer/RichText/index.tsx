@@ -32,9 +32,10 @@ import Styles from './RichText.less'
 
 const LabelEditor: React.FC = () => {
   const dispatch = useDispatch()
-  const { layer: { params: { richText }, id: layerId, params },  operationInfo: { editing } } = useContext(LayerContext)
+  const { layer: { params: { richText }, id: layerId, params },  operationInfo } = useContext(LayerContext)
   const { boxStyles } = buildLabelRichTextStyles(params)
-
+  const editing = operationInfo?.editing
+  
   const editorContent = useMemo(
     () => richText ? richText.content : buildLabelRichTextContentChildren({ fontSize: 40 }),
     [richText, params]

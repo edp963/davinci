@@ -88,6 +88,7 @@ export function* getDashboard(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DASHBOARD) {
     return
   }
+
   const { dashboardGetted, loadDashboardFail } = DashboardActions
   const { token, reject } = action.payload
 
@@ -103,6 +104,7 @@ export function* getDashboard(action: DashboardActionType) {
       config,
       ...rest
     } = result.payload as IShareDashboardDetailRaw
+  
     const parsedConfig: IDashboardConfig = JSON.parse(config || '{}')
     const dashboard = {
       ...rest,

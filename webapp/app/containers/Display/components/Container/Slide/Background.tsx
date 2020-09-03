@@ -278,7 +278,9 @@ const SlideBackground: React.FC<ISlideBackgroundProps> = (props) => {
   }, [refBackground.current, onDoLayerOperation])
 
   const removeLayerOperationInfo = useCallback(() => {
-    onRemoveLayerOperationInfo({selected: false})
+    if(onRemoveLayerOperationInfo){
+      onRemoveLayerOperationInfo({selected: false})
+    }
     if(!onLabelEditorSelectedRange() && onRemoveLayerOperationInfo){
       onRemoveLayerOperationInfo({editing: false})
     }
