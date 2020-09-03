@@ -31,6 +31,7 @@ import {
   makeSelectShareType
 } from 'share/containers/App/selectors'
 import { displayParamsMigrationRecorder } from 'app/utils/migrationRecorders'
+import { SecondaryGraphTypes } from 'app/containers/Display/components/Setting'
 export function* getDisplay (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
 
@@ -56,7 +57,8 @@ export function* getDisplay (action: ShareDisplayActionType) {
       slide.config = JSON.parse(slide.config)
       slide.relations.forEach((layer) => {
         const parsedParams = JSON.parse(layer.params)
-        layer.params = displayParamsMigrationRecorder(parsedParams)
+        const { subType } = parsedParams
+        layer.params = subType == SecondaryGraphTypes.Label ? displayParamsMigrationRecorder(parsedParams) : parsedParams
       })
     })
     if (Array.isArray(widgets)) {

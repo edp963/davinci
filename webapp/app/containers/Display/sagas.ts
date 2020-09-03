@@ -98,7 +98,8 @@ export function* getSlideDetail(action: DisplayActionType) {
     }
     items.forEach((item: ILayerRaw) => {
       const parsedParams = JSON.parse(item.params)
-      item.params = displayParamsMigrationRecorder(parsedParams)
+      const { subType } = parsedParams
+      item.params = subType == SecondaryGraphTypes.Label ? displayParamsMigrationRecorder(parsedParams) : parsedParams
     })
     widgets.forEach((widget: IWidgetRaw) => {
       const parsedConfig: IWidgetConfig = JSON.parse(widget.config)
