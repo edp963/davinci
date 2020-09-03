@@ -92,7 +92,7 @@ export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeSt
     const { value } = this.state
 
     return (
-      <InputGroup className={styles.range} size={size} compact>
+      <InputGroup className={styles.range} {...(size && { size })} compact>
         <Input
           className={styles.number}
           value={value[0]}

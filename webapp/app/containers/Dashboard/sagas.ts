@@ -57,19 +57,15 @@ import {
   IDataDownloadStatistic
 } from './types'
 import {
-  GlobalControlQueryMode,
   IGlobalControlConditionsByItem,
   IGlobalControlConditions,
   ILocalControlConditions
 } from 'app/components/Control/types'
-import { IWidgetRaw, IWidgetFormed } from '../Widget/types'
+import { IWidgetFormed } from '../Widget/types'
 import { DownloadTypes } from '../App/constants'
-import {
-  globalControlMigrationRecorder,
-  localControlMigrationRecorder
-} from 'app/utils/migrationRecorders'
+import { dashboardConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 import { ControlPanelTypes } from 'app/components/Control/constants'
-import { RenderType, IWidgetConfig } from '../Widget/components/Widget'
+import { RenderType } from '../Widget/components/Widget'
 import { CancelTokenSource } from 'axios'
 import request from 'utils/request'
 import { errorHandler, getErrorMessage } from 'utils/util'
@@ -81,56 +77,31 @@ export function* getDashboardDetail(action: DashboardActionType) {
     return
   }
   const { dashboardDetailLoaded, loadDashboardDetailFail } = DashboardActions
-  const { projectId, portalId, dashboardId } = action.payload
+  const { portalId, dashboardId } = action.payload
 
   try {
-    const result = yield all({
-      dashboardDetail: call(
-        request,
-        `${api.portal}/${portalId}/dashboards/${dashboardId}`
-      ),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`)
-    })
-    const { dashboardDetail, widgets } = result
+    const result = yield call(
+      request,
+      `${api.portal}/${portalId}/dashboards/${dashboardId}`
+    )
 
     const {
       widgets: items,
       views,
       config,
       ...rest
-    } = dashboardDetail.payload as IDashboardDetailRaw
+    } = result.payload as IDashboardDetailRaw
     const parsedConfig: IDashboardConfig = JSON.parse(config || '{}')
-    const filters = (parsedConfig.filters || []).map((c) =>
-      globalControlMigrationRecorder(c)
-    )
-    const linkages = parsedConfig.linkages || []
-    const queryMode =
-      parsedConfig.queryMode || GlobalControlQueryMode.Immediately
     const dashboard = {
       ...rest,
-      config: {
-        filters,
-        linkages,
-        queryMode
-      }
+      config: dashboardConfigMigrationRecorder(parsedConfig)
     }
 
-    const formedWidgets: IWidgetFormed[] = widgets.payload.map(
-      (widget: IWidgetRaw) => {
-        const parsedConfig: IWidgetConfig = JSON.parse(widget.config)
-        parsedConfig.controls = parsedConfig.controls.map((c) =>
-          localControlMigrationRecorder(c)
-        )
-        return {
-          ...widget,
-          config: parsedConfig
-        }
-      }
-    )
+    const widgets: IWidgetFormed[] = yield select(makeSelectWidgets())
 
-    operationWidgetProps.widgetIntoPool(formedWidgets)
+    operationWidgetProps.widgetIntoPool(widgets)
 
-    yield put(dashboardDetailLoaded(dashboard, items, formedWidgets, views))
+    yield put(dashboardDetailLoaded(dashboard, items, widgets, views))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     errorHandler(err)
@@ -147,9 +118,7 @@ export function* addDashboardItems(action: DashboardActionType) {
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.portal}/${portalId}/dashboards/${
-        items[0].dashboardId
-      }/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/${items[0].dashboardId}/widgets`,
       data: items
     })
     const widgets: IWidgetFormed[] = yield select(makeSelectWidgets())
@@ -319,9 +288,10 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
       globalControlFormValues,
       formValues
     )
-    const globalControlConditionsByItemEntries: Array<
-      [string, IGlobalControlConditions]
-    > = Object.entries(
+    const globalControlConditionsByItemEntries: Array<[
+      string,
+      IGlobalControlConditions
+    ]> = Object.entries(
       globalControlConditionsByItem as IGlobalControlConditionsByItem
     )
     while (globalControlConditionsByItemEntries.length) {
@@ -487,46 +457,101 @@ export function* getDashboardShareLink(action: DashboardActionType) {
   const {
     dashboardAuthorizedShareLinkLoaded,
     dashboardShareLinkLoaded,
+    dashboardPasswordShareLinkLoaded,
     loadDashboardShareLinkFail
   } = DashboardActions
-  const { id, authUser } = action.payload
+
+  const {id, mode, permission, roles, viewerIds} = action.payload.params
+
+  let requestData = null
+  switch(mode) {
+    case 'AUTH':
+        requestData = { mode, permission, roles, viewers: viewerIds }
+        break
+      case 'PASSWORD':
+        requestData = { mode }
+        break
+      case 'NORMAL':
+        requestData = { mode }
+        break
+      default:
+        break
+  }
+
   try {
     const result = yield call(request, {
-      method: 'get',
+      method: 'post',
       url: `${api.portal}/dashboards/${id}/share`,
-      params: { username: authUser || '' }
+      data: requestData
     })
-    if (authUser) {
-      yield put(dashboardAuthorizedShareLinkLoaded(result.payload))
-    } else {
-      yield put(dashboardShareLinkLoaded(result.payload))
+
+    const { token, password} = result.payload
+    switch (mode) {
+      case 'AUTH':
+        yield put(dashboardAuthorizedShareLinkLoaded(token))
+        break
+      case 'PASSWORD':
+        yield put(dashboardPasswordShareLinkLoaded(token, password))
+        break
+      case 'NORMAL':
+        yield put(dashboardShareLinkLoaded(token))
+        break
+      default:
+        break
     }
+
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
     errorHandler(err)
   }
 }
 
-export function* getWidgetShareLink(action: DashboardActionType) {
+export function* getWidgetShareLink (action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGET_SHARE_LINK) {
     return
   }
   const {
     widgetAuthorizedShareLinkLoaded,
+    widgetPasswordShareLinkLoaded,
     widgetShareLinkLoaded,
     loadWidgetShareLinkFail
   } = DashboardActions
-  const { id, authUser, itemId } = action.payload
+  const {id, itemId,  mode, permission, roles, viewerIds} = action.payload.params
+
+  let requestData = null
+  switch(mode) {
+    case 'AUTH':
+        requestData = { mode, permission, roles, viewers: viewerIds }
+        break
+      case 'PASSWORD':
+        requestData = { mode }
+        break
+      case 'NORMAL':
+        requestData = { mode }
+        break
+      default:
+        break
+  }
+
   try {
     const result = yield call(request, {
-      method: 'get',
+      method: 'post',
       url: `${api.widget}/${id}/share`,
-      params: { username: authUser || '' }
+      data: requestData
     })
-    if (authUser) {
-      yield put(widgetAuthorizedShareLinkLoaded(result.payload, itemId))
-    } else {
-      yield put(widgetShareLinkLoaded(result.payload, itemId))
+    const { token, password } = result.payload
+    switch (mode) {
+      case 'AUTH':
+        yield put(widgetAuthorizedShareLinkLoaded(token, itemId))
+        break
+      case 'PASSWORD':
+        yield put(widgetPasswordShareLinkLoaded(token, password, itemId))
+        break
+      case 'NORMAL':
+        yield put(widgetShareLinkLoaded(token, itemId))
+        break
+      default:
+        break
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))

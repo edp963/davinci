@@ -18,16 +18,16 @@
  * >>
  */
 
-import React, { FC, ChangeEventHandler } from 'react'
+import React, { FC, forwardRef, ChangeEventHandler } from 'react'
 import { Input } from 'antd'
 import { InputSizes } from 'antd/lib/input/Input'
 const Search = Input.Search
 
 interface IInputTextProps {
-  value: string
-  size: typeof InputSizes[number]
-  onChange: ChangeEventHandler<HTMLInputElement>
-  onSearch: (
+  value?: string
+  size?: typeof InputSizes[number]
+  onChange?: ChangeEventHandler<HTMLInputElement>
+  onSearch?: (
     value: string,
     event?:
       | React.ChangeEvent<HTMLInputElement>
@@ -36,21 +36,20 @@ interface IInputTextProps {
   ) => void
 }
 
-const InputText: FC<IInputTextProps> = ({
-  value,
-  size,
-  onChange,
-  onSearch
-}) => {
+const InputText: FC<IInputTextProps> = (
+  { value, size, onChange, onSearch },
+  ref
+) => {
   return (
     <Search
       placeholder="请输入"
       value={value}
-      size={size}
+      {...(size && { size })}
       onChange={onChange}
-      onSearch={onSearch}
+      {...(onSearch && { onSearch })}
+      ref={ref}
     />
   )
 }
 
-export default InputText
+export default forwardRef(InputText)

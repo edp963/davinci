@@ -44,16 +44,14 @@ import { getStackName, EmptyStack } from 'containers/Widget/components/Config/St
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-import { barChartStylesMigrationRecorder } from 'utils/migrationRecorders'
 import { inGroupColorSort } from '../../components/Config/Sort/util'
 import { FieldSortTypes } from '../../components/Config/Sort'
 import ChartTypes from '../../config/chart/ChartTypes'
 
 export default function (chartProps: IChartProps, drillOptions) {
-  const { data, cols, chartStyles: prevChartStyles, color, tip, references } = chartProps
+  const { data, cols, chartStyles, color, tip, references } = chartProps
   const { isDrilling, getDataDrillDetail, instance, selectedItems, callback } = drillOptions
   const metrics =  getCartesianChartMetrics(chartProps.metrics)
-  const chartStyles = barChartStylesMigrationRecorder(prevChartStyles)
 
   const { bar, label, legend, xAxis, yAxis, splitLine } = chartStyles
   const {

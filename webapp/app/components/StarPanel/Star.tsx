@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { IStar, IEvent, IStarUserList } from './type'
+import { IStar, IEvent, IStarUserList } from './types'
 const styles = require('./Star.less')
 import StarUser from './StarUser'
 

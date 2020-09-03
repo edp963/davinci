@@ -22,29 +22,46 @@ import OperatorTypes from 'utils/operatorTypes'
 
 export enum ControlTypes {
   Select = 'select',
+  Radio = 'radio',
   Date = 'date',
   DateRange = 'dateRange',
   InputText = 'inputText',
-  NumberRange = 'numberRange'
-  // TreeSelect = 'treeSelect'
+  NumberRange = 'numberRange',
+  Slider = 'slider',
+  TreeSelect = 'treeSelect'
 }
-
-export const ControlTypeList = [
-  ControlTypes.Select,
-  ControlTypes.Date,
-  ControlTypes.DateRange,
-  ControlTypes.InputText,
-  ControlTypes.NumberRange
-  // ControlTypes.TreeSelect
-]
 
 export const ControlTypesLocale = {
   [ControlTypes.Select]: '下拉菜单',
+  [ControlTypes.Radio]: '单选按钮',
   [ControlTypes.Date]: '日期选择',
   [ControlTypes.DateRange]: '日期范围选择',
   [ControlTypes.InputText]: '文本输入框',
-  [ControlTypes.NumberRange]: '数字范围输入框'
-  // [ControlTypes.TreeSelect]: '下拉树'
+  [ControlTypes.NumberRange]: '数字范围输入框',
+  [ControlTypes.Slider]: '数字滑块',
+  [ControlTypes.TreeSelect]: '下拉树'
+}
+
+export enum ControlFieldTypes {
+  Column = 'column',
+  Variable = 'variable'
+}
+
+export enum ControlOptionTypes {
+  Auto = 'auto',
+  Manual = 'manual',
+  Custom = 'custom'
+}
+
+export enum ControlDefaultValueTypes {
+  Dynamic = 'dynamic',
+  Fixed = 'fixed'
+}
+
+export enum ControlVisibilityTypes {
+  Visible = 'visible',
+  Hidden = 'hidden',
+  Conditional = 'conditional'
 }
 
 export enum DatePickerFormats {
@@ -81,67 +98,59 @@ export const DatePickerFormatsSelectSetting = {
   ]
 }
 
-export enum DatePickerDefaultValues {
-  Today = 'today',
-  Yesterday = 'yesterday',
-  Week = 'week',
-  Day7 = 'day7',
-  LastWeek = 'lastWeek',
-  Month = 'month',
-  Day30 = 'day30',
-  LastMonth = 'lastMonth',
-  Quarter = 'quarter',
-  Day90 = 'day90',
-  LastQuarter = 'lastQuarter',
-  Year = 'year',
-  Day365 = 'day365',
-  LastYear = 'lastYear',
-  Custom = 'custom'
-}
-
-export const DatePickerDefaultValuesLocales = {
-  [DatePickerDefaultValues.Today]: '今天',
-  [DatePickerDefaultValues.Yesterday]: '昨天',
-  [DatePickerDefaultValues.Week]: '本周',
-  [DatePickerDefaultValues.Day7]: '7天前',
-  [DatePickerDefaultValues.LastWeek]: '上周',
-  [DatePickerDefaultValues.Month]: '本月',
-  [DatePickerDefaultValues.Day30]: '30天前',
-  [DatePickerDefaultValues.LastMonth]: '上月',
-  [DatePickerDefaultValues.Quarter]: '本季度',
-  [DatePickerDefaultValues.Day90]: '90天前',
-  [DatePickerDefaultValues.LastQuarter]: '上季度',
-  [DatePickerDefaultValues.Year]: '今年',
-  [DatePickerDefaultValues.Day365]: '365天前',
-  [DatePickerDefaultValues.LastYear]: '去年',
-  [DatePickerDefaultValues.Custom]: '自定义'
-}
-
 export const SHOULD_LOAD_OPTIONS = {
   [ControlTypes.Select]: true,
+  [ControlTypes.Radio]: true,
   [ControlTypes.Date]: false,
   [ControlTypes.DateRange]: false,
   [ControlTypes.InputText]: false,
-  [ControlTypes.NumberRange]: false
-  // [ControlTypes.TreeSelect]: true
+  [ControlTypes.NumberRange]: false,
+  [ControlTypes.Slider]: false,
+  [ControlTypes.TreeSelect]: true
 }
 
 export const IS_RANGE_TYPE = {
   [ControlTypes.Select]: false,
+  [ControlTypes.Radio]: false,
   [ControlTypes.Date]: false,
   [ControlTypes.DateRange]: true,
   [ControlTypes.InputText]: false,
-  [ControlTypes.NumberRange]: true
-  // [ControlTypes.TreeSelect]: false
+  [ControlTypes.NumberRange]: true,
+  [ControlTypes.Slider]: true,
+  [ControlTypes.TreeSelect]: false
+}
+
+export const IS_DATE_TYPE = {
+  [ControlTypes.Select]: false,
+  [ControlTypes.Radio]: false,
+  [ControlTypes.Date]: true,
+  [ControlTypes.DateRange]: true,
+  [ControlTypes.InputText]: false,
+  [ControlTypes.NumberRange]: false,
+  [ControlTypes.Slider]: false,
+  [ControlTypes.TreeSelect]: false
+}
+
+export const IS_NUMBER_TYPE = {
+  [ControlTypes.Select]: false,
+  [ControlTypes.Radio]: false,
+  [ControlTypes.Date]: false,
+  [ControlTypes.DateRange]: false,
+  [ControlTypes.InputText]: false,
+  [ControlTypes.NumberRange]: true,
+  [ControlTypes.Slider]: true,
+  [ControlTypes.TreeSelect]: false
 }
 
 export const CHANGE_IMMEDIATELY = {
   [ControlTypes.Select]: true,
+  [ControlTypes.Radio]: true,
   [ControlTypes.Date]: true,
   [ControlTypes.DateRange]: true,
   [ControlTypes.InputText]: false,
-  [ControlTypes.NumberRange]: false
-  // [ControlTypes.TreeSelect]: true
+  [ControlTypes.NumberRange]: false,
+  [ControlTypes.Slider]: true,
+  [ControlTypes.TreeSelect]: true
 }
 
 export const ControlTypesOperatorSetting = {
@@ -149,43 +158,31 @@ export const ControlTypesOperatorSetting = {
     normal: [OperatorTypes.Equal, OperatorTypes.NotEqual],
     multiple: [OperatorTypes.In, OperatorTypes.NotIn]
   },
+  [ControlTypes.Radio]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
   [ControlTypes.Date]: {
-    normal: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+    normal: [
+      OperatorTypes.Equal,
+      OperatorTypes.LessThan,
+      OperatorTypes.LessThanOrEqual,
+      OperatorTypes.GreaterThan,
+      OperatorTypes.GreaterThanOrEqual
+    ],
     multiple: [OperatorTypes.In, OperatorTypes.NotIn]
   },
   [ControlTypes.DateRange]: [],
-  [ControlTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [ControlTypes.NumberRange]: []
-  // [ControlTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn]
-}
-
-export const ControlTypesDynamicDefaultValueSetting = {
-  [ControlTypes.Date]: {
-    normal: [
-      DatePickerDefaultValues.Today,
-      DatePickerDefaultValues.Yesterday,
-      DatePickerDefaultValues.Week,
-      DatePickerDefaultValues.Day7,
-      DatePickerDefaultValues.LastWeek,
-      DatePickerDefaultValues.Month,
-      DatePickerDefaultValues.Day30,
-      DatePickerDefaultValues.LastMonth,
-      DatePickerDefaultValues.Quarter,
-      DatePickerDefaultValues.Day90,
-      DatePickerDefaultValues.LastQuarter,
-      DatePickerDefaultValues.Year,
-      DatePickerDefaultValues.Day365,
-      DatePickerDefaultValues.LastYear,
-      DatePickerDefaultValues.Custom
-    ],
-    multiple: [DatePickerDefaultValues.Custom]
+  [ControlTypes.InputText]: [
+    OperatorTypes.Equal,
+    OperatorTypes.NotEqual,
+    OperatorTypes.Contain,
+    OperatorTypes.NotContain
+  ],
+  [ControlTypes.NumberRange]: [],
+  [ControlTypes.Slider]: [],
+  [ControlTypes.TreeSelect]: {
+    normal: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+    multiple: [OperatorTypes.In, OperatorTypes.NotIn]
   }
 }
-
-export const CascadeControlTypes = [
-  ControlTypes.Select
-  // ControlTypes.TreeSelect
-]
 
 export enum ControlPanelTypes {
   Global = 'global',
@@ -199,5 +196,23 @@ export enum ControlPanelLayoutTypes {
   DashboardItem = 'dashboardItem'
 }
 
-export const DEFAULT_DASHBOARD_CONTROL_GRID_WIDTH = { xxl: 3, xl: 4, lg: 6, md: 12}
-export const DEFAULT_DASHBOARD_ITEM_CONTROL_GRID_WIDTH = { xxl: 8, xl: 12, lg: 12, md: 12}
+export const DEFAULT_DASHBOARD_CONTROL_GRID_WIDTH = {
+  xxl: 3,
+  xl: 4,
+  lg: 6,
+  md: 12
+}
+export const DEFAULT_DASHBOARD_ITEM_CONTROL_GRID_WIDTH = {
+  xxl: 8,
+  xl: 12,
+  lg: 12,
+  md: 12
+}
+
+export enum ControlQueryMode {
+  Immediately,
+  Manually
+}
+
+export const CONTROL_MAX_TAG_COUNT = 10
+export const CONTROL_MAX_TAG_TEXT_LENGTH = 10

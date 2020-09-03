@@ -52,7 +52,7 @@ export const ShareDisplayActions = {
     }
   },
 
-  loadLayerData(renderType, slideNumber, layerId, dataToken, requestParams) {
+  loadLayerData(renderType, slideNumber, layerId, dataToken, password, requestParams) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA,
       payload: {
@@ -60,6 +60,7 @@ export const ShareDisplayActions = {
         slideNumber,
         layerId,
         dataToken,
+        password,
         requestParams
       }
     }

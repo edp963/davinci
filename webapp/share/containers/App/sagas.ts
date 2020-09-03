@@ -18,17 +18,22 @@
  * >>
  */
 
-import { call, put, all, takeLatest } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
-import { LOGIN } from './constants'
-import { logged, logonFail } from './actions'
+import { ActionTypes } from './constants'
+import { AppActions, AppActionType } from './actions'
 
 import request from 'utils/request'
 import { errorHandler } from 'utils/util'
 import api from 'utils/api'
 
-export function* login (action) {
-  const { username, password, shareToken, resolve } = action.payload
+
+export function* login (action: AppActionType) {
+  if (action.type !== ActionTypes.LOGIN) {
+    return
+  }
+  const { username, password, shareToken, resolve, reject } = action.payload
+  const { logged, loginFail} = AppActions
   try {
     const userInfo = yield call(request, {
       method: 'post',
@@ -39,15 +44,67 @@ export function* login (action) {
       }
     })
     yield put(logged(userInfo.payload))
-    resolve()
+    localStorage.setItem('loginUser', JSON.stringify(userInfo.payload))
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
-    yield put(logonFail(err))
+    if(reject) {
+      return reject()
+    }
+    yield put(loginFail(err))
     errorHandler(err)
+  }
+}
+
+export function * interceptor(action: AppActionType) {
+  if (action.type !== ActionTypes.INTERCEPTOR_PREFLIGHT) {
+    return
+  }
+  const { token } = action.payload
+  const { interceptored, interceptorFail } = AppActions
+  try {
+    const check = yield call(request, {
+      method: 'get',
+      url: `${api.share}/preflight/${token}`
+    })
+
+    yield put(interceptored(check?.payload?.type))
+  } catch (error) {
+    yield put(interceptorFail())
+    errorHandler(error)
+  }
+}
+
+export function * getPermissions(action: AppActionType) {
+  if (action.type !== ActionTypes.GET_PERMISSIONS) {
+    return
+  }
+  const { type, token, password, resolve, reject } = action.payload
+  const { getPermissionsSuccess, getPermissionsFail } = AppActions
+  try {
+    const check = yield call(request, {
+      method: 'get',
+      url: `${api.share}/permissions/${token}`,
+      params: {type, password}
+    })
+    yield put(getPermissionsSuccess(check?.payload?.download))
+    if (resolve) {
+      resolve()
+    }
+  } catch (error) {
+    if (reject) {
+      return  reject()
+    }
+    yield put(getPermissionsFail())
+    errorHandler(error)
   }
 }
 
 export default function* rootAppSaga () {
   yield all([
-    takeLatest(LOGIN, login)
+    takeLatest(ActionTypes.LOGIN, login),
+    takeEvery(ActionTypes.INTERCEPTOR_PREFLIGHT, interceptor),
+    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions)
   ])
 }

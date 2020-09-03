@@ -32,8 +32,6 @@ import { useInjectSaga } from 'utils/injectSaga'
 
 import reducer from './reducer'
 import saga from './sagas'
-
-import { Login } from 'share/components/Login/Loadable'
 import Reveal from './Reveal'
 
 import mainStyles from 'containers/Main/Main.less'
@@ -48,7 +46,6 @@ const ShareDisplayIndex: React.FC = () => {
   const shareToken = new URLSearchParams(window.location.search).get(
     'shareToken'
   )
-  const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {
     sessionStorage.setItem('pathname', location.pathname + location.search)
@@ -58,23 +55,13 @@ const ShareDisplayIndex: React.FC = () => {
     dispatch(
       ShareDisplayActions.loadDisplay(
         shareToken,
-        () => {
-          console.log('share page need login...')
-        },
-        () => {
-          setShowLogin(true)
-        }
+        () => null,
+        () => null
       )
     )
   }, [])
 
   useEffect(loadShareContent, [])
-
-  const login = useCallback(() => {
-    setShowLogin(false)
-    loadShareContent()
-  }, [])
-  const loginLoading = useSelector(makeSelectLoginLoading())
 
   const title = useSelector(makeSelectTitle())
   return (
@@ -82,13 +69,6 @@ const ShareDisplayIndex: React.FC = () => {
       <Helmet title={title} />
       <div className={mainStyles.container}>
         {title && <Reveal />}
-        {showLogin && (
-          <Login
-            loading={loginLoading}
-            shareToken={shareToken}
-            legitimateUser={login}
-          />
-        )}
       </div>
     </>
   )

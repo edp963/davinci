@@ -34,8 +34,6 @@ export const JOIN_ORGANIZATION_SUCCESS = 'davinci/App/JOIN_ORGANIZATION_SUCCESS'
 export const JOIN_ORGANIZATION_ERROR = 'davinci/App/JOIN_ORGANIZATION_ERROR'
 
 export const LOGOUT = 'davinci/App/LOGOUT'
-export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
-export const GET_LOGIN_USER_ERROR = 'davinci/App/GET_LOGIN_USER_ERROR'
 export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'
 export const HIDE_NAVIGATOR = 'davinci/App/HIDE_NAVIGATOR'
 export const CHECK_NAME = 'davinci/App/CHECK_NAME'
@@ -88,6 +86,11 @@ export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
 export const GET_VERSION = 'davinci/GET_VERSION'
 export const GET_VERSION_SUCCESS = 'davinci/GET_VERSION_SUCCESS'
 export const GET_VERSION_FAIL = 'davinci/GET_VERSION_FAIL'
+
+export const GET_USER_BY_TOKEN = 'davinci/GET_USER_BY_TOKEN'
+export const GET_USER_BY_TOKEN_SUCCESS = 'davinci/GET_USER_BY_TOKEN_SUCCESS'
+export const GET_USER_BY_TOKEN_FAIL = 'davinci/GET_USER_BY_TOKEN_FAIL'
+
 
 export enum DownloadTypes {
   Folder = 'folder',

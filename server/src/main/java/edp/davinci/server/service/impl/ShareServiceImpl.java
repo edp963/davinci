@@ -70,7 +70,7 @@ public class ShareServiceImpl implements ShareService {
     private UserExtendMapper userExtendMapper;
 
     @Autowired
-    private WidgetExtendMapper widgetMapper;
+    private WidgetExtendMapper widgetExtendMapper;
 
     @Autowired
     private DisplaySlideExtendMapper displaySlideExtendMapper;
@@ -121,6 +121,7 @@ public class ShareServiceImpl implements ShareService {
                 throw new ForbiddenException(ErrorMsg.ERR_PERMISSION);
             }
         }
+
         //是否激活
         if (!loginUser.getActive()) {
             throw new ServerException("This user is not active");
@@ -139,7 +140,7 @@ public class ShareServiceImpl implements ShareService {
 
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
-        ShareWidget shareWidget = widgetMapper.getShareWidgetById(widget.getId());
+        ShareWidget shareWidget = widgetExtendMapper.getShareWidgetById(widget.getId());
 
         if (null == shareWidget) {
             throw new NotFoundException("Widget not found");
@@ -199,7 +200,7 @@ public class ShareServiceImpl implements ShareService {
             shareDisplay.setSlides(shareDisplaySlideSet);
         }
 
-        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(display.getId());
+        Set<ShareWidget> shareWidgets = widgetExtendMapper.getShareWidgetsByDisplayId(display.getId());
         if (!CollectionUtils.isEmpty(shareWidgets)) {
             shareWidgets.forEach(shareWidget -> shareFactor.freshShareDataToken(shareWidget, TOKEN_SECRET));
             shareDisplay.setWidgets(shareWidgets);
@@ -225,7 +226,7 @@ public class ShareServiceImpl implements ShareService {
         List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetExtendMapper.getByDashboardId(dashboard.getId());
         shareDashboard.setRelations(memDashboardWidgets);
 
-        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboard.getId());
+        Set<ShareWidget> shareWidgets = widgetExtendMapper.getShareWidgetsByDashboard(dashboard.getId());
         if (!CollectionUtils.isEmpty(shareWidgets)) {
             shareWidgets.forEach(shareWidget -> shareFactor.freshShareDataToken(shareWidget, TOKEN_SECRET));
         }

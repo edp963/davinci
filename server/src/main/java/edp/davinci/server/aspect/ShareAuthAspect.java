@@ -158,7 +158,6 @@ public class ShareAuthAspect {
     }
 
     /**
-     *
      * 校验Token 是否合法
      *
      * @param operation

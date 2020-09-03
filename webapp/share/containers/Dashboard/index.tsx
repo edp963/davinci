@@ -31,7 +31,7 @@ import reducer from './reducer'
 import controlReducer from 'app/containers/ControlPanel/reducer'
 import saga from './sagas'
 
-import Container from 'components/Container'
+import Container, { ContainerTitle } from 'components/Container'
 import {
   getMappingLinkage,
   processLinkage,
@@ -50,7 +50,7 @@ import DownloadList from 'components/DownloadList'
 import { getValidColumnValue } from 'app/components/Control/util'
 import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 import { Row, Col } from 'antd'
-
+import { querystring } from '../../util'
 import DashboardActions from './actions'
 import ControlActions from 'app/containers/ControlPanel/actions'
 const {
@@ -86,7 +86,6 @@ import {
   makeSelectShareParams
 } from './selectors'
 import { makeSelectLoginLoading } from '../App/selectors'
-import { decodeMetricName } from 'app/containers/Widget/components/util'
 import {
   GRID_COLS,
   GRID_ROW_HEIGHT,
@@ -97,7 +96,6 @@ import {
 
 import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from 'share/components/Login'
 import {
   IQueryConditions,
   IDataRequestParams,
@@ -125,7 +123,6 @@ interface IDashboardStates {
   shareToken: string
   modalLoading: boolean
   interactingStatus: { [itemId: number]: boolean }
-  showLogin: boolean
   headlessBrowserRenderSign: boolean
 }
 
@@ -138,7 +135,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
       modalLoading: false,
       interactingStatus: {},
-      showLogin: false,
 
       headlessBrowserRenderSign: false
     }
@@ -167,33 +163,21 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
 
     if (qs.type === 'dashboard') {
-      onLoadDashboard(qs.shareToken, (err) => {
-        if (err.response.status === 403) {
-          this.setState({
-            showLogin: true
-          })
-        }
-      })
+      onLoadDashboard(qs.shareToken, () => null)
     } else {
       onLoadWidget(
         qs.shareToken,
         (widget) => {
           onSetIndividualDashboard(widget, qs.shareToken)
         },
-        (err) => {
-          if (err.response.status === 403) {
-            this.setState({
-              showLogin: true
-            })
-          }
-        }
+        () => null
       )
     }
   }
 
   public componentDidMount() {
     // urlparse
-    const qs = this.querystring(window.location.search.substr(1))
+    const qs = querystring(window.location.search.substr(1))
 
     this.setState({
       type: qs.type,
@@ -233,44 +217,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-  private querystring = (str) => {
-    return str.split('&').reduce((o, kv) => {
-      const [key, value] = kv.split('=')
-      if (!value) {
-        return o
-      }
-      this.deep_set(
-        o,
-        key.split(/[\[\]]/g).filter((x) => x),
-        value
-      )
-      return o
-    }, {})
-  }
-
-  private deep_set(o, path, value) {
-    let i = 0
-    const val = decodeURIComponent(value)
-    for (; i < path.length - 1; i++) {
-        if (o[path[i]] === undefined) {
-            o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
-        }
-        o = o[decodeURIComponent(path[i])]
-    }
-    if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
-        const isInclude =
-            Array.isArray(o[decodeURIComponent(path[i])]) &&
-            o[decodeURIComponent(path[i])].includes(val)
-
-        const isEqual = o[decodeURIComponent(path[i])] === val
-        if (!(isInclude || isEqual)) {
-            o[decodeURIComponent(path[i])] = [val].concat(o[decodeURIComponent(path[i])])
-        }
-    } else {
-        o[decodeURIComponent(path[i])] = val
-    }
-  }
-
   private initPolling = (token) => {
     this.props.onLoadDownloadList(this.shareClientId, token)
     this.downloadListPollingTimer = window.setInterval(() => {
@@ -295,21 +241,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       clearTimeout(this.resizeSign)
       this.resizeSign = 0
     }, 500)
-  }
-
-  private handleLegitimateUser = () => {
-    const { type, shareToken } = this.state
-    this.setState(
-      {
-        showLogin: false
-      },
-      () => {
-        this.loadShareContent({
-          type,
-          shareToken
-        })
-      }
-    )
   }
 
   private checkInteract = (itemId: number) => {
@@ -483,13 +414,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     const {
       shareToken,
-      showLogin,
       interactingStatus,
       headlessBrowserRenderSign
     } = this.state
 
     let grids = null
-    let loginPanel = null
 
     if (currentItems) {
       const itemblocks: React.ReactNode[] = []
@@ -599,22 +528,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       )
     }
 
-    loginPanel = showLogin ? (
-      <Login
-        loading={loginLoading}
-        shareToken={shareToken}
-        legitimateUser={this.handleLegitimateUser}
-      />
-    ) : (
-      ''
-    )
-
     const headlessBrowserRenderParentNode = document.getElementById('app')
 
     return (
       <Container>
         <Helmet title={title} />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col span={24}>
               <h2 className={styles.shareTitle}>{title}</h2>
@@ -634,10 +553,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             onGetOptions={this.getControlSelectOptions}
             onSearch={onLoadBatchDataWithControlValues}
           />
-        </Container.Title>
+        </ContainerTitle>
         {grids}
         <div className={styles.gridBottom} />
-        {loginPanel}
         <FullScreenPanel
           currentDashboard={dashboard}
           widgets={widgets}

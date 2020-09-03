@@ -42,6 +42,8 @@ const initialState: IDashboardState = {
   currentDashboardLoading: false,
   currentDashboardShareToken: '',
   currentDashboardAuthorizedShareToken: '',
+  currentDashboardPasswordShareToken: '',
+  currentDashboardPasswordSharePassword: '',
   currentDashboardShareLoading: false,
   sharePanel: defaultSharePanelState,
   currentItems: null,
@@ -271,7 +273,7 @@ const dashboardReducer = (
 
       case ActionTypes.LOAD_DASHBOARD_SHARE_LINK:
         draft.currentDashboardShareLoading = true
-        if (action.payload.authUser) {
+        if (action.payload.params.mode === 'AUTH') {
           draft.currentDashboardAuthorizedShareToken = ''
         }
         break
@@ -287,14 +289,22 @@ const dashboardReducer = (
         draft.currentDashboardShareLoading = false
         break
 
+      case ActionTypes.LOAD_DASHBOARD_PASSWORD_SHARE_LINK_SUCCESS:
+        draft.currentDashboardPasswordShareToken =
+          action.payload.pwdToken
+        draft.currentDashboardPasswordSharePassword =
+          action.payload.pwd
+        draft.currentDashboardShareLoading = false
+        break
+
       case ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE:
         draft.currentDashboardShareLoading = false
         break
 
       case ActionTypes.LOAD_WIDGET_SHARE_LINK:
-        draft.currentItemsInfo[action.payload.itemId].shareLoading = true
-        if (action.payload.authUser) {
-          draft.currentItemsInfo[action.payload.itemId].authorizedShareToken =
+        draft.currentItemsInfo[action.payload.params.itemId].shareLoading = true
+        if (action.payload.params.mode === 'AUTH') {
+          draft.currentItemsInfo[action.payload.params.itemId].authorizedShareToken =
             ''
         }
         break
@@ -307,7 +317,14 @@ const dashboardReducer = (
 
       case ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS:
         targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
-        targetItemInfo.authorizedShareToken = action.payload.shareToken
+        targetItemInfo.authorizedShareToken = action.payload.authorizedShareToken
+        targetItemInfo.shareLoading = false
+        break
+
+      case ActionTypes.LOAD_WIDGET_PASSWORD_SHARE_LINK_SUCCESS:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.pwdToken = action.payload.pwdToken
+        targetItemInfo.pwd = action.payload.pwd
         targetItemInfo.shareLoading = false
         break
 

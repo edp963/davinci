@@ -21,7 +21,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { Tag } from 'antd'
 import Toolbar from './Toolbar'
-import { IProjectItem, ItemToolbarProps } from './type'
+import { IProjectItem, ItemToolbarProps } from './types'
 const styles = require('./item.less')
 
 const ProjectItem: React.FC<IProjectItem> & {

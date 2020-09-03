@@ -67,6 +67,8 @@ import {
 import { computeEditorBaselines, setLayersAlignment } from './components/util'
 import { DefaultDisplayParams } from './components/Setting/constants'
 import { IDisplayFormed } from '../Viz/types'
+import { IWidgetConfig } from '../Widget/components/Widget'
+import { widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 
 export function* getSlideDetail(action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SLIDE_DETAIL) {
@@ -95,7 +97,10 @@ export function* getSlideDetail(action: DisplayActionType) {
       item.params = JSON.parse(item.params)
     })
     widgets.forEach((widget: IWidgetRaw) => {
-      widget.config = JSON.parse(widget.config)
+      const parsedConfig: IWidgetConfig = JSON.parse(widget.config)
+      widget.config = widgetConfigMigrationRecorder(parsedConfig, {
+        viewId: widget.viewId
+      })
     })
 
     yield put(slideDetailLoaded(slideId, items, widgets, views))
@@ -482,24 +487,52 @@ export function* getDisplayShareLink(action: DisplayActionType) {
     return
   }
 
-  const { id, authUser } = action.payload
+  const {id, mode, permission, roles, viewerIds} = action.payload.params
   const {
     displayAuthorizedShareLinkLoaded,
     displayShareLinkLoaded,
-    loadDisplayShareLinkFail
+    loadDisplayShareLinkFail,
+    displayPasswordShareLinkLoaded
   } = DisplayActions
+
+  let requestData = null
+
+  switch(mode) {
+    case 'AUTH':
+        requestData = { mode, permission, roles, viewers: viewerIds }
+        break
+      case 'PASSWORD':
+        requestData = { mode }
+        break
+      case 'NORMAL':
+        requestData = { mode }
+        break
+      default:
+        break
+  }
+
   try {
     const asyncData = yield call(request, {
-      method: 'get',
+      method: 'POST',
       url: `${api.display}/${id}/share`,
-      params: { username: authUser || '' }
+      data: requestData
     })
-    const shareToken = asyncData.payload
-    if (authUser) {
-      yield put(displayAuthorizedShareLinkLoaded(shareToken))
-    } else {
-      yield put(displayShareLinkLoaded(shareToken))
+    const { token, password} = asyncData.payload
+
+    switch (mode) {
+      case 'AUTH':
+        yield put(displayAuthorizedShareLinkLoaded(token))
+        break
+      case 'PASSWORD':
+        yield put(displayPasswordShareLinkLoaded(token, password))
+        break
+      case 'NORMAL':
+        yield put(displayShareLinkLoaded(token))
+        break
+      default:
+        break
     }
+
   } catch (err) {
     yield put(loadDisplayShareLinkFail())
     errorHandler(err)
