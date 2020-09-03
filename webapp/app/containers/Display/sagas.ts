@@ -69,7 +69,7 @@ import { computeEditorBaselines, setLayersAlignment } from './components/util'
 import { DefaultDisplayParams } from './components/Setting/constants'
 import { IDisplayFormed } from '../Viz/types'
 import { IWidgetConfig } from '../Widget/components/Widget'
-import { widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
+import { widgetConfigMigrationRecorder, displayParamsMigrationRecorder } from 'app/utils/migrationRecorders'
 
 import { OperationInfo } from './components/Layer/types'
 import { SecondaryGraphTypes } from './components/Setting'
@@ -97,7 +97,8 @@ export function* getSlideDetail(action: DisplayActionType) {
       widgets: []
     }
     items.forEach((item: ILayerRaw) => {
-      item.params = JSON.parse(item.params)
+      const parsedParams = JSON.parse(item.params)
+      item.params = displayParamsMigrationRecorder(parsedParams)
     })
     widgets.forEach((widget: IWidgetRaw) => {
       const parsedConfig: IWidgetConfig = JSON.parse(widget.config)

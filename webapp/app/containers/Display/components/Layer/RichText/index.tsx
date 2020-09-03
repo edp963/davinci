@@ -23,7 +23,6 @@ import React, { useContext, useCallback, useState, useMemo, useEffect } from 're
 import { useDispatch } from 'react-redux'
 import Toolbar from 'components/RichText/Toolbar'
 import { RichTextNode } from 'components/RichText'
-import { displayRichTextMigrationRecorder } from 'utils/migrationRecorders'
 import { buildLabelRichTextStyles } from 'app/containers/Display/components/Layer/RichText/util'
 import { onLabelEditorStylesChange, buildLabelRichTextContentChildren } from './util'
 import { LayerContext } from '../util'
@@ -37,7 +36,7 @@ const LabelEditor: React.FC = () => {
   const { boxStyles } = buildLabelRichTextStyles(params)
 
   const editorContent = useMemo(
-    () => richText ? richText.content : displayRichTextMigrationRecorder(params).richText.content,
+    () => richText ? richText.content : buildLabelRichTextContentChildren({ fontSize: 40 }),
     [richText, params]
   )
   const [value, setValue] = useState(editorContent)
