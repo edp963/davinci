@@ -19,6 +19,8 @@
 
 package edp.davinci.server.dto.display;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edp.davinci.server.dto.commons.ConfigDeserialize;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -34,6 +36,7 @@ public class DisplaySlideCreate {
 
     private Integer index = 0;
 
+    @JsonDeserialize(using = ConfigDeserialize.class)
     private String config;
 
     private List<Long> roleIds;

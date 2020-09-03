@@ -60,7 +60,7 @@ public class SystemSchedule {
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
 
-        //下载内容文件保留7天，记录保留1月
+        //下载内容文件保留7天
         String downloadDir = fileUtils.fileBasePath + Constants.DIR_DOWNLOAD + DateUtils.getAWeekBeforeYYYYMMDD();
         String tempDir = fileUtils.fileBasePath + Constants.DIR_TEMPL + DateUtils.getAMonthBeforeYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
@@ -76,7 +76,7 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
-        List<CronJob> jobs = cronJobExtendMapper.getStopedJob();
+        List<CronJob> jobs = cronJobExtendMapper.getStoppedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {

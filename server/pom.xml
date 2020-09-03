@@ -385,7 +385,14 @@
             <scope>runtime</scope>
         </dependency>
 
-	</dependencies>
+		<!-- test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 
 	<build>
 		<plugins>

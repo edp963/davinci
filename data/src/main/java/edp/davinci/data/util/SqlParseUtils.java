@@ -19,28 +19,7 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.commons.Constants.*;
-// import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import com.sun.tools.javac.util.ListBuffer;
-
-import org.springframework.beans.BeanUtils;
-
-import edp.davinci.commons.exception.ServerException;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -59,40 +38,54 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.springframework.beans.BeanUtils;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.*;
+
+//import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
 
 @Slf4j
 public class SqlParseUtils {
 
     private static final String SELECT = "select";
-	private static final String WITH = "with";
-	private static final String OR = "or";
+    private static final String WITH = "with";
+    private static final String OR = "or";
 
     private static final String QUERY_WHERE_TRUE = "1=1";
-	private static final String QUERY_WHERE_FALSE = "1=0";
-	private static final String QUERY_WHERE_VALUE = "'%s'";
+    private static final String QUERY_WHERE_FALSE = "1=0";
+    private static final String QUERY_WHERE_VALUE = "'%s'";
 
     public static final String REG_IGNORE_CASE = "(?i)";
-    
+
     public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
     public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
     public static final String REG_CRITERION = "^'.*?'$";
-    
+
     public static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
     public static final Pattern PATTERN_WITH_SQL_FRAGMENT = Pattern.compile(REG_WITH_SQL_FRAGMENT);
-    
+
     public static final String REG_SQL_ANNOTATION = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
     public static final Pattern PATTERN_SQL_ANNOTATION = Pattern.compile(REG_SQL_ANNOTATION);
-    
+
     public static String parseAnnotations(String sql) {
         return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replaceAll("(;+\\s*)+", SEMICOLON);
     }
 
     public static String parseSystemVars(String sql, boolean isMaintainer, User user) {
-        
+
+        if (isMaintainer) {
+            return replaceSystemVars(sql, QUERY_WHERE_TRUE, null);
+        }
+
         if (user == null) {
             return replaceSystemVars(sql, QUERY_WHERE_FALSE, null);
         }
-        
+
         return replaceSystemVars(sql, null, user);
     }
 
@@ -562,13 +555,13 @@ public class SqlParseUtils {
 		return list;
     }
 
-    private static void checkSensitiveSql(String sql) throws ServerException {
-        // Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
-        // if (matcher.find()) {
-        //     String group = matcher.group();
-        //     log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
-        //     throw new ServerException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
-        // }
+    private static void checkSensitiveSql(String sql) {
+//         Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
+//         if (matcher.find()) {
+//             String group = matcher.group();
+//             log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
+//             throw new RuntimeException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
+//         }
     }
     
     public static String parseSqlWithFragment(String sql) {

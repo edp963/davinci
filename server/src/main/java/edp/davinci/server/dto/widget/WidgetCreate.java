@@ -19,6 +19,8 @@
 
 package edp.davinci.server.dto.widget;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edp.davinci.server.dto.commons.ConfigDeserialize;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -28,6 +30,7 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "Widget cannot be null")
 @Data
 public class WidgetCreate {
+
     @NotBlank(message = "Widget name cannot be empty")
     private String name;
 
@@ -44,5 +47,7 @@ public class WidgetCreate {
 
     private Boolean publish = true;
 
+    @JsonDeserialize(using = ConfigDeserialize.class)
     private String config;
+
 }

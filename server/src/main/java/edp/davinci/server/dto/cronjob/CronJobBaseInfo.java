@@ -19,22 +19,16 @@
 
 package edp.davinci.server.dto.cronjob;
 
-import java.io.IOException;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edp.davinci.commons.util.DateUtils;
+import edp.davinci.server.dto.commons.ConfigDeserialize;
+import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
-import edp.davinci.commons.util.DateUtils;
-import edp.davinci.commons.util.JSONUtils;
-import lombok.Data;
 
 @Data
 @NotNull(message = "Cronjob info cannot be null")
@@ -66,17 +60,4 @@ public class CronJobBaseInfo {
 
     private String description;
 
-    public static class ConfigDeserialize extends JsonDeserializer<Object> {
-
-        @Override
-        public Object deserialize(JsonParser p, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
-                Object value = p.readValueAs(Object.class);
-                if (value instanceof String) {
-                    return value;
-                }else{
-                    return JSONUtils.toString(value);
-                }
-        }
-    }
 }

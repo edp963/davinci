@@ -135,7 +135,7 @@
     </sql>
 
 
-    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
+    <select id="getProjectsByKeywordsWithUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         <if test="orgList != null">
             and p.org_id in
@@ -154,13 +154,13 @@
         <if test="orgId != null">
             and p.org_id = #{orgId}
         </if>
-        <if test="keyword != null">
+        <if test="keyword != null">p
             and lower(p.`name`) like concat(concat('%', lower(#{keyword})), '%')
         </if>
         order by p.id
     </select>
 
-    <select id="getProejctsByUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
+    <select id="getProjectsByUser" resultType="edp.davinci.server.dto.project.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         order by p.id
     </select>

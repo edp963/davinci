@@ -21,7 +21,7 @@ package edp.davinci.server.config;
 
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -57,7 +57,7 @@ public class RestExceptionHandler {
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = ForbiddenExecption.class)
+    @ExceptionHandler(value = ForbiddenException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
     private ResultMap forbiddenExceptionHandler(HttpServletRequest request, Exception e) {

@@ -32,7 +32,7 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.share.ShareInfo;
 import edp.davinci.server.enums.*;
-import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -165,11 +165,11 @@ public class ShareAuthAspect {
      * @param shareFactor
      * @param user
      * @param args
-     * @throws ForbiddenExecption
+     * @throws ForbiddenException
      * @throws UnAuthorizedExecption
      */
     private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, Object[] args)
-            throws ForbiddenExecption, UnAuthorizedExecption {
+            throws ForbiddenException, UnAuthorizedExecption {
         switch (shareFactor.getMode()) {
             case PASSWORD:
                 String password = (String) args[1];
@@ -177,21 +177,17 @@ public class ShareAuthAspect {
                     throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_EMPTY_PASSWORD);
                 }
                 if (!password.equals(shareFactor.getPassword())) {
-                    throw new ForbiddenExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_INVALID_PASSWORD);
+                    throw new ForbiddenException(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_INVALID_PASSWORD);
                 }
                 break;
             case AUTH:
                 if (user == null) {
                     throw new UnAuthorizedExecption(ErrorMsg.ERR_AUTHENTICATION);
                 }
-                if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-                    if (!user.getId().equals(shareFactor.getSharerId())) {
-                        throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
-                    }
-                } else {
+                if (!shareFactor.getViewers().contains(user.getId())) {
                     Set<RelRoleUser> relRoleUsers = relRoleUserExtendMapper.getByUserAndRoles(user.getId(), shareFactor.getRoles());
                     if (!shareFactor.getViewers().contains(user.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
-                        throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
+                        throw new ForbiddenException(ErrorMsg.ERR_PERMISSION);
                     }
                 }
                 break;
@@ -211,10 +207,10 @@ public class ShareAuthAspect {
      */
     @Transactional
     protected void verifyDataPermission(ShareOperation shareOperation, ShareType flagShareType, ShareFactor shareFactor, User viewer)
-            throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
         User sharer = userExtendMapper.selectByPrimaryKey(shareFactor.getSharerId());
         if (sharer == null) {
-            throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_SHARER);
+            throw new ForbiddenException(ErrorMsg.ERR_INVALID_SHARER);
         }
         User user = shareFactor.getPermission() == ShareDataPermission.SHARER ? sharer : viewer;
         shareFactor.setUser(user);
@@ -222,7 +218,7 @@ public class ShareAuthAspect {
             parseEntityAndProject(shareFactor, user);
         } else if (shareOperation == ShareOperation.LOAD_DATA) {
             if (shareFactor.getType() != ShareType.WIDGET) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_INVALID_DATA_TOKEN);
+                throw new ForbiddenException(ErrorMsg.ERR_INVALID_DATA_TOKEN);
             }
             Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
             ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);

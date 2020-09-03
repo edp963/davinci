@@ -154,7 +154,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     public List<ProjectInfo> getProjects(User user) {
         //当前用户能看到的所有project
-        List<ProjectWithCreateBy> projects = projectExtendMapper.getProejctsByUser(user.getId());
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByUser(user.getId());
         return getProjectInfos(user, projects);
     }
 
@@ -180,7 +180,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         PageHelper.startPage(pageNum, pageSize);
-        List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
+        List<ProjectWithCreateBy> projects = projectExtendMapper.getProjectsByKeywordsWithUser(keywords, user.getId(), orgs);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
         return pageInfo;
     }

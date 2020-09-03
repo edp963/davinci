@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import edp.davinci.data.provider.CSVDataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -219,7 +220,8 @@ public class JdbcDataSource {
         String username = config.getUsername();
         String password = config.getPassword();
         String version = config.getVersion();
-        
+        String type = config.getType();
+
         String key = getDataSourceKey(config);
 
         DruidDataSource druidDataSource = dataSourceMap.get(key);
@@ -316,10 +318,17 @@ public class JdbcDataSource {
 
             try {
                 druidDataSource.setFilters(filters);
-                // davinci's aggregator source and statistic source don't need wall filter
-                if (!name.equals(aggregatorName) && !name.equals("statistic")) {
-                    druidDataSource.setProxyFilters(Arrays.asList(new Filter[] { wallFilter }));
+                if (CSVDataProvider.type.equals(type)) {
+                    WallConfig wallConfig = wallFilter.getConfig();
+                    wallConfig.setDropTableAllow(true);
+                    wallConfig.setCreateTableAllow(true);
+                    wallConfig.setInsertAllow(true);
+                    wallConfig.setTruncateAllow(true);
+                    druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
+                } else if (!name.equals(aggregatorName) && !name.equals("statistic")) {// davinci's aggregator source and statistic source don't need wall filter
+                    druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
                 }
+
 				druidDataSource.init();
             } catch (Exception e) {
                 log.error("Exception during pool initialization", e);

@@ -34,9 +34,8 @@ import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
-import edp.davinci.server.enums.ShareDataPermission;
 import edp.davinci.server.enums.ShareMode;
-import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -54,13 +53,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
-
 import static edp.davinci.commons.Constants.*;
 
-import java.io.File;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -78,13 +73,7 @@ public class ShareServiceImpl implements ShareService {
     private WidgetExtendMapper widgetMapper;
 
     @Autowired
-    private DisplayExtendMapper displayExtendMapper;
-
-    @Autowired
     private DisplaySlideExtendMapper displaySlideExtendMapper;
-
-    @Autowired
-    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -126,14 +115,10 @@ public class ShareServiceImpl implements ShareService {
         if (null == loginUser) {
             throw new NotFoundException("User is not found");
         }
-        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-            if (!loginUser.getId().equals(shareFactor.getSharerId())) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
-            }
-        } else {
+        if (!shareFactor.getViewers().contains(loginUser.getId())) {
             Set<RelRoleUser> relRoleUsers = relRoleUserExtendMapper.getByUserAndRoles(loginUser.getId(), shareFactor.getRoles());
             if (!shareFactor.getViewers().contains(loginUser.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
+                throw new ForbiddenException(ErrorMsg.ERR_PERMISSION);
             }
         }
         //是否激活
@@ -150,7 +135,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+    public ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
 
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
@@ -172,7 +157,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+    public ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Display display = (Display) shareFactor.getShareEntity();
         ShareDisplay shareDisplay = new ShareDisplay();
@@ -231,7 +216,7 @@ public class ShareServiceImpl implements ShareService {
      */
     @Override
     @Transactional
-    public ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption {
+    public ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Dashboard dashboard = (Dashboard) shareFactor.getShareEntity();
         ShareDashboard shareDashboard = new ShareDashboard();
@@ -258,7 +243,7 @@ public class ShareServiceImpl implements ShareService {
      */
     @Override
     public Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user)
-            throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException {
+            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption, SQLException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
 
@@ -335,10 +320,10 @@ public class ShareServiceImpl implements ShareService {
      *
      * @return
      * @throws ServerException
-     * @throws ForbiddenExecption
+     * @throws ForbiddenException
      */
     @Override
-    public Map<String, Object> getSharePermissions() throws ServerException, ForbiddenExecption {
+    public Map<String, Object> getSharePermissions() throws ServerException, ForbiddenException {
         Map<String, Object> map = new HashMap<>(1);
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         ProjectDetail projectDetail = shareFactor.getProjectDetail();
@@ -360,10 +345,10 @@ public class ShareServiceImpl implements ShareService {
      *
      * @return
      * @throws ServerException
-     * @throws ForbiddenExecption
+     * @throws ForbiddenException
      */
     @Override
-    public Map<String, Object> checkShareToken() throws ServerException, ForbiddenExecption {
+    public Map<String, Object> checkShareToken() throws ServerException, ForbiddenException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Map<String, Object> map = new HashMap<>(1);
         map.put("type", shareFactor.getMode().name());
@@ -378,10 +363,10 @@ public class ShareServiceImpl implements ShareService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws ForbiddenException
      */
     @Deprecated
-    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption {
+    public ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenException {
 
         if (StringUtils.isEmpty(token)) {
             throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
@@ -419,11 +404,11 @@ public class ShareServiceImpl implements ShareService {
             Long sharedUserId = Long.parseLong(tokenCrypts[1]);
             User sharedUser = userExtendMapper.selectByUsername(username);
             if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_AUTHENTICATION);
+                throw new ForbiddenException(ErrorMsg.ERR_AUTHENTICATION);
             }
 
             if (null == user || (!user.getId().equals(sharedUserId) && !user.getId().equals(shareUserId))) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_AUTHENTICATION);
+                throw new ForbiddenException(ErrorMsg.ERR_AUTHENTICATION);
             }
 
             sharedUserName = username;
@@ -447,10 +432,10 @@ public class ShareServiceImpl implements ShareService {
      * @param user
      * @param shareInfo
      * @throws ServerException
-     * @throws ForbiddenExecption
+     * @throws ForbiddenException
      */
     @Deprecated
-    public void verifyShareUser(User user, ShareInfo shareInfo) throws ServerException, ForbiddenExecption {
+    public void verifyShareUser(User user, ShareInfo shareInfo) throws ServerException, ForbiddenException {
         if (null == shareInfo || shareInfo.getShareId() < 1L) {
             throw new ServerException(ErrorMsg.ERR_INVALID_TOKEN);
         }
@@ -458,7 +443,7 @@ public class ShareServiceImpl implements ShareService {
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
             User tokenUser = userExtendMapper.selectByUsername(shareInfo.getSharedUserName());
             if (tokenUser == null || !tokenUser.getId().equals(user.getId())) {
-                throw new ForbiddenExecption(ErrorMsg.ERR_PERMISSION);
+                throw new ForbiddenException(ErrorMsg.ERR_PERMISSION);
             }
         }
     }

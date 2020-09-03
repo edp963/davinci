@@ -109,9 +109,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Autowired
 	private RedisUtils redisUtils;
 	
-    @Value("${source.query-model:0.3}")
-    private String queryModel;
-	
 	private static final CheckEntityEnum entity = CheckEntityEnum.SOURCE;
 
 	@Override
@@ -210,6 +207,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		try{
 
 			SourceConfig config = sourceCreate.getConfig();
+			config.setType(sourceCreate.getType());
 			
 			if (!testConnection(config, user)) {
 				throw new ServerException("Test source connection fail");
@@ -285,6 +283,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		try {
 			
 			SourceConfig config = sourceInfo.getConfig();
+			config.setType(sourceInfo.getType());
 
 			// 失效的数据源
 			Source sourceCopy = new Source();
@@ -705,7 +704,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		String sql = null;
 
-		if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
+		if (sourceDataUpload.getMode() == UploadModeEnum.COVER.getMode()) {
 			ST st = stg.getInstanceOf("create");
 			st.add("tableName", sourceDataUpload.getTableName());
 			st.add("fields", fields);
@@ -727,6 +726,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 					st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
 					st.add("indexKeys", sourceDataUpload.getIndexList());
 					sql = st.render();
+					log.info("Source({}) create table sql:{}", source.getId(), edp.davinci.data.util.SqlUtils.formatSql(sql));
+					DataProviderFactory.getProvider(source.getType()).execute(source, sql, user);
 				} else {
 					throw new ServerException("Table " + sourceDataUpload.getTableName() + " is already exist");
 				}
@@ -736,9 +737,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				}
 			}
 		}
-
-		log.info("Source({}) create table sql:{}", source.getId(), edp.davinci.data.util.SqlUtils.formatSql(sql));
-		DataProviderFactory.getProvider(source.getType()).execute(source, sql, user);
 	}
 
 	/**
@@ -754,6 +752,10 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		if (CollectionUtils.isEmpty(values)) {
 			return;
+		}
+
+		if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
+			DataProviderFactory.getProvider(source.getType()).execute(source, "truncate table `" + sourceDataUpload.getTableName() + "`", user);
 		}
 
 		STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);

@@ -21,6 +21,7 @@ package edp.davinci.server.service.impl;
 
 import static edp.davinci.commons.Constants.AT_SIGN;
 import static edp.davinci.commons.Constants.COMMA;
+import static edp.davinci.commons.Constants.UNDERLINE;
 import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
 
 import java.util.ArrayList;
@@ -32,9 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -136,13 +136,18 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
 
-    private static final String SQL_VARABLE_KEY = "name";
+    private static final String SQL_VARIABLE_KEY = "name";
 
     private static final CheckEntityEnum entity = CheckEntityEnum.VIEW;
 
     private static final ExecutorService roleParamThreadPool = Executors.newFixedThreadPool(8);
 
     private static final int CONCURRENCY_EXPIRE = 60 * 60;
+
+    static final String element = "stub";
+    static volatile ConcurrentHashMap<String, String> queryStateMap = new ConcurrentHashMap();
+    static volatile ConcurrentHashMap<String, ArrayBlockingQueue> queryBlockingQMap = new ConcurrentHashMap();
+    static volatile AtomicInteger blockingQNum = new AtomicInteger();
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -267,7 +272,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Transactional
-    private void insertView(View view) {
+    protected void insertView(View view) {
         if (viewExtendMapper.insert(view) <= 0) {
             throw new ServerException("Create view fail");
         }
@@ -343,7 +348,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Transactional
-    private void updateView(View view) {
+    protected void updateView(View view) {
         if (viewExtendMapper.update(view) <= 0) {
             throw new ServerException("Update view fail");
         }
@@ -628,53 +633,76 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 excludeColumns.addAll(columns);
             }
 
-            BaseLock lock = null;
             if (withConcurrency) {
+
                 String concurrencyKey = getConcurrencyKey(source, queryStatements.get(queryStatements.size() - 1), param);
-                
-                // try to get data from concurrency cache first
-                pagingWithQueryColumns = getPagingDataByCache(concurrencyKey);
-                if (pagingWithQueryColumns != null) {
-                    return pagingWithQueryColumns;
+                BaseLock lock = null;
+
+                if (ConcurrencyStrategyEnum.FAIL_FAST == strategy) {
+                    lock = getConcurrencyStrategyLock(concurrencyKey);
+                    if (lock == null || !lock.getLock()) {
+                        throw new ServerException("The data is querying, please try again later");
+                    }
                 }
 
-                lock = getConcurrencyStrategyLock(concurrencyKey, strategy);
-                if (lock != null) {// query data
+                int num = initQueryState(concurrencyKey);
+                String concurrencyBlockingQKey = concurrencyKey + UNDERLINE + num;
+                ArrayBlockingQueue abq = queryBlockingQMap.get(concurrencyBlockingQKey);
+                try {
+                    abq.put(element);
 
-                    try {
-                        
-                        Stopwatch watch = Stopwatch.createStarted();
-                        
-                        if (withAggregator) {
-                            // parse auth var first but with out values
-                            sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, null, queryParams, source, user);
-                            sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
-                            pagingWithQueryColumns = getPagingDataByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
-                        
-                        } else {
-                            pagingWithQueryColumns = doQuery(new PagingParam(sqlQueryParam.getPageNo(),
-                                    sqlQueryParam.getPageSize(), sqlQueryParam.getLimit()), queryStatements,
-                                    excludeColumns, source, user);
-                        }
-
-                        redisUtils.set(concurrencyKey, pagingWithQueryColumns, Math.max(10_000, watch.elapsed(TimeUnit.MILLISECONDS)), TimeUnit.MILLISECONDS);
-                    
-                    }finally {
-                        lock.release();
+                    if (!"querying".equals(queryStateMap.get(concurrencyBlockingQKey))) {
+                        abq.poll();
+                        return getPagingDataByCache(concurrencyKey);
                     }
 
-                }else{// data is querying so pending
-                    while(LockFactory.ifLockExist(concurrencyKey, LockType.REDIS)) {
-                        Thread.sleep(1_000);
+                    if (lock == null) {// get lock for dirty read strategy
+                        lock = getConcurrencyStrategyLock(concurrencyKey);
+                    }
+
+                    if (lock != null && lock.isHolding()) {// query data
+
+                        try {
+                            if (withAggregator) {
+                                // parse auth var first but with out values
+                                sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, null, queryParams, source, user);
+                                sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
+                                pagingWithQueryColumns = getPagingDataByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
+
+                            } else {
+                                pagingWithQueryColumns = query(new PagingParam(sqlQueryParam.getPageNo(),
+                                                sqlQueryParam.getPageSize(), sqlQueryParam.getLimit()), queryStatements,
+                                        excludeColumns, source, user);
+                            }
+
+                            redisUtils.set(concurrencyKey, pagingWithQueryColumns, 60_000L, TimeUnit.MILLISECONDS);
+
+                        }finally {
+                            blockingQNum.getAndIncrement();
+                            queryStateMap.remove(concurrencyBlockingQKey);
+                            abq.clear();
+                            queryBlockingQMap.remove(concurrencyBlockingQKey);
+                            lock.release();
+                        }
+
+                    }else{// data is querying so pending
+                        while(LockFactory.ifLockExist(concurrencyKey, LockType.REDIS)) {
+                            Thread.sleep(1_000);
+                        }
+
                         pagingWithQueryColumns = getPagingDataByCache(concurrencyKey);
-                        if (pagingWithQueryColumns != null) {
-                            return pagingWithQueryColumns;
-                        }
+                        queryStateMap.remove(concurrencyBlockingQKey);
+                        blockingQNum.getAndIncrement();
+                        abq.clear();
+                        queryBlockingQMap.remove(concurrencyBlockingQKey);
+                        return pagingWithQueryColumns;
                     }
 
-                    return getPagingDataByCache(concurrencyKey);
+                }catch (Exception e) {
+                    log.error(e.toString(), e);
+                    throw new ServerException(e.getMessage());
                 }
-            
+
             }else{
                 if (withAggregator) {
                     // parse auth var first but with out values
@@ -682,7 +710,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
                     pagingWithQueryColumns = getPagingDataByAggregator(sWithQueryVar, sqlQueryParam, authParams, excludeColumns, viewWithSource, user);
                 } else {
-                    pagingWithQueryColumns = doQuery(new PagingParam(sqlQueryParam.getPageNo(),
+                    pagingWithQueryColumns = query(new PagingParam(sqlQueryParam.getPageNo(),
                             sqlQueryParam.getPageSize(), sqlQueryParam.getLimit()), queryStatements, excludeColumns,
                             source, user);
                 }
@@ -700,8 +728,34 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return pagingWithQueryColumns;
     }
 
-    private PagingWithQueryColumns doQuery(PagingParam paging, List<String> queryStatements,
-            Set<String> excludeColumns, Source source, User user) {
+    private int initQueryState(String key) {
+        synchronized (key.intern()) {
+
+            int num = blockingQNum.get();
+            String blockingQkey = key + UNDERLINE + num;
+
+            if("querying".equals(queryStateMap.get(blockingQkey))) {
+                return num;
+            }
+
+            ArrayBlockingQueue abq = queryBlockingQMap.get(blockingQkey);
+            if (abq != null) {
+                num = blockingQNum.get();
+                blockingQkey = key + UNDERLINE + num;
+            }
+
+            abq = new ArrayBlockingQueue(1000);
+            for (int i = 0; i < 999; i++) {
+                abq.offer(element);
+            }
+            queryBlockingQMap.put(blockingQkey, abq);
+            queryStateMap.put(blockingQkey, "querying");
+            return num;
+        }
+    }
+
+    private PagingWithQueryColumns query(PagingParam paging, List<String> queryStatements,
+                                         Set<String> excludeColumns, Source source, User user) {
         PagingWithQueryColumns pagingWithQueryColumns = null;
         for (String s : queryStatements) {
             pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, excludeColumns, user);
@@ -774,23 +828,11 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return null;
     }
 
-    private BaseLock getConcurrencyStrategyLock(String cacheKey, ConcurrencyStrategyEnum strategy) {
-        
-        BaseLock lock = LockFactory.getLock(cacheKey, CONCURRENCY_EXPIRE, LockType.REDIS);
-
-        if (ConcurrencyStrategyEnum.FAIL_FAST == strategy) {
-            if (lock != null && lock.getLock()) {
-                return lock;
-            }
-            throw new ServerException("The data is querying, please try again later");
+    private BaseLock getConcurrencyStrategyLock(String lockKey) {
+        BaseLock lock = LockFactory.getLock(lockKey, CONCURRENCY_EXPIRE, LockType.REDIS);
+        if (lock != null && lock.getLock()) {
+            return lock;
         }
-
-        if (ConcurrencyStrategyEnum.DIRTY_READ == strategy) {
-            if (lock != null && lock.getLock()) {
-                return lock;
-            }
-        }
-        
         return null;
     }
 
@@ -890,7 +932,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         // build query sql with aggregation
         List<String> queryStatements = parser.getQueryStatement(sql, queryParam, source, user);
-        return doQuery(new PagingParam(queryParam.getPageNo(), queryParam.getPageSize(), queryParam.getLimit()),
+        return query(new PagingParam(queryParam.getPageNo(), queryParam.getPageSize(), queryParam.getLimit()),
                 queryStatements, excludeColumns, source, user);
     }
 
@@ -953,9 +995,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         return isFullAuth ? null : columns;
     }
 
-    private void insertRelRoleView(String sqlVarible, List<RelRoleViewDTO> roles, User user, View view) {
+    private void insertRelRoleView(String sqlVariable, List<RelRoleViewDTO> roles, User user, View view) {
 
-        List<SqlVariable> variables = JSONUtils.toObjectArray(sqlVarible, SqlVariable.class);
+        List<SqlVariable> variables = JSONUtils.toObjectArray(sqlVariable, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
             relRoleViewExtendMapper.deleteByViewId(view.getId());
             return;
@@ -986,7 +1028,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     if (!CollectionUtils.isEmpty(rowAuthList)) {
                         List<Map> newRowAuthList = new ArrayList<Map>();
                         for (Map jsonMap : rowAuthList) {
-                            String name = (String) jsonMap.get(SQL_VARABLE_KEY);
+                            String name = (String) jsonMap.get(SQL_VARIABLE_KEY);
                             if (finalVars.contains(name)) {
                                 newRowAuthList.add(jsonMap);
                             }
