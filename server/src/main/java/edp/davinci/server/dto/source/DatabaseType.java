@@ -20,7 +20,7 @@
 package edp.davinci.server.dto.source;
 
 import edp.davinci.data.commons.Constants;
-import edp.davinci.server.enums.DatabaseTypeEnum;
+import edp.davinci.data.enums.DatabaseTypeEnum;
 import lombok.Getter;
 
 import java.util.List;

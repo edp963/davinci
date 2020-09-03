@@ -369,14 +369,14 @@ public class SqlParseUtils {
             StringBuilder sb = new StringBuilder();
             if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
                 sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
-                sb.append(getColumn(column, jdbcUrl, dbVersion));
+                sb.append(getColumn(column, SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion), SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion)));
                 sb.append(PARENTHESES_CLOSE);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion)).append("COUNTDISTINCT").append(PARENTHESES_START);
                 sb.append(column);
                 sb.append(PARENTHESES_CLOSE).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
             } else {
                 sb.append(func.trim()).append(PARENTHESES_START);
-                sb.append(getColumn(column, jdbcUrl, dbVersion));
+                sb.append(getColumn(column, SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion), SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion)));
                 sb.append(PARENTHESES_CLOSE);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion));
                 sb.append(func.trim()).append(PARENTHESES_START);

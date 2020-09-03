@@ -19,26 +19,6 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.server.commons.Constants.PATTERN_DB_COLUMN_TYPE;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-
-import javax.sql.DataSource;
-
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
@@ -48,14 +28,26 @@ import edp.davinci.data.pojo.PagingParam;
 import edp.davinci.data.pojo.TableType;
 import edp.davinci.data.provider.DataProviderFactory;
 import edp.davinci.data.provider.JdbcDataProvider;
-import edp.davinci.server.enums.DatabaseTypeEnum;
 import edp.davinci.server.enums.SqlColumnTypeEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.SourceException;
 import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.TableInfo;
-import lombok.Getter;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+
+import static edp.davinci.server.commons.Constants.PATTERN_DB_COLUMN_TYPE;
 
 @Component
 public class DataUtils {

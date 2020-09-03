@@ -19,25 +19,10 @@
 
 package edp.davinci.data.source;
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import edp.davinci.data.provider.CSVDataProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Component;
-
 import com.alibaba.druid.filter.Filter;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.wall.WallConfig;
 import com.alibaba.druid.wall.WallFilter;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.commons.Constants;
@@ -45,10 +30,23 @@ import edp.davinci.data.enums.DatabaseTypeEnum;
 import edp.davinci.data.exception.SourceException;
 import edp.davinci.data.jdbc.ExtendedJdbcClassLoader;
 import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.provider.CSVDataProvider;
 import edp.davinci.data.util.CustomDatabaseUtils;
 import edp.davinci.data.util.JdbcSourceUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.stereotype.Component;
+
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Component
@@ -318,6 +316,8 @@ public class JdbcDataSource {
 
             try {
                 druidDataSource.setFilters(filters);
+
+                // you can operate csv datasource
                 if (CSVDataProvider.type.equals(type)) {
                     WallConfig wallConfig = wallFilter.getConfig();
                     wallConfig.setDropTableAllow(true);
@@ -327,6 +327,17 @@ public class JdbcDataSource {
                     druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
                 } else if (!name.equals(aggregatorName) && !name.equals("statistic")) {// davinci's aggregator source and statistic source don't need wall filter
                     druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
+                }
+
+                // druid wall filter not support some database so set type mysql
+                if (DatabaseTypeEnum.MOONBOX == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.MONGODB == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.ELASTICSEARCH == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.CASSANDRA == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.VERTICA == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.HANA == DatabaseTypeEnum.urlOf(url) ||
+                        DatabaseTypeEnum.IMPALA == DatabaseTypeEnum.urlOf(url)) {
+                    wallFilter.setDbType(DatabaseTypeEnum.MYSQL.getFeature());
                 }
 
 				druidDataSource.init();
