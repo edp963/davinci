@@ -24,6 +24,7 @@ import { ControlQueryMode } from 'app/components/Control/constants'
 import { RenderType, IPaginationParams } from '../Widget/components/Widget'
 import { IFieldSortDescriptor } from '../Widget/components/Config/Sort'
 import { SharePanelType, ISharePanel } from 'app/components/SharePanel/types'
+import { TShareVizsType, ISharePanel } from 'app/components/SharePanel/type'
 import { IWidgetFormed } from '../Widget/types'
 import { IView, IViewQueryResponse } from '../View/types'
 import { CancelTokenSource } from 'axios'
@@ -170,4 +171,4 @@ export type ILoadData = (
   queryConditions?: Partial<IQueryConditions>
 ) => void
 
-export { IDashboardRaw, SharePanelType }
+export { IDashboardRaw, TShareVizsType }
