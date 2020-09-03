@@ -1,7 +1,12 @@
-import { IWidgetConfig } from 'app/containers/Widget/components/Widget'
 import widgetConfig from './widgetConfig'
 import dashboardConfig from './dashboardConfig'
+import scheduleConfig from './scheduleConfig'
+import { IWidgetConfig } from 'app/containers/Widget/components/Widget'
 import { IDashboardConfig } from 'app/containers/Dashboard/types'
+import {
+  IScheduleMailConfig,
+  IScheduleWeChatWorkConfig
+} from 'app/containers/Schedule/components/types'
 
 export interface IMigrationRecorder {
   versions: string[]
@@ -27,5 +32,12 @@ const widgetConfigMigrationRecorder = (data: IWidgetConfig, options?) =>
   executeMigration(widgetConfig, data, options)
 const dashboardConfigMigrationRecorder = (data: IDashboardConfig) =>
   executeMigration(dashboardConfig, data)
+const scheduleConfigMigrationRecorder = (
+  data: IScheduleMailConfig | IScheduleWeChatWorkConfig
+) => executeMigration(scheduleConfig, data)
 
-export { widgetConfigMigrationRecorder, dashboardConfigMigrationRecorder }
+export {
+  widgetConfigMigrationRecorder,
+  dashboardConfigMigrationRecorder,
+  scheduleConfigMigrationRecorder
+}

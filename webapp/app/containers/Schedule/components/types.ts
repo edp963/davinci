@@ -59,6 +59,7 @@ export interface IScheduleMailConfig {
   type: ScheduleType
   imageWidth: number
   contentList: IScheduleVizConfigItem[]
+  setCronExpressionManually: boolean
 }
 
 export interface IScheduleWeChatWorkConfig {
@@ -66,6 +67,7 @@ export interface IScheduleWeChatWorkConfig {
   type: string
   imageWidth: number
   contentList: IScheduleVizConfigItem[]
+  setCronExpressionManually: boolean
 }
 
 export interface ISchedule extends IScheduleBase {
