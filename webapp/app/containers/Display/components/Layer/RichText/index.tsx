@@ -35,7 +35,7 @@ const LabelEditor: React.FC = () => {
   const { layer: { params: { richText }, id: layerId, params },  operationInfo } = useContext(LayerContext)
   const { boxStyles } = buildLabelRichTextStyles(params)
   const editing = operationInfo?.editing
-  
+
   const editorContent = useMemo(
     () => richText ? richText.content : buildLabelRichTextContentChildren({ fontSize: 40 }),
     [richText, params]
@@ -48,13 +48,10 @@ const LabelEditor: React.FC = () => {
         return
       }
       setValue(updatedContent)
+      dispatch(DisplayActions.editSlideLayerParams(layerId, onLabelEditorStylesChange(['richText', 'content'], value)))
     },
     [editorContent]
   )
-
-  useEffect(() => {
-    dispatch(DisplayActions.editSlideLayerParams(layerId, onLabelEditorStylesChange(['richText', 'content'], value)))
-  },[value, onLabelEditorStylesChange])
     
   return (
     <Editor
