@@ -1,16 +1,8 @@
-import React, { Component } from 'react'
+import React, { PureComponent, GetDerivedStateFromProps } from 'react'
 import { fromJS } from 'immutable'
 
-import {
-  IGlobalControl,
-  ILocalControl,
-  IControlBase,
-  IRenderTreeItem
-} from '../types'
-import {
-  getControlRenderTree,
-  getAllChildren
-} from '../util'
+import { IControl, IRenderTreeItem } from '../types'
+import { getControlRenderTree, getAllChildren } from '../util'
 import { ListItem } from 'components/ListFormLayout'
 
 import styles from '../Control.less'
@@ -19,12 +11,17 @@ import { Icon, Tree } from 'antd'
 const { TreeNode } = Tree
 
 interface IControlListProps {
-  list: IGlobalControl[] | ILocalControl[]
-  selected: IControlBase
+  list: IControl[]
+  selected: Omit<IControl, 'relatedItems' | 'relatedViews'>
   onSelect: (key: string) => void
   onDelete: (keys: string[], selectKey: string) => void
   onNameChange: (key: string, name: string) => void
-  onParentChange: (key: string, parentKey: string, type: string, dropNextKey?: string) => void
+  onParentChange: (
+    key: string,
+    parentKey: string,
+    type: string,
+    dropNextKey?: string
+  ) => void
 }
 
 interface IControlListStates {
@@ -33,43 +30,39 @@ interface IControlListStates {
     [key: string]: IRenderTreeItem
   }
   selectedKeys: string[]
+  prevList: IControl[]
+  prevSelected: Omit<IControl, 'relatedItems' | 'relatedViews'>
 }
 
-class ControlList extends Component<IControlListProps, IControlListStates> {
-  constructor (props) {
+class ControlList extends PureComponent<IControlListProps, IControlListStates> {
+  constructor(props) {
     super(props)
     this.state = {
       renderTree: [],
       flatTree: {},
-      selectedKeys: []
+      selectedKeys: [],
+      prevList: [],
+      prevSelected: null
     }
   }
 
-  public componentWillMount () {
-    const { list, selected } = this.props
-    this.getRenderTree(list)
-    this.getSelectedKeys(selected)
-  }
-
-  public componentWillReceiveProps (nextProps: IControlListProps) {
-    const { list, selected } = nextProps
-    if (list !== this.props.list) {
-      this.getRenderTree(list)
+  public static getDerivedStateFromProps: GetDerivedStateFromProps<
+    IControlListProps,
+    IControlListStates
+  > = (props, state) => {
+    let nextState: Partial<IControlListStates> = {}
+    if (props.list !== state.prevList) {
+      const replica = fromJS(props.list).toJS()
+      nextState = {
+        ...getControlRenderTree(replica),
+        prevList: props.list
+      }
     }
-    if (selected !== this.props.selected) {
-      this.getSelectedKeys(selected)
+    if (props.selected !== state.prevSelected) {
+      nextState.selectedKeys = props.selected ? [props.selected.key] : []
+      nextState.prevSelected = props.selected
     }
-  }
-
-  private getRenderTree = (list: IGlobalControl[] | ILocalControl[]) => {
-    const replica = fromJS(list).toJS()
-    this.setState(getControlRenderTree<IControlBase, typeof replica>(replica))
-  }
-
-  private getSelectedKeys = (selected: IControlBase) => {
-    this.setState({
-      selectedKeys: selected ? [selected.key] : []
-    })
+    return nextState
   }
 
   private delete = (key: string) => {
@@ -88,7 +81,7 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
           selectedKey =
             delIndex === parentTree.children.length - 1
               ? parentTree.children[delIndex - 1].key
-              :  parentTree.children[delIndex + 1].key
+              : parentTree.children[delIndex + 1].key
         }
       } else {
         if (renderTree.length !== 1) {
@@ -96,7 +89,7 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
           selectedKey =
             delIndex === renderTree.length - 1
               ? renderTree[delIndex - 1].key
-              :  renderTree[delIndex + 1].key
+              : renderTree[delIndex + 1].key
         }
       }
     } else {
@@ -113,7 +106,7 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
   }
 
   private dragEnter = (info) => {
-    // console.log(info)
+
   }
 
   private drop = (info) => {
@@ -133,9 +126,9 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
       parentKey = dropKey
       type = 'append'
     } else if (
-      (info.node.props.children || []).length > 0
-      && info.node.props.expanded
-      && dropPosition === 1
+      (info.node.props.children || []).length > 0 &&
+      info.node.props.expanded &&
+      dropPosition === 1
     ) {
       parentKey = dropKey
       type = 'prepend'
@@ -166,16 +159,10 @@ class ControlList extends Component<IControlListProps, IControlListStates> {
           </TreeNode>
         )
       }
-      return (
-        <TreeNode
-          title={title}
-          key={key}
-          dataRef={node}
-        />
-      )
+      return <TreeNode title={title} key={key} dataRef={node} />
     })
 
-  public render () {
+  public render() {
     const { renderTree, selectedKeys } = this.state
     return (
       <Tree

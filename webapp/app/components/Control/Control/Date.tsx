@@ -20,16 +20,16 @@
 
 import React, { FC, useCallback, forwardRef } from 'react'
 import moment from 'moment'
-import { IControlBase } from '../types'
+import { IControl } from '../types'
 import { DatePicker } from 'antd'
 const { WeekPicker, MonthPicker } = DatePicker
 const MultiDatePicker = React.lazy(() => import('components/MultiDatePicker'))
 import { DatePickerFormats } from '../constants'
 
 interface IDateProps {
-  control: IControlBase
+  control: Omit<IControl, 'relatedItems' | 'relatedViews'>
   value?: any
-  size: 'large' | 'small' | 'default'
+  size?: 'large' | 'small' | 'default'
   onChange?: (value) => void
 }
 
@@ -44,8 +44,8 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
       <MultiDatePicker
         ref={ref}
         placeholder="请选择"
-        size={size}
         format={dateFormat}
+        {...(size && { size })}
         {...(controlled && { value, onChange })}
       />
     )
@@ -57,7 +57,7 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
           <WeekPicker
             ref={ref}
             placeholder="请选择"
-            size={size}
+            {...(size && { size })}
             {...(controlled && { value, onChange })}
           />
         )
@@ -68,7 +68,7 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
             ref={ref}
             placeholder="请选择"
             format={dateFormat}
-            size={size}
+            {...(size && { size })}
             {...(controlled && { value, onChange })}
           />
         )
@@ -80,7 +80,7 @@ const Date: FC<IDateProps> = ({ control, value, size, onChange }, ref) => {
             placeholder="请选择"
             showTime={isDatetimePicker}
             format={dateFormat}
-            size={size}
+            {...(size && { size })}
             {...(controlled && { value })}
             {...(controlled && { onChange })}
             {...(controlled && { onOk: onChange })}

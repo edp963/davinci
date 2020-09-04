@@ -1,4 +1,4 @@
-import { IMapControlOptions, IControlBase } from 'app/components/Control/types'
+import { IMapControlOptions } from 'app/components/Control/types'
 
 export interface IControlState {
   globalControlPanelFormValues: object
@@ -9,5 +9,4 @@ export interface IControlState {
   localControlPanelSelectOptions: {
     [itemId: string]: IMapControlOptions
   }
-  configForm: IControlBase
 }

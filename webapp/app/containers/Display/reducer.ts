@@ -46,6 +46,8 @@ const defaultSharePanelState: IDisplaySharePanelState = {
 export const initialState: IDisplayState = {
   currentDisplayShareToken: '',
   currentDisplayAuthorizedShareToken: '',
+  currentDisplayPasswordShareToken: '',
+  currentDisplayPasswordPassword: '',
   sharePanel: defaultSharePanelState,
   currentDisplaySelectOptions: {},
 
@@ -217,6 +219,11 @@ const displayReducer = (
         })
         break
 
+      case ActionTypes.LOAD_DISPLAY_PASSWORD_SHARE_LINK_SUCCESS:
+        draft.currentDisplayPasswordShareToken = action.payload.pwdToken
+        draft.currentDisplayPasswordPassword = action.payload.pwd
+        draft.loading.shareToken = false
+        break
       case ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS:
         slideId = action.payload.slideId
         const lastLayers = []
@@ -383,7 +390,7 @@ const displayReducer = (
 
       case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
         draft.loading.shareToken = true
-        if (action.payload.authUser) {
+        if (action.payload.params.mode === 'AUTH') {
           draft.currentDisplayAuthorizedShareToken = ''
         }
         break

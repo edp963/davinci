@@ -27,7 +27,7 @@ import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
 
-import { logged, logout, getLoginUser, loadDownloadList, externalAuthlogout } from '../App/actions'
+import { logged, logout, loadDownloadList, externalAuthlogout } from '../App/actions'
 import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
 import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
 
@@ -59,7 +59,6 @@ interface IMainProps {
   onLogged: (user) => void
   onLogout: () => void
   onExternalAuthLogout: () => void
-  onGetLoginUser: (resolve: () => void) => any
   onLoadDownloadList: () => void
 }
 
@@ -202,7 +201,6 @@ export function mapDispatchToProps(dispatch) {
     onLogged: (user) => dispatch(logged(user)),
     onLogout: () => dispatch(logout()),
     onExternalAuthLogout: () => dispatch(externalAuthlogout()),
-    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
     onLoadDownloadList: () => dispatch(loadDownloadList())
   }
 }

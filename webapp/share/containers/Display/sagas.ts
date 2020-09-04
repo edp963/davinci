@@ -19,21 +19,30 @@
  */
 
 import omit from 'lodash/omit'
-import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
+import { call, select, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
 import ShareDisplayActions, { ShareDisplayActionType } from './actions'
-
+import { getPasswordUrl } from 'share/util'
+import {
+  makeSelectShareType
+} from 'share/containers/App/selectors'
 export function* getDisplay (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
 
   const { token, resolve, reject } = action.payload
   const { loadDisplayFail, displayLoaded } = ShareDisplayActions
+
+  const shareType = yield select(makeSelectShareType())
+  const baseUrl = `${api.share}/display/${token}`
+  const requestUrl = getPasswordUrl(shareType, token, baseUrl)
+
+
   try {
-    const asyncData = yield call(request, `${api.share}/display/${token}`)
+    const asyncData = yield call(request, requestUrl)
     const { header, payload } = asyncData
     if (header.code === 401) {
       reject(header.msg)
@@ -67,7 +76,7 @@ export function* getDisplay (action: ShareDisplayActionType) {
 export function* getData (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_LAYER_DATA) { return }
 
-  const { renderType, slideNumber, layerId, dataToken, requestParams } = action.payload
+  const { renderType, slideNumber, layerId, dataToken, password, requestParams } = action.payload
   const {
     filters,
     tempFilters,  // @TODO combine widget static filters with local filters
@@ -85,7 +94,7 @@ export function* getData (action: ShareDisplayActionType) {
   try {
     const response = yield call(request, {
       method: 'post',
-      url: `${api.share}/data/${dataToken}`,
+      url: `${api.share}/data/${dataToken}?password=${password}`,
       data: {
         ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
@@ -94,7 +103,7 @@ export function* getData (action: ShareDisplayActionType) {
         pageNo
       }
     })
-    let responsePayload = response.payload || { resultList: [] }
+    const responsePayload = response.payload || { resultList: [] }
     const { resultList } = responsePayload
     responsePayload.resultList = (resultList && resultList.slice(0, 600)) || []
     yield put(layerDataLoaded(renderType, slideNumber, layerId, responsePayload, requestParams))

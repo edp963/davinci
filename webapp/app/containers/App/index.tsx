@@ -26,7 +26,7 @@ import { Route, HashRouter as Router, Switch, Redirect, withRouter } from 'react
 import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
-import { logged, logout, getLoginUser } from './actions'
+import { logged, logout, getUserByToken } from './actions'
 import injectReducer from 'utils/injectReducer'
 import reducer from './reducer'
 import injectSaga from 'utils/injectSaga'
@@ -50,7 +50,7 @@ interface IAppStateProps {
 interface IAppDispatchProps {
   onLogged: (user) => void
   onLogout: () => void
-  onGetLoginUser: (resolve: () => void) => any
+  onGetLoginUser: (token: string) => any
 }
 
 type AppProps = IAppStateProps & IAppDispatchProps & RouteComponentWithParams
@@ -114,7 +114,6 @@ export class App extends React.PureComponent<AppProps> {
       statistic.sendPrevDurationRecord()
     } else {
       this.props.onLogout()
-      // this.props.history.replace('/login')
     }
   }
 
@@ -170,7 +169,7 @@ const mapStateToProps = createStructuredSelector({
 const mapDispatchToProps = (dispatch) => ({
   onLogged: (user) => dispatch(logged(user)),
   onLogout: () => dispatch(logout()),
-  onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve))
+  onGetLoginUser: (token) => dispatch(getUserByToken(token))
 })
 
 const withConnect = connect(

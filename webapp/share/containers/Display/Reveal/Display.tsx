@@ -65,6 +65,7 @@ const Display: React.FC<IDisplayProps> = (props) => {
           slideNumber,
           layerId,
           widget.dataToken,
+          widget.password,
           requestParams
         )
       )

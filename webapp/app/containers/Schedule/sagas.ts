@@ -7,6 +7,7 @@ import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 import { message } from 'antd'
 import { IScheduleRaw, ISchedule } from './components/types'
+import { scheduleConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 
 export function* getSchedules (action: ScheduleActionType) {
   if (action.type !== ActionTypes.LOAD_SCHEDULES) { return }
@@ -28,7 +29,7 @@ export function* getScheduleDetail (action: ScheduleActionType) {
   try {
     const asyncData = yield call(request, `${api.schedule}/${action.payload.scheduleId}`)
     const schedule = asyncData.payload
-    schedule.config = JSON.parse(schedule.config)
+    schedule.config = scheduleConfigMigrationRecorder(JSON.parse(schedule.config))
     yield put(ScheduleActions.scheduleDetailLoaded(schedule))
   } catch (err) {
     yield put(ScheduleActions.loadScheduleDetailFail())

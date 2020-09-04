@@ -18,33 +18,25 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React, { FC, forwardRef } from 'react'
+import classnames from 'classnames'
+import styles from './Container.less'
 
-const styles = require('./Container.less')
-
-interface IContainerProps {
+interface IContainerBodyProps {
   grid?: boolean
-  card?: boolean
-  report?: boolean
   children: React.ReactNode
 }
 
-export class Body extends React.Component<IContainerProps, {}> {
-  public render () {
-    const { grid, card, children, report} = this.props
-    const bodyClass = classnames({
-      [styles.body]: true,
-      [styles.grid]: grid,
-      [styles.card]: card,
-      [styles.report]: report
-    })
-    return (
-      <div className={bodyClass}>
-        {children}
-      </div>
-    )
-  }
+const Body: FC<IContainerBodyProps> = ({ grid, children }, ref) => {
+  const bodyClass = classnames({
+    [styles.body]: true,
+    [styles.grid]: grid
+  })
+  return (
+    <div className={bodyClass} ref={ref}>
+      {children}
+    </div>
+  )
 }
 
-export default Body
+export default forwardRef(Body)

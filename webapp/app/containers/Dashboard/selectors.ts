@@ -54,6 +54,16 @@ const makeSelectCurrentDashboardAuthorizedShareToken = () =>
     selectDashboard,
     (dashboardState) => dashboardState.currentDashboardAuthorizedShareToken
   )
+const makeSelectCurrentDashboardPasswordShareToken = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardPasswordShareToken
+  )
+const makeSelectCurrentDashboardPasswordSharePassword = () =>
+  createSelector(
+    selectDashboard,
+    (dashboardState) => dashboardState.currentDashboardPasswordSharePassword
+  )
 const makeSelectCurrentDashboardShareLoading = () =>
   createSelector(
     selectDashboard,
@@ -142,5 +152,7 @@ export {
   makeSelectCurrentLinkages,
   makeSelectItemInfo,
   makeSelectItemRelatedWidget,
-  makeSelectFullScreenPanelItemId
+  makeSelectFullScreenPanelItemId,
+  makeSelectCurrentDashboardPasswordShareToken,
+  makeSelectCurrentDashboardPasswordSharePassword
 }

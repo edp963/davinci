@@ -20,33 +20,62 @@
 
 import React, { PureComponent } from 'react'
 
-import { Form, Input, Modal, Icon } from 'antd'
+import { Form, Input, Modal, Select, Divider } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-const FormItem = Form.Item
-const TextArea = Input.TextArea
-
+import { IFlatRelatedView } from './ControlForm/types'
+import { IControlOption } from '../types'
 import styles from '../Control.less'
+const FormItem = Form.Item
+const Option = Select.Option
 
-interface IOptionSettingFormProps {
+interface IOptionSettingFormProps extends FormComponentProps {
   visible: boolean
-  options: string
+  values: IControlOption
+  customOptions: IControlOption[]
+  optionWithVariable: boolean
+  relatedViewList: IFlatRelatedView[]
   onSave: () => void
   onCancel: () => void
+  afterClose: () => void
 }
 
-export class OptionSettingForm extends PureComponent<IOptionSettingFormProps & FormComponentProps, {}> {
-
-  public componentDidUpdate (prevProps: IOptionSettingFormProps & FormComponentProps) {
-    const { form, options } = this.props
-    if (options !== prevProps.options) {
-      form.setFieldsValue({ options })
+class OptionSettingForm extends PureComponent<IOptionSettingFormProps> {
+  public componentDidUpdate(prevProps: IOptionSettingFormProps) {
+    const { form, values, optionWithVariable } = this.props
+    if (values !== prevProps.values) {
+      if (!values) {
+        form.resetFields()
+      } else {
+        form.setFieldsValue({
+          ...values,
+          ...(optionWithVariable &&
+            values.variables &&
+            Object.entries(values.variables).reduce((obj, [viewId, field]) => {
+              obj[viewId] = field.name
+              return obj
+            }, {}))
+        })
+      }
     }
   }
 
-  public render () {
-    const { form, visible, onSave, onCancel } = this.props
+  public render() {
+    const {
+      form,
+      visible,
+      optionWithVariable,
+      relatedViewList,
+      onSave,
+      onCancel,
+      afterClose
+    } = this.props
     const { getFieldDecorator } = form
-    const placeholder = `请输入选项文本与值，用回车分隔，例如：\n北京 1\n上海 2\n天津 Tianjin\n`
+
+    const itemCols = {
+      labelCol: { span: 8 },
+      wrapperCol: { span: 12 }
+    }
+
     return (
       <Modal
         title="编辑自定义选项"
@@ -54,20 +83,42 @@ export class OptionSettingForm extends PureComponent<IOptionSettingFormProps & F
         wrapClassName={`ant-modal-small ${styles.optionsModal}`}
         onOk={onSave}
         onCancel={onCancel}
+        afterClose={afterClose}
       >
         <Form>
-          <FormItem className={styles.formItem}>
-            {getFieldDecorator('options', {})(
-              <TextArea
-                placeholder={placeholder}
-                autosize={{minRows: 5, maxRows: 10}}
-              />
-            )}
+          <FormItem label="值" {...itemCols}>
+            {getFieldDecorator('value', {
+              rules: [{ required: true, message: '值不能为空' }]
+            })(<Input />)}
           </FormItem>
+          <FormItem label="文本" {...itemCols}>
+            {getFieldDecorator('text', {})(<Input />)}
+          </FormItem>
+          {optionWithVariable && (
+            <>
+              <Divider>关联变量</Divider>
+              {relatedViewList.map(({ id, name, variables }) => (
+                <FormItem key={id} label={name} {...itemCols}>
+                  {getFieldDecorator(
+                    `${id}`,
+                    {}
+                  )(
+                    <Select placeholder="请选择" allowClear>
+                      {variables.map((v) => (
+                        <Option key={v.name} value={v.name}>
+                          {v.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  )}
+                </FormItem>
+              ))}
+            </>
+          )}
         </Form>
       </Modal>
     )
   }
 }
 
-export default Form.create<IOptionSettingFormProps & FormComponentProps>()(OptionSettingForm)
+export default Form.create<IOptionSettingFormProps>()(OptionSettingForm)

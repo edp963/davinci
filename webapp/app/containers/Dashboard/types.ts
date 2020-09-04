@@ -19,13 +19,11 @@
  */
 
 import { IDashboardBase, IDashboardRaw } from 'app/containers/Viz/types'
-import {
-  GlobalControlQueryMode,
-  IGlobalControl
-} from 'app/components/Control/types'
+import { IControl } from 'app/components/Control/types'
+import { ControlQueryMode } from 'app/components/Control/constants'
 import { RenderType, IPaginationParams } from '../Widget/components/Widget'
 import { IFieldSortDescriptor } from '../Widget/components/Config/Sort'
-import { SharePanelType, ISharePanel } from 'app/components/SharePanel/type'
+import { TShareVizsType, ISharePanel } from 'app/components/SharePanel/types'
 import { IWidgetFormed } from '../Widget/types'
 import { IView, IViewQueryResponse } from '../View/types'
 import { CancelTokenSource } from 'axios'
@@ -36,9 +34,9 @@ export interface IDashboard extends IDashboardBase {
 }
 
 export interface IDashboardConfig {
-  filters: IGlobalControl[]
+  filters: IControl[]
   linkages: any[]
-  queryMode: GlobalControlQueryMode
+  queryMode: ControlQueryMode
 }
 
 export interface IDashboardDetailRaw extends IDashboardRaw {
@@ -65,6 +63,8 @@ export interface IDashboardItemInfo {
   loading: boolean
   queryConditions: IQueryConditions
   shareToken: string
+  pwdToken?: string
+  pwd?: string
   authorizedShareToken: string
   shareLoading: boolean
   downloadCsvLoading: boolean
@@ -136,7 +136,7 @@ export interface IDataRequestBody {
 }
 
 export interface IDataDownloadStatistic {
-  id: number,
+  id: number
   param: IDataRequestBody
   itemId: number
   widget: IWidgetFormed
@@ -147,6 +147,8 @@ export interface IDashboardState {
   currentDashboardLoading: boolean
   currentDashboardShareToken: string
   currentDashboardAuthorizedShareToken: string
+  currentDashboardPasswordShareToken: string
+  currentDashboardPasswordSharePassword: string
   currentDashboardShareLoading: boolean
   sharePanel: IDashboardSharePanelState
   currentItems: IDashboardItem[]
@@ -168,4 +170,4 @@ export type ILoadData = (
   queryConditions?: Partial<IQueryConditions>
 ) => void
 
-export { IDashboardRaw, SharePanelType }
+export { IDashboardRaw, TShareVizsType }

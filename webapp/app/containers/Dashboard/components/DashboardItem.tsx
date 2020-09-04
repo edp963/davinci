@@ -45,7 +45,7 @@ import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import ShareDownloadPermission from 'containers/Account/components/checkShareDownloadPermission'
 import { IProject } from 'containers/Projects/types'
-import { IQueryConditions, IQueryVariableMap, SharePanelType, ILoadData } from '../types'
+import { IQueryConditions, IQueryVariableMap, TShareVizsType, ILoadData } from '../types'
 import { IWidgetFormed, IWidgetBase } from 'app/containers/Widget/types'
 import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Control/constants'
 import { OnGetControlOptions } from 'app/components/Control/types'
@@ -82,7 +82,7 @@ interface IDashboardItemProps {
   onDeleteDashboardItem?: (itemId: number) => () => void
   onResizeDashboardItem: (itemId: number) => void
   onRenderChartError: (itemId: number, error: Error) => void
-  onOpenSharePanel?: (id: number, type: SharePanelType, title: string, itemId?: number) => void
+  onOpenSharePanel?: (id: number, type: TShareVizsType, title: string, itemId?: number) => void
   onDownloadCsv: (itemId: number) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (itemId: number) => void
@@ -146,9 +146,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   public componentWillMount () {
     const { itemId, widget, view, onLoadData, container } = this.props
     const { cacheWidgetProps, cacheWidgetId } = this.state
-    const { autoLoadData } = widget.config
     if (container === 'share') {
-      if (autoLoadData === true || autoLoadData === undefined) {
+      if (widget.config.autoLoadData) {
         onLoadData('clear', itemId)
       }
       this.initPolling(this.props)
@@ -198,11 +197,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       container,
       onLoadData
     } = nextProps
-    const { autoLoadData } = widget.config
     if (!container) {
       if (!this.props.rendered && rendered) {
         // clear
-        if (autoLoadData === true || autoLoadData === undefined) {
+        if (widget.config.autoLoadData) {
           onLoadData('clear', itemId)
         }
         this.initPolling(this.props)

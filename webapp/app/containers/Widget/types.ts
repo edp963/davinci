@@ -37,13 +37,12 @@ export interface IWidgetRaw extends IWidgetBase {
 export interface IWidgetFormed extends IWidgetBase {
   config: IWidgetConfig
   dataToken?: string
+  password?: string
 }
 
 export interface IWidgetState {
   widgets: IWidgetFormed[]
-  currentWidget: IWidgetRaw
+  currentWidget: IWidgetFormed
   loading: boolean
   dataLoading: boolean
-  columnValueLoading: boolean
-  distinctColumnValues: any[]
 }
