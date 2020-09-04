@@ -316,7 +316,10 @@ export function* dragLayer(action: DisplayActionType) {
       finish
     )
   )
-  yield put(DisplayActions.showEditorBaselines(baselines))
+
+  if(deltaX !== 0 && deltaY !== 0){
+    yield put(DisplayActions.showEditorBaselines(baselines))
+  }
 
   if (finish) {
     const updateLayers = produce(updateMovingLayers, (draft) => {
