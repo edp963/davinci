@@ -84,7 +84,7 @@ const SlideLayerList: React.FC = (props) => {
       eventTrigger: DragTriggerTypes,
       finish = false
     ) => {
-      if (deltaPosition.deltaX == null && deltaPosition.deltaY == null) {
+      if (deltaPosition.deltaX === null && deltaPosition.deltaY === null) {
         return
       }
       dispatch(

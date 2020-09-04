@@ -279,7 +279,6 @@ export function* dragLayer(action: DisplayActionType) {
     }
     return layer
   })
-
   const otherLayers = yield select((state) =>
     makeSelectCurrentOtherLayerList()(state, layerId)
   )
