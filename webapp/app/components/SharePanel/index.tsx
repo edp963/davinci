@@ -34,7 +34,7 @@ const RadioGroup = Radio.Group
 import { uuid } from 'utils/util'
 import ShareForm from './ShareForm'
 import styles from './SharePanel.less'
-import { Tmode, TShareVizsType, TPermission, IGetTokenParams } from './type'
+import { Tmode, TShareVizsType, TPermission, IGetTokenParams } from './types'
 import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
 import { IOrganizationMember } from 'containers/Organizations/types'
 import { debounce } from 'lodash'

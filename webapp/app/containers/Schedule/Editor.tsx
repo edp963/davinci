@@ -244,14 +244,16 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
       if (err1) {
         return
       }
-      const cronExpression = getCronExpressionByPartition(value1)
+      const { setCronExpressionManually, ...scheduleBase } = value1
       const [startDate, endDate] = baseConfigForm.form.getFieldValue(
         'dateRange'
       ) as ScheduleBaseFormProps['dateRange']
-      delete value1.dateRange
+      delete scheduleBase.dateRange
       const schedule: ISchedule = {
-        ...value1,
-        cronExpression,
+        ...scheduleBase,
+        cronExpression: setCronExpressionManually
+          ? scheduleBase.cronExpression
+          : getCronExpressionByPartition(scheduleBase),
         startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
         endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
         projectId: +projectId
@@ -261,15 +263,25 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
           if (err2) {
             return
           }
-          schedule.config = { ...value2, contentList: localContentList }
-          schedule.config.content = serialize(schedule.config.content as RichTextNode[])
+          schedule.config = {
+            ...value2,
+            contentList: localContentList,
+            setCronExpressionManually
+          }
+          schedule.config.content = serialize(
+            schedule.config.content as RichTextNode[]
+          )
         })
       } else {
         weChatWorkConfigForm.form.validateFieldsAndScroll((err3, value3) => {
           if (err3) {
             return
           }
-          schedule.config = { ...value3, contentList: localContentList }
+          schedule.config = {
+            ...value3,
+            contentList: localContentList,
+            setCronExpressionManually
+          }
         })
       }
       if (editingSchedule.id) {
@@ -320,31 +332,32 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = (props) => {
                   onChangeJobType={onChangeJobType}
                 />
               </Card>
-              {
-                editingSchedule.jobType === 'email' ?
-                (
-                  <Card title="邮件设置" size="small" style={{ marginTop: 8 }}>
-                    <ScheduleMailConfig
-                      wrappedComponentRef={(inst) => {
-                        mailConfigForm = inst
-                      }}
-                      config={config}
-                      loading={loading.schedule}
-                      mailList={suggestMails}
-                      onLoadMailList={onLoadSuggestMails}
-                    />
-                  </Card>
-                ) : (
-                  <Card title="企业微信设置" size="small" style={{ marginTop: 8 }}>
-                    <ScheduleWeChatWorkConfig
-                      wrappedComponentRef={(inst) => {
-                        weChatWorkConfigForm = inst
-                      }}
-                      config={config}
-                    />
-                  </Card>
-                )
-              }
+              {editingSchedule.jobType === 'email' ? (
+                <Card title="邮件设置" size="small" style={{ marginTop: 8 }}>
+                  <ScheduleMailConfig
+                    wrappedComponentRef={(inst) => {
+                      mailConfigForm = inst
+                    }}
+                    config={config as IScheduleMailConfig}
+                    loading={loading.schedule}
+                    mailList={suggestMails}
+                    onLoadMailList={onLoadSuggestMails}
+                  />
+                </Card>
+              ) : (
+                <Card
+                  title="企业微信设置"
+                  size="small"
+                  style={{ marginTop: 8 }}
+                >
+                  <ScheduleWeChatWorkConfig
+                    wrappedComponentRef={(inst) => {
+                      weChatWorkConfigForm = inst
+                    }}
+                    config={config as IScheduleWeChatWorkConfig}
+                  />
+                </Card>
+              )}
             </Col>
             <Col span={12}>
               <Card title="发送内容设置" size="small">
@@ -405,13 +418,11 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(checkNameUniqueAction('cronjob', data, resolve, reject)),
   onLoadSuggestMails: (keyword) =>
     dispatch(ScheduleActions.loadSuggestMails(keyword)),
-  onChangeJobType: (jobType) => dispatch(ScheduleActions.changeScheduleJobType(jobType))
+  onChangeJobType: (jobType) =>
+    dispatch(ScheduleActions.changeScheduleJobType(jobType))
 })
 
-const withConnect = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'schedule', reducer })
 const withSaga = injectSaga({ key: 'schedule', saga })
 const withVizReducer = injectReducer({

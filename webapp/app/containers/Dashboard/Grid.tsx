@@ -36,7 +36,7 @@ import {
   IDashboardItem,
   QueryVariable,
   IQueryConditions,
-  SharePanelType
+  TShareVizsType
 } from './types'
 import { RouteComponentWithParams } from 'utils/types'
 
@@ -1274,7 +1274,7 @@ export function mapDispatchToProps (dispatch) {
       dispatch(renderChartError(itemId, error)),
     onOpenSharePanel: (
       id: number,
-      type: SharePanelType,
+      type: TShareVizsType,
       title: string,
       itemId?: number
     ) => dispatch(openSharePanel(id, type, title, itemId)),

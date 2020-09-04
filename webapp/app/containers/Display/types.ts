@@ -31,7 +31,7 @@ import { ActionTypes } from './constants'
 import { IQueryConditions } from 'containers/Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IWidgetFormed } from 'containers/Widget/types'
-import { ISharePanel, SharePanelType } from 'app/components/SharePanel/types'
+import { ISharePanel, TShareVizsType } from 'app/components/SharePanel/types'
 
 export interface ILayerInfo {
   datasource: {
@@ -87,4 +87,4 @@ export interface IDisplaySharePanelState extends Pick<ISharePanel, 'id' | 'type'
   visible: boolean
 }
 
-export { SharePanelType }
+export { TShareVizsType }

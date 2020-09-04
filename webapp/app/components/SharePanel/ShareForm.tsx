@@ -27,7 +27,7 @@ const apiHost = `${location.origin}${config[env].host}`
 const shareHost = `${location.origin}${config[env].shareHost}`
 const styles = require('./SharePanel.less')
 import { copyTextToClipboard } from './utils'
-import { TCopyType } from './type'
+import { TCopyType } from './types'
 interface IShareFormProps {
   type: string
   shareToken: string
