@@ -37,6 +37,7 @@ import { ActionTypes, DragTriggerTypes } from './constants'
 import DisplayActions, { DisplayActionType } from './actions'
 import {
   ILayerRaw,
+  ILayerParams,
   Layer,
   ILayerFormed,
   LayersOperationInfo,
@@ -97,9 +98,9 @@ export function* getSlideDetail(action: DisplayActionType) {
       widgets: []
     }
     items.forEach((item: ILayerRaw) => {
-      const parsedParams = JSON.parse(item.params)
-      const { subType } = parsedParams
-      item.params = subType == SecondaryGraphTypes.Label ? displayParamsMigrationRecorder(parsedParams) : parsedParams
+      const { subType } = item
+      const parsedParams: ILayerParams = JSON.parse(item.params)
+      item.params = SecondaryGraphTypes.Label === subType ? displayParamsMigrationRecorder(parsedParams) : parsedParams
     })
     widgets.forEach((widget: IWidgetRaw) => {
       const parsedConfig: IWidgetConfig = JSON.parse(widget.config)

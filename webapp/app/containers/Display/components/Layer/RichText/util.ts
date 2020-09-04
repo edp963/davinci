@@ -22,9 +22,9 @@ import { ElementTypes } from 'components/RichText/Element'
 import { RichTextNode } from 'components/RichText'
 import { EDITOR_DEFAULT_TEXT_ALIGN, EDITOR_DEFAULT_FONT_WEIGHT, EDITOR_DEFAULT_FONT_COLOR, EDITOR_DEFAULT_FONT_WEIGHT_BOLD } from './contants'
 import { ILayerParams } from '../../types'
-import { ElementStylesType, Selection } from './types'
+import { IEditorSelection, EditorContentChildStyles, IEditorContentItem} from './types'
 
-export const buildLabelRichTextContent = (content: string | RichTextNode[]) => {
+export const buildLabelRichTextContent = (content: IEditorContentItem[]) => {
   return {
     content
   }
@@ -46,13 +46,13 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
     lineHeight
   } = params
 
-  const fontStyles: ElementStylesType = {
+  const fontStyles: Partial<EditorContentChildStyles.IElementFontStyles> = {
     fontSize: Number(`${fontSize}`)
   }
 
-  const textStyles: ElementStylesType = {}
+  const textStyles: Partial<EditorContentChildStyles.IElementTextStyles> = {}
 
-  const boxStyles: React.CSSProperties  = {
+  const boxStyles: Partial<EditorContentChildStyles.IEditorBoxStyle>  = {
     paddingTop: `${paddingTop}px`,
     paddingRight: `${paddingRight}px`,
     paddingBottom: `${paddingBottom}px`,
@@ -87,12 +87,12 @@ export const buildLabelRichTextStyles = (params: ILayerParams) => {
   }
 }
 
-export const buildLabelRichTextContentChildren = (sectionInnerStyle?: Partial<ElementStylesType>, text?: string, sectionWrapStyle?:Partial<ElementStylesType>,) => [
+export const buildLabelRichTextContentChildren = (fontStyles?: Partial<EditorContentChildStyles.IElementFontStyles>, text?: string, textStyles?:Partial<EditorContentChildStyles.IElementTextStyles>) => [
   {
     type: ElementTypes.Paragraph,
-    children: [{ text: text || '', ...sectionInnerStyle }],
-    ...sectionWrapStyle
-  }
+    children: [{ text: text || '', ...fontStyles }],
+    ...textStyles
+  } as IEditorContentItem
 ]
 
 export const onLabelEditorStylesChange = (propPath: string[], value: string | RichTextNode[]) => {
@@ -107,7 +107,7 @@ export const onLabelEditorStylesChange = (propPath: string[], value: string | Ri
 }
 
 export const onLabelEditorSelectedRange = () => {
-  const { anchorNode } = window.getSelection() as Selection
+  const { anchorNode } = window.getSelection() as IEditorSelection
   if(!anchorNode || !anchorNode.parentNode){
     return false
   }

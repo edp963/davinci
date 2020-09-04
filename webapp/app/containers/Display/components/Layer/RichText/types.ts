@@ -17,22 +17,7 @@
  * limitations under the License.
  * >>
  */
-
-export interface ElementStylesType {
-  bold?: boolean,
-  italic?: boolean,
-  underline?: boolean,
-  fontFamily?: string,
-  fontSize?: number,
-  lineHeight?: string,
-  textIndent?: string,
-  color?: string,
-  backgroundColor?: string,
-  textAlign?: string,
-  fontWeight?: string | number
-}
-
-export interface Selection {
+export interface IEditorSelection {
   readonly anchorNode: Node | null;
   readonly anchorOffset: number;
   readonly focusNode: Node | null;
@@ -55,6 +40,44 @@ export interface Selection {
   setBaseAndExtent(anchorNode: Node, anchorOffset: number, focusNode: Node, focusOffset: number): void;
   setPosition(node: Node | null, offset?: number): void;
   toString(): string;
+}
+
+export interface IEditorContent {
+  content: Array<IEditorContentItem>
+}
+
+export interface IEditorContentItem extends EditorContentChildStyles.IElementTextStyles{
+  type: string,
+  children: IEditorContentChild[]
+}
+
+export interface IEditorContentChild extends EditorContentChildStyles.IElementFontStyles{
+  text: string
+}
+
+export namespace EditorContentChildStyles {
+  export interface IElementFontStyles {
+    fontSize: number,
+    color: string,
+    fontFamily: string,
+    fontWeight: number | string,
+    bold: boolean,
+    italic: boolean,
+    underline: boolean
+  }
+  
+  export interface IElementTextStyles {
+    textAlign: string,
+  }
+  
+  export interface IEditorBoxStyle {
+    paddingTop: string,
+    paddingRight: string,
+    paddingBottom: string,
+    paddingLeft: string,
+    textIndent: string,
+    lineHeight: string
+  }
 }
 
 
