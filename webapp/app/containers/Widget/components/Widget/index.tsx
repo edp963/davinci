@@ -170,6 +170,7 @@ export interface IWidgetProps extends IWidgetConfigBase {
 
 export interface IWidgetConfig extends IWidgetConfigBase {
   controls: IControl[]
+  limit: number
   cache: boolean
   expired: number
   autoLoadData: boolean
