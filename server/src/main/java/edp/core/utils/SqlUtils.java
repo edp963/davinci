@@ -183,9 +183,12 @@ public class SqlUtils {
         long before = System.currentTimeMillis();
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
+        jdbcTemplate.setMaxRows(resultLimit);
         if (pageNo < 1 && pageSize < 1) {
 
-            jdbcTemplate.setMaxRows(Math.min(limit, resultLimit));
+            if (limit > 0) {
+                jdbcTemplate.setMaxRows(Math.min(limit, resultLimit));
+            }
 
             // special for mysql
             if (getDataTypeEnum() == DataTypeEnum.MYSQL) {
@@ -213,7 +216,7 @@ public class SqlUtils {
                 totalCount = Math.min(Math.min(limit, resultLimit), totalCount);
                 if (limit < pageNo * pageSize) {
                     jdbcTemplate.setMaxRows(limit - startRow);
-                }else {
+                } else {
                     jdbcTemplate.setMaxRows(Math.min(limit, pageSize));
                 }
             }
