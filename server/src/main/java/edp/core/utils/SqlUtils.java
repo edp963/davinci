@@ -30,7 +30,6 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SqlParseUtils;
-import edp.davinci.model.Source;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -184,15 +183,9 @@ public class SqlUtils {
         long before = System.currentTimeMillis();
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
-        jdbcTemplate.setMaxRows(resultLimit);
-
         if (pageNo < 1 && pageSize < 1) {
 
-            if (limit > 0) {
-                resultLimit = limit > resultLimit ? resultLimit : limit;
-            }
-
-            jdbcTemplate.setMaxRows(resultLimit);
+            jdbcTemplate.setMaxRows(Math.min(limit, resultLimit));
 
             // special for mysql
             if (getDataTypeEnum() == DataTypeEnum.MYSQL) {
@@ -217,18 +210,20 @@ public class SqlUtils {
             }
 
             if (limit > 0) {
-                limit = limit > resultLimit ? resultLimit : limit;
-                totalCount = Math.min(limit, totalCount);
+                totalCount = Math.min(Math.min(limit, resultLimit), totalCount);
+                if (limit < pageNo * pageSize) {
+                    jdbcTemplate.setMaxRows(limit - startRow);
+                }else {
+                    jdbcTemplate.setMaxRows(Math.min(limit, pageSize));
+                }
             }
 
             paginateWithQueryColumns.setTotalCount(totalCount);
-            int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
             if (this.dataTypeEnum == MYSQL) {
                 sql = sql + " LIMIT " + startRow + ", " + pageSize;
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
             } else {
-                jdbcTemplate.setMaxRows(maxRows);
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
             }
         }
