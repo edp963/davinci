@@ -19,13 +19,18 @@
 
 package edp.davinci.data.provider;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.sql.DataSource;
-
+import com.google.common.base.Stopwatch;
+import edp.davinci.commons.util.MD5Utils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Source;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.data.enums.DatabaseTypeEnum;
+import edp.davinci.data.exception.SourceException;
+import edp.davinci.data.pojo.*;
+import edp.davinci.data.source.JdbcDataSource;
+import edp.davinci.data.util.JdbcSourceUtils;
+import edp.davinci.data.util.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,23 +38,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Stopwatch;
-
-import edp.davinci.commons.util.MD5Utils;
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.Source;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.data.enums.DatabaseTypeEnum;
-import edp.davinci.data.exception.SourceException;
-import edp.davinci.data.pojo.DataColumn;
-import edp.davinci.data.pojo.DataResult;
-import edp.davinci.data.pojo.PagingParam;
-import edp.davinci.data.pojo.SourceConfig;
-import edp.davinci.data.pojo.TableType;
-import edp.davinci.data.source.JdbcDataSource;
-import edp.davinci.data.util.JdbcSourceUtils;
-import edp.davinci.data.util.SqlUtils;
-import lombok.extern.slf4j.Slf4j;
+import javax.sql.DataSource;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -145,12 +138,16 @@ public class JdbcDataProvider extends DataProvider {
 				switch(database) {
 					case H2:
 					case MYSQL:
-						sql = sql + " limit " + startRow + "," + pageSize;
+						if (maxRows < pageNo * pageSize) {
+							sql = sql + " limit " + startRow + ", " + (maxRows - startRow);
+						} else {
+							sql = sql + " limit " + startRow + ", " + pageSize;
+						}
 						dataResult = getData(jdbcTemplate, sql);
 						break;
-				default:
-					dataResult = getData(jdbcTemplate, sql, startRow);
-					break;
+					default:
+						dataResult = getData(jdbcTemplate, sql, startRow);
+						break;
 				}
 				
 				dataResult.setCount(Math.min(count, maxRows));
@@ -362,7 +359,7 @@ public class JdbcDataProvider extends DataProvider {
 		
 		} catch (SQLException e) {
 			throw new SourceException(e.getMessage());
-		}finally {
+		} finally {
 			JdbcSourceUtils.closeResult(res);
 		}
 
@@ -403,10 +400,10 @@ public class JdbcDataProvider extends DataProvider {
 					databases.add(res.getString(1));
 				}
 			}
-		
+
 		} catch (SQLException e) {
 			throw new SourceException(e.getMessage());
-		}finally {
+		} finally {
 			JdbcSourceUtils.closeResult(res);
 		}
 

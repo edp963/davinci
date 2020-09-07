@@ -215,7 +215,7 @@ public class SqlParseUtils {
 			exp = exp.substring(1, exp.length() - 1);
 		}
 
-		String sql = String.format(Constants.JDBC_SELECT_SQL_FORMATER, exp);
+		String sql = String.format(Constants.JDBC_SELECT_SQL_FORMATTER, exp);
 		Select select = (Select) CCJSqlParserUtil.parse(sql);
 		PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
 		Expression where = plainSelect.getWhere();

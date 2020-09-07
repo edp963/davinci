@@ -23,7 +23,7 @@ server:
   servlet:
     context-path: /
 
-## Userd for mail and download services, can be empty, careful configuration
+## Used for mail and download services, can be empty, careful configuration
 ## By default, 'server.address' and 'server.port' is used as the string value.
 # access:
 #  address:
@@ -38,7 +38,9 @@ jwtToken:
   algorithm: HS512
 
 
-##your datasouce config
+##your
+cronjob:
+  load-all: false config
 source:
   initial-size: 1
   min-idle: 1
@@ -71,12 +73,13 @@ aggregator:
   ttl: 60000
   result-limit: 300000
 
+
 spring:
   mvc:
     async:
       request-timeout: 30s
 
-  ## davinci datasouce config
+  ## davinci datasource config
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
@@ -100,6 +103,7 @@ spring:
     keep-alive: false
     filters: stat
 
+
 ## redis config
 ## please choose either of the two ways
   redis:
@@ -122,6 +126,7 @@ spring:
         max-wait: 1
         max-idle: 8
         min-idle: 0
+
 
 ## mail is one of the important configuration of the application
 ## mail config cannot be null or empty
@@ -153,6 +158,7 @@ spring:
 ## domainName is enterprise mailbox suffix, such as enterprise mailbox is: "xxx@example.com", the value here is "@example.com"
     domainName:
 
+
   security:
     oauth2:
       enable: false
@@ -178,6 +184,7 @@ spring:
 #              name: "attributes.CnName1"
 #              avatar: "attributes.Avatar"
 
+
 screenshot:
   default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
   timeout_second: 600
@@ -185,11 +192,13 @@ screenshot:
   chromedriver_path: $your_chromedriver_path$
   remote_webdriver_url: $your_remote_webdriver_url$
 
+
 data-auth-center:
   channels:
     - name:
       base-url:
       auth-code:
+
 
 statistic:
   enable: false
@@ -210,3 +219,7 @@ statistic:
   java.security.krb5.conf:
   java.security.keytab:
   java.security.principal:
+
+
+cronjob:
+  load-all: false

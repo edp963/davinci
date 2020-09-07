@@ -21,9 +21,9 @@ package edp.davinci.data.util;
 
 import static edp.davinci.commons.Constants.*;
 import static edp.davinci.data.commons.Constants.DATABASE_DEFAULT_VERSION;
-import static edp.davinci.data.commons.Constants.EXT_LIB_PATH_FORMATER;
+import static edp.davinci.data.commons.Constants.EXT_LIB_PATH_FORMATTER;
 import static edp.davinci.data.commons.Constants.JDBC_URL_PATTERN;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATER;
+import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATTER;
 
 import java.io.File;
 import java.sql.DriverManager;
@@ -77,7 +77,7 @@ public class JdbcSourceUtils {
         
 		if (isExt && !StringUtils.isEmpty(version) && !DATABASE_DEFAULT_VERSION.equals(version)) {
 			String path = System.getenv("DAVINCI_HOME") + File.separator
-					+ String.format(EXT_LIB_PATH_FORMATER, databaseName, version);
+					+ String.format(EXT_LIB_PATH_FORMATTER, databaseName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDatabase database = CustomDatabaseUtils.getInstance(url, version);
 			try {
@@ -113,7 +113,7 @@ public class JdbcSourceUtils {
             throw new SourceException("Not supported database: url=" + url);
         }
 
-        String urlPrefix = String.format(JDBC_URL_PREFIX_FORMATER, database);
+        String urlPrefix = String.format(JDBC_URL_PREFIX_FORMATTER, database);
         String checkUrl = url.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SIGN, EMPTY);
         if (urlPrefix.equals(checkUrl)) {
             throw new SourceException("Communications link failure");

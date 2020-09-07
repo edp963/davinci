@@ -110,8 +110,8 @@ public class SystemSchedule {
 				return;
 			}
 
-			File[] childs = file.listFiles();
-			if (childs.length == 0) {
+			File[] children = file.listFiles();
+			if (children.length == 0) {
 				file.delete();
 				deleteFile(file.getParentFile());
 			} else {
@@ -120,8 +120,8 @@ public class SystemSchedule {
 
 		} else {
 			File parentDir = file.getParentFile();
-			File[] childs = parentDir.listFiles();
-			if (childs.length == 1) {
+			File[] children = parentDir.listFiles();
+			if (children.length == 1) {
 				file.delete();
 				deleteFile(parentDir);
 			} else {

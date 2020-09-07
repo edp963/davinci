@@ -74,7 +74,7 @@ public enum DatabaseTypeEnum {
     public static DatabaseTypeEnum urlOf(String url) {
         url = url.toLowerCase().trim();
         for (DatabaseTypeEnum dataTypeEnum : values()) {
-            if (url.startsWith(String.format(Constants.JDBC_URL_PREFIX_FORMATER, dataTypeEnum.feature))) {
+            if (url.startsWith(String.format(Constants.JDBC_URL_PREFIX_FORMATTER, dataTypeEnum.feature))) {
                 return dataTypeEnum;
             }
         }

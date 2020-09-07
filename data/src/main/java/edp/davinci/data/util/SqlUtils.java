@@ -19,14 +19,13 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATER;
-import static edp.davinci.commons.Constants.*;
-
 import com.alibaba.druid.sql.SQLUtils;
-
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.enums.DatabaseTypeEnum;
 import edp.davinci.data.pojo.CustomDatabase;
+
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATTER;
 
 public class SqlUtils {
 
@@ -35,7 +34,7 @@ public class SqlUtils {
     }
     
     public static String getCountSql(String sql) {
-    	return String.format(JDBC_COUNT_SQL_FORMATER, sql);
+    	return String.format(JDBC_COUNT_SQL_FORMATTER, sql);
     }
 
     public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
