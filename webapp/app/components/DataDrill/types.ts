@@ -97,6 +97,7 @@ export default class WidgetAbstract {
   public pagination?: IPaginationParams
   public queryVariables?: IQueryVariableMap
   public controls: any[]
+  public limit: number
   public cache: boolean
   public expired: number
   public autoLoadData: boolean

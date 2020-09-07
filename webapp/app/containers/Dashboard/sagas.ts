@@ -234,7 +234,6 @@ function* getData(
     result.payload = result.payload || {}
     const { payload } = result
     payload.resultList = payload.resultList || []
-    payload.resultList = payload.resultList.slice(0, 600)
     requestParams.pagination = getUpdatedPagination(
       requestParams.pagination,
       result.payload

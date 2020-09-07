@@ -109,6 +109,7 @@ export interface IDataRequestParams {
   linkageVariables: QueryVariable
   globalVariables: QueryVariable
   orders: Array<{ column: string; direction: string }>
+  limit: number
   cache: boolean
   expired: number
   flush: boolean
@@ -127,6 +128,7 @@ export interface IDataRequestBody {
   filters: string[]
   params?: QueryVariable
   orders?: Array<{ column: string; direction: string }>
+  limit: number
   cache: boolean
   expired: number
   flush: boolean

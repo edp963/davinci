@@ -45,7 +45,10 @@ import ChartTypes from '../../config/chart/ChartTypes'
 import { FieldSortTypes, fieldGroupedSort } from '../Config/Sort'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
-import { IDistinctValueReqeustParams, IControl } from 'app/components/Control/types'
+import {
+  IDistinctValueReqeustParams,
+  IControl
+} from 'app/components/Control/types'
 import { IReference } from './Reference/types'
 import { IWorkbenchSettings, WorkbenchQueryMode } from './types'
 import { IWidgetFormed, IWidgetRaw } from '../../types'
@@ -94,6 +97,7 @@ interface IWorkbenchStates {
   computed: any[]
   autoLoadData: boolean
   controlQueryMode: ControlQueryMode
+  limit: number
   cache: boolean
   expired: number
   splitSize: number
@@ -130,6 +134,7 @@ export class Workbench extends React.Component<
       cache: false,
       autoLoadData: true,
       controlQueryMode: ControlQueryMode.Immediately,
+      limit: null,
       expired: DEFAULT_CACHE_EXPIRED,
       splitSize,
       originalWidgetProps: null,
@@ -184,6 +189,7 @@ export class Workbench extends React.Component<
       const {
         controls,
         references,
+        limit,
         cache,
         expired,
         computed,
@@ -200,6 +206,7 @@ export class Workbench extends React.Component<
         cache,
         autoLoadData,
         controlQueryMode: queryMode,
+        limit,
         expired,
         selectedViewId: viewId,
         originalWidgetProps: { ...rest },
@@ -302,6 +309,7 @@ export class Workbench extends React.Component<
       references,
       cache,
       autoLoadData,
+      limit,
       expired,
       widgetProps,
       computed,
@@ -331,6 +339,7 @@ export class Workbench extends React.Component<
                 originalComputed && originalComputed
                   ? [...computed, ...originalComputed]
                   : [...computed],
+              limit,
               cache,
               autoLoadData,
               expired,
@@ -364,6 +373,7 @@ export class Workbench extends React.Component<
                 originalComputed && originalComputed
                   ? [...computed, ...originalComputed]
                   : [...computed],
+              limit,
               cache,
               autoLoadData,
               expired,
@@ -422,6 +432,12 @@ export class Workbench extends React.Component<
     }
   }
 
+  private limitChange = (value) => {
+    this.setState({
+      limit: value
+    })
+  }
+
   private cacheChange = (e) => {
     this.setState({
       cache: e.target.value
@@ -464,6 +480,7 @@ export class Workbench extends React.Component<
       controls,
       controlQueryMode,
       references,
+      limit,
       cache,
       expired,
       widgetProps,
@@ -494,6 +511,7 @@ export class Workbench extends React.Component<
           originalComputed && originalComputed
             ? [...computed, ...originalComputed]
             : [...computed],
+        limit,
         cache,
         expired,
         autoLoadData,
@@ -629,6 +647,7 @@ export class Workbench extends React.Component<
       controls,
       controlQueryMode,
       references,
+      limit,
       cache,
       autoLoadData,
       expired,
@@ -686,6 +705,7 @@ export class Workbench extends React.Component<
                 controls={controls}
                 controlQueryMode={controlQueryMode}
                 references={references}
+                limit={limit}
                 cache={cache}
                 autoLoadData={autoLoadData}
                 expired={expired}
@@ -696,6 +716,7 @@ export class Workbench extends React.Component<
                 onChangeAutoLoadData={this.changeAutoLoadData}
                 onSetControls={this.setControls}
                 onSetReferences={this.setReferences}
+                onLimitChange={this.limitChange}
                 onCacheChange={this.cacheChange}
                 onExpiredChange={this.expiredChange}
                 onSetWidgetProps={this.setWidgetProps}

@@ -248,6 +248,7 @@ export function getRequestParams(
     size,
     xAxis,
     tip,
+    limit,
     cache,
     expired
   } = widget.config
@@ -375,6 +376,7 @@ export function getRequestParams(
     linkageVariables,
     globalVariables,
     orders,
+    limit,
     cache,
     expired,
     flush,
