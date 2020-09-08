@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import styles from './Avatar.less'
 const logo = require('assets/images/profile.png')
 import { Modal, Spin } from 'antd'
-import { IAvatarProps, TSize, TImageState } from './type'
+import { IAvatarProps, TSize, TImageState } from './types'
 import { useIntersectionObserver } from './useIntersectionObserver'
 
 export const Avatar: React.FC<IAvatarProps> = ({

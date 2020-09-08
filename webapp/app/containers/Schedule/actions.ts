@@ -215,35 +215,33 @@ export const ScheduleActions = {
         dashboards
       }
     }
+  },
+
+  loadVizs(projectId) {
+    return {
+      type: ActionTypes.LOAD_VIZS,
+      payload: {
+        projectId
+      }
+    }
+  },
+  vizsLoaded(result) {
+    return {
+      type: ActionTypes.LOAD_VIZS_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+  loadVizsFail() {
+    return {
+      type: ActionTypes.LOAD_VIZS_FAILUER
+    }
   }
 }
+
 
 const mockAction = returnType(ScheduleActions)
 export type ScheduleActionType = typeof mockAction
 
 export default ScheduleActions
-
-// @FIXME need refactor
-export function loadVizs(projectId) {
-  return {
-    type: ActionTypes.LOAD_VIZS,
-    payload: {
-      projectId
-    }
-  }
-}
-
-export function vizsLoaded(result) {
-  return {
-    type: ActionTypes.LOAD_VIZS_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function loadVizsFail() {
-  return {
-    type: ActionTypes.LOAD_VIZS_FAILUER
-  }
-}

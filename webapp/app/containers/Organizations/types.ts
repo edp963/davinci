@@ -127,54 +127,55 @@ export interface IProjectsStates {
 }
 
 export interface IProjectsProps {
-  loginUser: any
-  organizationId: number
-  organizations: any
-  projectDetail: any
-  currentOrganization: IOrganization
-  toProject: (id: number) => any
-  deleteProject: (id: number) => any
-  starUser: IStarUser[]
-  collectProjects: IProject[]
-  onAddProject: (project: any, resolve: () => any) => any
-  onEditProject: (project: any, resolve: () => any) => any
-  organizationProjects: IProject[]
-  organizationProjectsDetail: { total?: number; list: IProject[] }
+  children?: React.ReactNode
+  loginUser?: any
+  organizationId?: number
+  organizations?: any
+  projectDetail?: any
+  currentOrganization?: IOrganization
+  toProject?: (id: number) => any
+  deleteProject?: (id: number) => any
+  starUser?: IStarUser[]
+  collectProjects?: IProject[]
+  onAddProject?: (project: any, resolve: () => any) => any
+  onEditProject?: (project: any, resolve: () => any) => any
+  organizationProjects?: IProject[]
+  organizationProjectsDetail?: { total?: number; list: IProject[] }
   unStar?: (id: number) => any
   userList?: (id: number) => any
-  onCheckUniqueName: (
+  onCheckUniqueName?: (
     pathname: any,
     data: any,
     resolve: () => any,
     reject: (error: string) => any
   ) => any
-  getOrganizationProjectsByPagination: (obj: {
+  getOrganizationProjectsByPagination?: (obj: {
     keyword?: string
     pageNum: number
     pageSize: number
   }) => any
-  onLoadOrganizationProjects: (param: {
+  onLoadOrganizationProjects?: (param: {
     id: number
     pageNum?: number
     pageSize?: number
   }) => any
-  onClickCollectProjects: (
+  onClickCollectProjects?: (
     formType,
     project: object,
     resolve: (id: number) => any
   ) => any
-  onLoadCollectProjects: () => any
-  onTransferProject: (id: number, orgId: number, resolve: () => any) => any
-  onSetCurrentProject: (option: any) => any
-  starUserList: IStarUser[]
-  onStarProject: (id: number, resolve: () => any) => any
-  onDeleteProject: (id: number, resolve?: any) => any
-  onGetProjectStarUser: (id: number) => any
-  currentOrganizationProjects: IProject[]
-  organizationMembers: any[]
-  onLoadVizs: (projectId: number) => any
-  onLoadOrganizations: () => any
-  vizs: any
+  onLoadCollectProjects?: () => any
+  onTransferProject?: (id: number, orgId: number, resolve: () => any) => any
+  onSetCurrentProject?: (option: any) => any
+  starUserList?: IStarUser[]
+  onStarProject?: (id: number, resolve: () => any) => any
+  onDeleteProject?: (id: number, resolve?: any) => any
+  onGetProjectStarUser?: (id: number) => any
+  currentOrganizationProjects?: IProject[]
+  organizationMembers?: any[]
+  onLoadVizs?: (projectId: number) => any
+  onLoadOrganizations?: () => any
+  vizs?: any
 }
 
 
