@@ -25,9 +25,11 @@ import org.apache.ibatis.annotations.Update;
 
 import edp.davinci.core.dao.DownloadRecordMapper;
 import edp.davinci.core.dao.entity.DownloadRecord;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface DownloadRecordExtendMapper extends DownloadRecordMapper {
 
     @Delete({

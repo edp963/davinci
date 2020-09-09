@@ -155,7 +155,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
     
     @Transactional
-    private void insertOrganization(Organization organization, RelUserOrganization relUserOrganization, User user) {
+    protected void insertOrganization(Organization organization, RelUserOrganization relUserOrganization, User user) {
 
     	if (organizationExtendMapper.insertSelective(organization) <= 0) {
             throw new ServerException("Create organization error");
@@ -214,7 +214,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
     
     @Transactional
-    private void updateOrganization(Organization organization) {
+    protected void updateOrganization(Organization organization) {
 		if (organizationExtendMapper.update(organization) <= 0) {
 			throw new ServerException("Update organization error");
 		}

@@ -18,11 +18,6 @@
 
 package edp.davinci.server.dto.share;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edp.davinci.commons.util.AESUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -31,11 +26,9 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.enums.ShareDataPermission;
 import edp.davinci.server.enums.ShareMode;
 import edp.davinci.server.enums.ShareType;
-import edp.davinci.server.model.CreaterInfo;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;

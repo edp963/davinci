@@ -19,18 +19,11 @@
 
 package edp.davinci.server.service.impl;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.RelRolePortal;
+import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
 import edp.davinci.server.dto.dashboard.DashboardPortalCreate;
@@ -44,15 +37,21 @@ import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.core.dao.entity.RelRolePortal;
-import edp.davinci.core.dao.entity.Role;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
@@ -175,7 +174,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     }
     
     @Transactional
-    private void insertDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+    protected void insertDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
 
     	if (dashboardPortalExtendMapper.insertSelective(dashboardPortal) != 1) {
 			throw new ServerException("Create dashboardPortal fail");
@@ -249,7 +248,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 	}
 
 	@Transactional
-	private void updateDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+	protected void updateDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
 		if (dashboardPortalExtendMapper.update(dashboardPortal) != 1) {
 			throw new ServerException("Update dashboardPortal fail");
 		}

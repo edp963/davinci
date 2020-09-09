@@ -19,32 +19,6 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.AT_SIGN;
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.commons.Constants.MINUS;
-import static edp.davinci.commons.Constants.UNDERLINE;
-import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -59,11 +33,7 @@ import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.component.quartz.ScheduleService;
 import edp.davinci.server.component.screenshot.ImageContent;
-import edp.davinci.server.dao.CronJobExtendMapper;
-import edp.davinci.server.dao.DashboardExtendMapper;
-import edp.davinci.server.dao.DisplayExtendMapper;
-import edp.davinci.server.dao.UserExtendMapper;
-import edp.davinci.server.dao.WidgetExtendMapper;
+import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.dto.cronjob.CronJobContent;
 import edp.davinci.server.dto.cronjob.ExcelContent;
@@ -73,16 +43,28 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
 import edp.davinci.server.dto.widget.WidgetWithVizId;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.CronJobMediaType;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.MailContentTypeEnum;
+import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.MailAttachment;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.MailUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.*;
+import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
 
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
@@ -115,43 +97,29 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
     @Override
     public void execute(long jobId) throws Exception {
-        CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
-        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
-            scheduleLogger.error("CronJob({}) config is empty", jobId);
-            return;
-        }
-        cronJobExtendMapper.updateExecLog(jobId, "");
-        CronJobConfig cronJobConfig = null;
-        try {
-            cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
-        } catch (Exception e) {
-        	scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+        CronJob cronJob = preExecute(jobId);
+        if (cronJob == null) {
             return;
         }
 
-        if (StringUtils.isEmpty(cronJobConfig.getType())) {
-            scheduleLogger.error("Cronjob({}) config type is empty", jobId);
-            return;
-        }
-
-        scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+        CronJobConfig cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
 
         List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
-        User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
+        User creator = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creator.getId());
         }
 
         if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-			excels = generateExcels(jobId, cronJobConfig, creater);
+			excels = generateExcels(jobId, cronJobConfig, creator);
         }
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
-            excels = generateExcels(jobId, cronJobConfig, creater);
+            images = generateImages(jobId, cronJobConfig, creator.getId());
+            excels = generateExcels(jobId, cronJobConfig, creator);
         }
 
         List<MailAttachment> attachmentList = new ArrayList<>();

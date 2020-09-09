@@ -27,9 +27,11 @@ import org.apache.ibatis.annotations.Update;
 
 import edp.davinci.core.dao.RelRoleViewMapper;
 import edp.davinci.core.dao.entity.RelRoleView;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RelRoleViewExtendMapper extends RelRoleViewMapper {
 
 	@Insert({

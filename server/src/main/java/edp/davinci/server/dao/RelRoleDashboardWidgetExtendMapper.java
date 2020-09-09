@@ -25,10 +25,12 @@ import org.apache.ibatis.annotations.Select;
 
 import edp.davinci.core.dao.RelRoleDashboardWidgetMapper;
 import edp.davinci.core.dao.entity.RelRoleDashboardWidget;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
+@Component
 public interface RelRoleDashboardWidgetExtendMapper extends RelRoleDashboardWidgetMapper {
 
 	@Insert({

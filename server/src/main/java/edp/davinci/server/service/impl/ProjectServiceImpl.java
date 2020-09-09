@@ -341,8 +341,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         boolean isTransfer = true;
         //移交回原组织
         if (project.getInitialOrgId().equals(orgId)) {
-            RelUserOrganization projectCreaterRuo = relUserOrganizationMapper.getRel(project.getUserId(), orgId);
-            if (null != projectCreaterRuo) {
+            RelUserOrganization projectCreatorRuo = relUserOrganizationMapper.getRel(project.getUserId(), orgId);
+            if (null != projectCreatorRuo) {
                 isTransfer = false;
             }
         }
@@ -450,7 +450,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
     @Transactional
-	private void updateProject(Project project) {
+	protected void updateProject(Project project) {
 		if (projectExtendMapper.updateBaseInfo(project) <= 0) {
 			log.error("Update project({}) fail", project.getId());
 			throw new ServerException("Update project fail");
@@ -622,8 +622,8 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
         RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectId, user.getId());
-        boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
-        boolean notOwner = !isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
+        boolean isCreator = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
+        boolean notOwner = !isCreator && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
         if (modify) {
             //项目的创建人和当前项目对应组织的owner可以修改
             if (notOwner) {
@@ -830,7 +830,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
 
     /**
-     * user是否project 的维护者
+     * user是否project的维护者
      *
      * @param projectDetail
      * @param user
@@ -841,17 +841,17 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             return false;
         }
 
-        //project所在org的creater
+        // project所在org的creator
         if (projectDetail.getOrganization().getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project的creater
+        // 当前project的creator
         if (projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer()) {
             return true;
         }
 
-        //project所在org的owner
+        // project所在org的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
         if (null == orgRel) {
             return false;
@@ -861,7 +861,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             return true;
         }
 
-        //project的admin
+        // project的admin
         RelProjectAdmin projectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
         if (null != projectAdmin) {
             return true;

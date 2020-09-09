@@ -1,23 +1,8 @@
 package edp.davinci.server.service.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
-import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.component.quartz.ScheduleService;
@@ -28,6 +13,19 @@ import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.enums.CronJobMediaType;
 import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service("weChatWorkScheduleService")
@@ -44,35 +42,18 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
 
     @Override
     public void execute(long jobId) throws Exception {
-        
-        CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
-        
-        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
-            scheduleLogger.error("CronJob({}) config is empty", jobId);
-            return;
-        }
-        
-        cronJobExtendMapper.updateExecLog(jobId, "");
-        CronJobConfig cronJobConfig = null;
-        try {
-            cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
-        } catch (Exception e) {
-            scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+        CronJob cronJob = preExecute(jobId);
+        if (cronJob == null) {
             return;
         }
 
-        if (StringUtils.isEmpty(cronJobConfig.getType())) {
-            scheduleLogger.error("Cronjob({}) config type is empty", jobId);
-            return;
-        }
-
-        scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+        CronJobConfig cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
 
         List<ImageContent> images = null;
-        User creater = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
+        User creator = userExtendMapper.selectByPrimaryKey(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creator.getId());
         }
 
         if (CollectionUtils.isEmpty(images)) {

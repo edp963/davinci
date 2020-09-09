@@ -19,27 +19,15 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.AT_SIGN;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.DisplaySlide;
 import edp.davinci.server.component.screenshot.ImageContent;
 import edp.davinci.server.component.screenshot.ScreenshotUtils;
+import edp.davinci.server.dao.CronJobExtendMapper;
 import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.DisplaySlideExtendMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
@@ -48,8 +36,19 @@ import edp.davinci.server.dto.dashboard.DashboardTree;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.ServerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.AT_SIGN;
 
 public class BaseScheduleService {
+
+    @Autowired
+    private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
     protected DashboardExtendMapper dashboardExtendMapper;
@@ -73,6 +72,31 @@ public class BaseScheduleService {
     protected static final String DISPLAY = "display";
 
     protected static final String DASHBOARD = "dashboard";
+
+    protected CronJob preExecute(long jobId) {
+        CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
+        if (null == cronJob || StringUtils.isEmpty(cronJob.getConfig())) {
+            scheduleLogger.error("CronJob({}) config is empty", jobId);
+            return null;
+        }
+
+        cronJobExtendMapper.updateExecLog(jobId, "");
+        CronJobConfig cronJobConfig = null;
+        try {
+            cronJobConfig = JSONUtils.toObject(cronJob.getConfig(), CronJobConfig.class);
+        } catch (Exception e) {
+            scheduleLogger.error("Cronjob({}) parse config({}) error:{}", jobId, cronJob.getConfig(), e.getMessage());
+            return null;
+        }
+
+        if (StringUtils.isEmpty(cronJobConfig.getType())) {
+            scheduleLogger.error("Cronjob({}) config type is empty", jobId);
+            return null;
+        }
+
+        scheduleLogger.info("CronJob({}) is start! --------------", jobId);
+        return cronJob;
+    }
 
     /**
      * 根据job配置截取图片
@@ -253,11 +277,11 @@ public class BaseScheduleService {
         root.setChilds(rootChilds);
 
         for (DashboardTree child : rootChilds) {
-            child.setChilds(getChilds(dashboardsMap, child));
+            child.setChilds(getChildren(dashboardsMap, child));
         }
     }
 
-    private List<DashboardTree> getChilds(Map<Long, Set<Dashboard>> dashboardsMap, DashboardTree node) {
+    private List<DashboardTree> getChildren(Map<Long, Set<Dashboard>> dashboardsMap, DashboardTree node) {
         if (CollectionUtils.isEmpty(dashboardsMap)) {
             return null;
         }
@@ -268,15 +292,15 @@ public class BaseScheduleService {
         List<DashboardTree> list = new ArrayList<>();
         for (Dashboard dashboard : childs) {
             DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
-            treeNode.setChilds(getChilds(dashboardsMap, treeNode));
+            treeNode.setChilds(getChildren(dashboardsMap, treeNode));
             list.add(treeNode);
         }
         list.sort(Comparator.comparing(DashboardTree::getIndex));
         return list;
     }
 
-    private String getContentUrl(Long userId, String contentType, Long contengId, int index) {
-        String shareToken = shareService.generateShareToken(contengId, null, userId);
+    private String getContentUrl(Long userId, String contentType, Long contentId, int index) {
+        String shareToken = shareService.generateShareToken(contentId, null, userId);
         StringBuilder sb = new StringBuilder();
 
         String type = "";

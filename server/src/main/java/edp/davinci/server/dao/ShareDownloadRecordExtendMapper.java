@@ -7,9 +7,11 @@ import org.apache.ibatis.annotations.Update;
 
 import edp.davinci.core.dao.ShareDownloadRecordMapper;
 import edp.davinci.core.dao.entity.ShareDownloadRecord;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface ShareDownloadRecordExtendMapper extends ShareDownloadRecordMapper {
 
     @Delete({"delete from share_download_record where id not in" +

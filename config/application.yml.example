@@ -185,6 +185,25 @@ spring:
 #              avatar: "attributes.Avatar"
 
 
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+      schema: classpath:quartz_table.sql
+    properties:
+      org:
+        quartz:
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 8
+          scheduler:
+            instanceName: DavinciScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: true
+
 screenshot:
   default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
   timeout_second: 600
@@ -220,6 +239,5 @@ statistic:
   java.security.keytab:
   java.security.principal:
 
-
 cronjob:
-  load-all: false
+  reload-all: false

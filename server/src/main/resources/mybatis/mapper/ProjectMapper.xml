@@ -154,7 +154,7 @@
         <if test="orgId != null">
             and p.org_id = #{orgId}
         </if>
-        <if test="keyword != null">p
+        <if test="keyword != null">
             and lower(p.`name`) like concat(concat('%', lower(#{keyword})), '%')
         </if>
         order by p.id

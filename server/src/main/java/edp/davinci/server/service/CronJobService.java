@@ -45,7 +45,7 @@ public interface CronJobService extends CheckEntityService {
 
     CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    void startAllJobs();
+    void restartAllJobs();
 
     boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

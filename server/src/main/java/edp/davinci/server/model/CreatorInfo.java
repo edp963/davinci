@@ -19,14 +19,13 @@
 
 package edp.davinci.server.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Data
-public class CreaterInfo<T> {
+public class CreatorInfo<T> {
 
     @JsonIgnore
     Long createBy;
