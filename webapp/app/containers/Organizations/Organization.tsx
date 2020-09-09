@@ -119,12 +119,11 @@ export class Organization extends React.PureComponent <IOrganizationProps & Rout
           <Tabs>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{this.getProjectsTotal()}</span></span>} key="projects">
               <ProjectList
-                currentOrganization={currentOrganization}
-                organizationId={organizationId}
-                organizationProjectsDetail={currentOrganizationProjectsDetail}
                 toProject={this.toProject}
-                loginUser={loginUser}
+                organizationId={+organizationId}
+                currentOrganization={currentOrganization}
                 organizationMembers={currentOrganizationMembers}
+                organizationProjectsDetail={currentOrganizationProjectsDetail}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{this.getMembersTotal()}</span></span>} key="members">

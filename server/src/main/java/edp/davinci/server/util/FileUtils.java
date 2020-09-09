@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -328,6 +329,75 @@ public class FileUtils {
         }
         sb.append(UNDERLINE).append(System.currentTimeMillis()).append(type.getFormat());
         return new File(sb.toString()).getAbsolutePath();
+    }
+
+    /**
+     * Read content from file
+     * @param fileName
+     * @return
+     */
+    public static String readFileToString(String fileName, String charset) {
+        File file = new File(fileName);
+        BufferedReader reader = null;
+        StringBuffer sbf = new StringBuffer();
+        try {
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+            String tempStr;
+            while ((tempStr = reader.readLine()) != null) {
+                sbf.append(tempStr);
+            }
+            reader.close();
+            return sbf.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        return sbf.toString();
+    }
+
+    /**
+     * Write content to file
+     * @param path
+     * @param fileName
+     * @param content
+     * @param encoding
+     */
+    public static void writeStringToFile(String path, String fileName, String content, Charset encoding) {
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        try {
+            File f = new File(path);
+            if (!f.exists()){
+                f.mkdirs();
+            }
+            File file = new File(path, fileName);
+            if (!file.exists()){
+                file.createNewFile();
+            }
+
+            fos = new FileOutputStream(file);
+            osw = new OutputStreamWriter(fos, encoding);
+            osw.write(content);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (osw != null){
+                try {
+                    osw.flush();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
     }
 
     public static boolean delete(String filePath) {

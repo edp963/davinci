@@ -38,9 +38,7 @@ jwtToken:
   algorithm: HS512
 
 
-##your
-cronjob:
-  load-all: false config
+##your datasouce config
 source:
   initial-size: 1
   min-idle: 1
@@ -66,9 +64,9 @@ source:
 aggregator:
   name: h2
   url: jdbc:h2:file:~/h2/data/davinci;DB_CLOSE_DELAY=-1;COMPRESS=true;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=true;DATABASE_TO_UPPER=false
-  username:  
-  password: 
-  keyword_prefix: '"' 
+  username:
+  password:
+  keyword_prefix: '"'
   keyword_suffix: '"'
   ttl: 60000
   result-limit: 300000
@@ -79,7 +77,7 @@ spring:
     async:
       request-timeout: 30s
 
-  ## davinci datasource config
+## davinci datasource config
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
@@ -114,8 +112,8 @@ spring:
     port: 6379
 
 ## cluster config
-#    cluster:
-#      nodes:
+#  cluster:
+#    nodes:
 
     password:
     database: 0
@@ -204,6 +202,7 @@ spring:
             driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
             isClustered: true
 
+
 screenshot:
   default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
   timeout_second: 600
@@ -238,6 +237,12 @@ statistic:
   java.security.krb5.conf:
   java.security.keytab:
   java.security.principal:
+
+
+encryption:
+  maxEncryptSize: 1024
+  type: Off # Off is to turn off encryption, to enable encryption, please select AES or RSA
+
 
 cronjob:
   reload-all: false
