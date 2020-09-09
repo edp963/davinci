@@ -110,7 +110,7 @@ export const ProjectActions = {
     }
   },
 
-  transferProject (id, orgId, resolve) {
+  transferProject (id, orgId, resolve?) {
     return {
       type: ActionTypes.TRANSFER_PROJECT,
       payload: {

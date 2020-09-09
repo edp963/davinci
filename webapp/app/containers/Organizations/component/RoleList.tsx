@@ -30,17 +30,17 @@ interface IRoleState {
 }
 
 interface IRoleProps {
-  isLoginUserOwner: boolean
+  isLoginUserOwner?: boolean
   onAddRole?: (name: string, desc: string, id: number, resolve: () => any) => any
   onEditRole?: (name: string, desc: string, id: number, resolve: () => any) => any
-  onDeleteRole: (id, resolve) => any
-  onRelRoleMember: (id: number, memberIds: number[], resolve: () => any) => any
-  onGetRelRoleMember: (id: number, resolve: (result: any) => any) => any
+  onDeleteRole?: (id, resolve) => any
+  onRelRoleMember?: (id: number, memberIds: number[], resolve: () => any) => any
+  onGetRelRoleMember?: (id: number, resolve: (result: any) => any) => any
   onLoadOrganizationRole?: (orgId: number) => any
-  currentOrganization: IOrganization
-  currentOrganizationRole: IOrganizationRole[]
-  organizationMembers: any[]
-  organizations: any
+  currentOrganization?: IOrganization
+  currentOrganizationRole?: IOrganizationRole[]
+  organizationMembers?: any[]
+  organizations?: any
   roleModalLoading?: boolean
   onLoadOrganizationDetail?: (id: number) => any
   onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -389,6 +389,6 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<MappedStates, MappedDispatches, IRoleProps & FormComponentProps>(mapStateToProps, mapDispatchToProps)(RoleList)
+export default connect<MappedStates, MappedDispatches, IRoleProps>(mapStateToProps, mapDispatchToProps)(RoleList)
 
 
