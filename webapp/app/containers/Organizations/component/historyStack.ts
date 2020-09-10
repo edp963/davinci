@@ -132,7 +132,6 @@ class HistoryStack  {
         proIdList: []
       }
     }
-    
   }
 }
 
