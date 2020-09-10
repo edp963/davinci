@@ -203,8 +203,7 @@ function* getData(
       url: `${api.share}/data/${relatedWidget.dataToken}?password=${relatedWidget.password}`,
       data: getRequestBody(requestParams)
     })
-    const { resultList } = result.payload
-    result.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    result.payload.resultList = result.payload.resultList || []
     requestParams.pagination = getUpdatedPagination(
       requestParams.pagination,
       result.payload

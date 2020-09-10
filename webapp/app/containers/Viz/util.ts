@@ -71,6 +71,7 @@ export function getRequestParamsByWidgetConfig(
     xAxis,
     tip,
     orders,
+    limit,
     cache,
     expired
   } = widgetConfig
@@ -203,6 +204,7 @@ export function getRequestParamsByWidgetConfig(
     linkageVariables,
     globalVariables,
     orders,
+    limit,
     cache,
     expired,
     flush: renderType === 'flush',

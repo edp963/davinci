@@ -1,7 +1,7 @@
 import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 
 import { ActionTypes } from './constants'
-import { ScheduleActions, ScheduleActionType, loadVizsFail, vizsLoaded } from './actions'
+import { ScheduleActions, ScheduleActionType } from './actions'
 import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
@@ -206,9 +206,9 @@ export function* getVizsData (action) {
       isTitle: true,
       children: portals
     }]
-    yield put(vizsLoaded(result))
+    yield put(ScheduleActions.vizsLoaded(result))
   } catch (err) {
-    yield put(loadVizsFail())
+    yield put(ScheduleActions.loadVizsFail())
     message.error('获取失败')
   }
 

@@ -27,7 +27,7 @@ import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import scheduleReducer from 'containers/Schedule/reducer'
 import scheduleSaga from 'containers/Schedule/sagas'
-import { loadVizs } from 'containers/Schedule/actions'
+import { ScheduleActions } from 'containers/Schedule/actions'
 import { makeSelectLoginUser } from 'containers/App/selectors'
 import Star from 'components/StarPanel/Star'
 const StarUserModal = Star.StarUser
@@ -344,7 +344,6 @@ export class ProjectList extends React.PureComponent<
       onCheckUniqueName,
       collectProjects,
       starUserList,
-      vizs,
       organizations
     } = this.props
 
@@ -383,17 +382,17 @@ export class ProjectList extends React.PureComponent<
     const ProjectItems = Array.isArray(organizationProjects)
       ? organizationProjects.map((lists, index) => (
           <ProjectItem
-            unStar={this.starProject}
-            userList={this.getStarProjectUserList}
-            collectProjects={collectProjects}
-            currentOrganization={currentOrganization}
             key={index}
-            loginUser={this.props.loginUser}
             pro={lists}
+            unStar={this.starProject}
             toProject={this.props.toProject}
-            showEditProjectForm={this.showEditProjectForm('edit', lists)}
-            onClickCollectProjects={this.props.onClickCollectProjects}
+            loginUser={this.props.loginUser}
+            collectProjects={collectProjects}
+            userList={this.getStarProjectUserList}
+            currentOrganization={currentOrganization}
             onLoadCollectProjects={this.props.onLoadCollectProjects}
+            onClickCollectProjects={this.props.onClickCollectProjects}
+            showEditProjectForm={this.showEditProjectForm('edit', lists)}
           />
         ))
       : ''
@@ -466,7 +465,6 @@ export class ProjectList extends React.PureComponent<
 }
 
 const mapStateToProps = createStructuredSelector({
-  vizs: makeSelectVizs(),
   starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
   projectDetail: makeSelectCurrentOrganizationProject(),
@@ -480,7 +478,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps(dispatch) {
   return {
-    onLoadVizs: (projectId) => dispatch(loadVizs(projectId)),
+    onLoadVizs: (projectId) => dispatch(ScheduleActions.loadVizs(projectId)),
     onSetCurrentProject: (option) =>
       dispatch(OrganizationActions.setCurrentProject(option)),
     onTransferProject: (id, orgId, resolve) =>
@@ -522,6 +520,7 @@ const withConnect = connect<MappedStates, MappedDispatches, IProjectsProps>(
   mapDispatchToProps
 )
 
+
 const withReducerSchedule = injectReducer({
   key: 'schedule',
   reducer: scheduleReducer
@@ -529,7 +528,11 @@ const withReducerSchedule = injectReducer({
 const withSagaSchedule = injectSaga({ key: 'schedule', saga: scheduleSaga })
 
 export default compose(
+  withConnect,
   withReducerSchedule,
-  withSagaSchedule,
-  withConnect
+  withSagaSchedule
 )(ProjectList)
+
+ 
+
+

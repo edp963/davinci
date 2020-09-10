@@ -116,7 +116,8 @@ const widgetConfigMigrationRecorder: IWidgetConfigMigrationRecorder = {
         queryMode:
           config.queryMode === void 0
             ? ControlQueryMode.Manually
-            : config.queryMode
+            : config.queryMode,
+        limit: config.limit === void 0 ? null : config.limit
       }
     }
   }

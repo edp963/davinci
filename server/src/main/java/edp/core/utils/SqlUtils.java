@@ -29,7 +29,9 @@ import edp.core.exception.SourceException;
 import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
+import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import edp.davinci.core.utils.SqlParseUtils;
+import edp.davinci.model.Source;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -93,11 +95,13 @@ public class SqlUtils {
     private SourceUtils sourceUtils;
 
     public SqlUtils init(BaseSource source) {
+        // Password decryption
+        String decrypt = SourcePasswordEncryptUtils.decrypt(source.getPassword());
         return SqlUtilsBuilder
                 .getBuilder()
                 .withJdbcUrl(source.getJdbcUrl())
                 .withUsername(source.getUsername())
-                .withPassword(source.getPassword())
+                .withPassword(decrypt)
                 .withDbVersion(source.getDbVersion())
                 .withProperties(source.getProperties())
                 .withIsExt(source.isExt())
@@ -108,11 +112,13 @@ public class SqlUtils {
     }
 
     public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext) {
+        // Password decryption
+        String decrypt = SourcePasswordEncryptUtils.decrypt(password);
         return SqlUtilsBuilder
                 .getBuilder()
                 .withJdbcUrl(jdbcUrl)
                 .withUsername(username)
-                .withPassword(password)
+                .withPassword(decrypt)
                 .withDbVersion(dbVersion)
                 .withProperties(properties)
                 .withIsExt(ext)

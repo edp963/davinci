@@ -1,6 +1,7 @@
 import React from 'react'
 import classnames from 'classnames'
 import set from 'lodash/set'
+import debounce from 'lodash/debounce'
 
 import widgetlibs from '../../config'
 import { IDataRequestBody } from 'app/containers/Dashboard/types'
@@ -76,6 +77,7 @@ interface IOperatingPanelProps {
   controls: any[]
   controlQueryMode: ControlQueryMode,
   references: IReference[]
+  limit: number
   cache: boolean
   autoLoadData: boolean
   expired: number
@@ -86,6 +88,7 @@ interface IOperatingPanelProps {
   onViewSelect: (viewId: number) => void
   onSetControls: (controls: IControl[], queryMode: ControlQueryMode) => void
   onSetReferences: (references: IReference[]) => void
+  onLimitChange: (value) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onChangeAutoLoadData: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
@@ -866,7 +869,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       renderType?: RenderType,
       updatedPagination?: IPaginationParams,
       workbenchQueryMode?: WorkbenchQueryMode,
-      orders?
+      orders?,
+      limit?
     }
   ) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
@@ -1016,6 +1020,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       pageNo: updatedPagination.pageNo,
       pageSize: updatedPagination.pageSize,
       nativeQuery: noAggregators,
+      limit: options?.limit || this.props.limit,
       cache: false,
       expired: 0,
       flush: false
@@ -1331,6 +1336,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setWidgetProps(dataParams, styleParams, { renderType })
   }
 
+  private limitChange = (value) => {
+    this.props.onLimitChange(value)
+    this.debounceLimitChangeUpdate(value)
+  }
+
+  private debounceLimitChangeUpdate = debounce((limit) => {
+    const { dataParams, styleParams } = this.state
+    this.setWidgetProps(dataParams, styleParams, { limit })
+  }, 500)
+
   private confirmColorModal = (config) => {
     this.state.modalCallback(config)
     this.closeColorModal()
@@ -1564,6 +1579,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       controls,
       controlQueryMode,
       references,
+      limit,
       cache,
       autoLoadData,
       expired,
@@ -1865,6 +1881,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                   </h4>
                 </div>
               )}
+            <div className={styles.paneBlock}>
+              <h4>展示数据量</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <InputNumber
+                      min={0}
+                      value={limit}
+                      onChange={this.limitChange}
+                    />
+                  </Col>
+                </Row>
+              </div>
+            </div>
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>
