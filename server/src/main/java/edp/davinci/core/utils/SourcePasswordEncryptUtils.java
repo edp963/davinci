@@ -252,7 +252,9 @@ public class SourcePasswordEncryptUtils {
         try {
             KeyGenerator kgen = KeyGenerator.getInstance(ALGORITHM_AES);
             String keyString = FileUtils.readFileToString(AES_BASE_PATH + AES_PRIVATE, CODE_TYPE);
-            kgen.init(KEY_LENGTH, new SecureRandom(keyString.getBytes()));
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            random.setSeed(keyString.getBytes());
+            kgen.init(KEY_LENGTH, random);
             SecretKey secretKey = kgen.generateKey();
             byte[] enCodeFormat = secretKey.getEncoded();
             SecretKeySpec key = new SecretKeySpec(enCodeFormat, ALGORITHM_AES);
@@ -277,7 +279,9 @@ public class SourcePasswordEncryptUtils {
             byte[] byteMi = new BASE64Decoder().decodeBuffer(encrypted);
             KeyGenerator kgen = KeyGenerator.getInstance(ALGORITHM_AES);
             String keyString = FileUtils.readFileToString(AES_BASE_PATH + AES_PRIVATE, CODE_TYPE);
-            kgen.init(KEY_LENGTH, new SecureRandom(keyString.getBytes()));
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            random.setSeed(keyString.getBytes());
+            kgen.init(KEY_LENGTH, random);
             SecretKey secretKey = kgen.generateKey();
             byte[] enCodeFormat = secretKey.getEncoded();
             SecretKeySpec key = new SecretKeySpec(enCodeFormat, ALGORITHM_AES);
