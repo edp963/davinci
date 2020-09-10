@@ -19,35 +19,8 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.AT_SIGN;
-import static edp.davinci.commons.Constants.COMMA;
-import static edp.davinci.commons.Constants.UNDERLINE;
-import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import edp.davinci.commons.Constants;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
@@ -74,23 +47,8 @@ import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.source.SourceBaseInfo;
-import edp.davinci.server.dto.view.AuthParamValue;
-import edp.davinci.server.dto.view.RelRoleViewDTO;
-import edp.davinci.server.dto.view.ViewBaseInfo;
-import edp.davinci.server.dto.view.ViewCreate;
-import edp.davinci.server.dto.view.ViewExecuteParam;
-import edp.davinci.server.dto.view.ViewUpdate;
-import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
-import edp.davinci.server.dto.view.WidgetDistinctParam;
-import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.ConcurrencyStrategyEnum;
-import edp.davinci.server.enums.LockType;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlVariableTypeEnum;
-import edp.davinci.server.enums.SqlVariableValueTypeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
+import edp.davinci.server.dto.view.*;
+import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
@@ -99,12 +57,23 @@ import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.SqlVariable;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.AuthVarUtils;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.DataUtils;
-import edp.davinci.server.util.LockFactory;
-import edp.davinci.server.util.RedisUtils;
+import edp.davinci.server.util.*;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.*;
+import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
 
 @Slf4j
 @Service("viewService")
@@ -135,6 +104,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
+
+    @Value("${encryption.type:Off}")
+    public String encryptType;
 
     private static final String SQL_VARIABLE_KEY = "name";
 
@@ -234,7 +206,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         Long sourceId = viewCreate.getSourceId();
-        Source source = getSource(sourceId);
+        Source source = getSource(sourceId, true);
 
         if (!DataProviderFactory.getProvider(source.getType()).test(source, user)) {
             throw new ServerException("Get source connection fail");
@@ -278,11 +250,22 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         }
     }
 
-    private Source getSource(Long id) {
+    private Source getSource(Long id, boolean decrypt) {
         Source source = sourceExtendMapper.selectByPrimaryKey(id);
         if (null == source) {
             log.error("Source({}) not found", id);
             throw new NotFoundException("Source is not found");
+        }
+        if (decrypt) {
+            source = SourcePasswordEncryptUtils.decryptPassword(source);
+        }
+        return source;
+    }
+
+    private Source getSourceFromView(ViewWithSource viewWithSource, boolean decrypt) {
+        Source source = viewWithSource.getSource();
+        if (decrypt) {
+            source = SourcePasswordEncryptUtils.decryptPassword(source);
         }
         return source;
     }
@@ -310,7 +293,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             alertNameTaken(entity, name);
         }
 
-        Source source = getSource(view.getSourceId());
+        Source source = getSource(view.getSourceId(), true);
 
         // 测试连接
         if (!DataProviderFactory.getProvider(source.getType()).test(source, user)) {
@@ -415,7 +398,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     public PagingWithQueryColumns execute(ViewExecuteParam executeParam, User user)
             throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-        Source source = getSource(executeParam.getSourceId());
+        Source source = getSource(executeParam.getSourceId(), true);
 
         ProjectDetail projectDetail = null;
         try {
@@ -454,9 +437,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<String> executeStatements = parser.getExecuteStatement(statement, queryParam, source, user);
             List<String> queryStatements = parser.getQueryStatement(statement, queryParam, source, user);
 
+            final Source fSource = source;
             if (!CollectionUtils.isEmpty(executeStatements)) {
                 executeStatements.forEach(s -> {
-                    DataUtils.execute(source, s, user);
+                    DataUtils.execute(fSource, s, user);
                 });
             }
 
@@ -566,7 +550,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         String cacheKey = null;
         try {
 
-            Source source = viewWithSource.getSource();
+            Source source = getSourceFromView(viewWithSource, true);
+
             List<Param> params = param.getParams();
             List<SqlVariable> variables = getVariables(viewWithSource.getVariable());
             List<RelRoleView> roleViewList = relRoleViewExtendMapper.getByUserAndView(user.getId(),
@@ -620,9 +605,10 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
             // execute statement with all var
+            final Source fSource = source;
             if (!CollectionUtils.isEmpty(executeStatements)) {
                 executeStatements.forEach(s -> {
-                    DataUtils.execute(source, s, user);
+                    DataUtils.execute(fSource, s, user);
                 });
             }
 
@@ -852,7 +838,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         Stopwatch watch = Stopwatch.createStarted();
 
-        Source source = viewWithSource.getSource();
+        Source source = getSourceFromView(viewWithSource, true);
         StatementParser parser = ParserFactory.getParser(source.getType());
         JdbcAggregator aggregator = (JdbcAggregator) AggregatorFactory.getAggregator("jdbc");
 
@@ -1077,7 +1063,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             return null;
         }
 
-        Source source = viewWithSource.getSource();
+        Source source = getSourceFromView(viewWithSource, false);
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
         boolean isMaintainer = projectService.isMaintainer(projectDetail, user);
 

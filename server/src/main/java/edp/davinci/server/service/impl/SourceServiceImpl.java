@@ -140,7 +140,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	public Source getSourceDetail(Long id, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		Source source = getSource(id);
+		Source source = getSource(id, false);
 
 		ProjectPermission projectPermission = getProjectPermission(source.getProjectId(), user);
 
@@ -190,7 +190,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			if (!testConnection(config, user)) {
 				throw new ServerException("Test source connection fail");
 			}
-			
+
+			config.setPassword(SourcePasswordEncryptUtils.encrypt(config.getPassword()));
 			Source source = new Source();
 			source.setCreateBy(user.getId());
 			source.setCreateTime(new Date());
@@ -213,13 +214,16 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 		}
 	}
 	
-	private Source getSource(Long id) {
+	private Source getSource(Long id, boolean decrypt) {
 
 		Source source = sourceExtendMapper.selectByPrimaryKey(id);
-
 		if (null == source) {
 			log.error("Source({}) is not found", id);
 			throw new NotFoundException("Source is not found");
+		}
+
+		if (decrypt) {
+			source = SourcePasswordEncryptUtils.decryptPassword(source);
 		}
 
 		return source;
@@ -245,10 +249,13 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Transactional
 	public Source updateSource(SourceInfo sourceInfo, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
-		
-		Source source = getSource(sourceInfo.getId());
+
+		Source source = getSource(sourceInfo.getId(), false);
 		checkWritePermission(entity, source.getProjectId(), user, "update");
-		
+
+		boolean changePwd = !JdbcSourceUtils.getPassword(source.getConfig()).equals(sourceInfo.getConfig().getPassword());
+		source = SourcePasswordEncryptUtils.decryptPassword(source);
+
 		String name = sourceInfo.getName();
 		Long projectId = source.getProjectId();
 		checkIsExist(name, source.getId(), projectId);
@@ -276,11 +283,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 					JdbcSourceUtils.getPassword(sourceCopyConfig), 
 					JdbcSourceUtils.getVersion(sourceCopyConfig), 
 					JdbcSourceUtils.isExt(sourceCopyConfig));
-			
+
+			String newPassword = changePwd ? config.getPassword() : SourcePasswordEncryptUtils.decrypt(config.getPassword());
+			config.setPassword(newPassword);
+
 			String newKey = JdbcSourceUtils.getSourceUID(
 					sourceInfo.getName(),
 					config.getUrl(), 
-					config.getUsername(), 
+					config.getUsername(),
 					config.getPassword(),
 					config.getVersion(), 
 					config.isExt());
@@ -296,7 +306,9 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			BeanUtils.copyProperties(sourceInfo, source);
 			source.setUpdateBy(user.getId());
 			source.setUpdateTime(new Date());
-			source.setConfig(JSONUtils.toString(sourceInfo.getConfig()));
+
+			config.setPassword(SourcePasswordEncryptUtils.encrypt(config.getPassword()));
+			source.setConfig(JSONUtils.toString(config));
 			updateSource(source);
 
 			optLogger.info("Source({}) is update by user({})", source.getId(), user.getId());
@@ -326,7 +338,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Transactional
 	public boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		Source source = getSource(id);
+		Source source = getSource(id, false);
 
 		checkWritePermission(entity, source.getProjectId(), user, "delete");
 
@@ -391,7 +403,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	public void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		Source source = getSource(sourceId);
+		Source source = getSource(sourceId, true);
 
 		checkWritePermission(entity, source.getProjectId(), user, "upload csv file in");
 
@@ -431,7 +443,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	public Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user,
 			String type) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		Source source = getSource(sourceId);
+		Source source = getSource(sourceId, true);
 
 		checkWritePermission(entity, source.getProjectId(), user, "upload data in");
 
@@ -504,7 +516,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Override
 	public List<String> getSourceDatabases(Long id, User user) throws NotFoundException, ServerException {
 
-		Source source = getSource(id);
+		Source source = getSource(id, true);
 
 		ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
@@ -537,7 +549,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
 		DBTables dbTable = new DBTables(dbName);
 
-		Source source = getSource(id);
+		Source source = getSource(id, true);
 
 		ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
@@ -571,7 +583,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	@Override
 	public TableInfo getTableInfo(Long id, String dbName, String tableName, User user) throws NotFoundException {
 
-		Source source = getSource(id);
+		Source source = getSource(id, true);
 
 		ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
@@ -600,7 +612,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	public boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user)
 			throws NotFoundException, UnAuthorizedExecption, ServerException {
 
-		Source source = getSource(id);
+		Source source = getSource(id, true);
 
 		checkWritePermission(entity, source.getProjectId(), user, "reconnect");
 

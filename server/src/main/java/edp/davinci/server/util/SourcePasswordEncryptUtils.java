@@ -1,9 +1,13 @@
 package edp.davinci.server.util;
 
 import com.sun.org.apache.xml.internal.security.utils.Base64;
-import edp.davinci.server.util.FileUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.core.dao.entity.Source;
+import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.util.JdbcSourceUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -14,22 +18,14 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 @Component
 public class SourcePasswordEncryptUtils {
-
-    @Value("${file.userfiles-path}")
-    public String fileBasePath;
 
     @Value("${encryption.type}")
     public String type;
@@ -97,10 +93,34 @@ public class SourcePasswordEncryptUtils {
      */
     public static final int KEY_LENGTH = 128;
 
+    private static String AES_PRIVATE_KEY;
+    private static String RSA_PRIVATE_KEY;
+    private static String RSA_PUBLIC_KEY;
+
+    static {
+        try {
+            String path = ResourceUtils.getURL("classpath:").getPath();
+            AES_BASE_PATH = path + "AES" + File.separatorChar;
+            RSA_BASE_PATH = path + "RSA" + File.separatorChar;
+            AES_PRIVATE_KEY = FileUtils.readFileToString(AES_BASE_PATH + AES_PRIVATE, CODE_TYPE);
+            RSA_PRIVATE_KEY = FileUtils.readFileToString(RSA_BASE_PATH + RSA_PRIVATE, CODE_TYPE);
+            RSA_PUBLIC_KEY = FileUtils.readFileToString(RSA_BASE_PATH + RSA_PUBLIC, CODE_TYPE);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Source decryptPassword(Source source) {
+        if (ENCRYPT_TYPE.equals(ALGORITHM_AES) || ENCRYPT_TYPE.equals(ALGORITHM_RSA)) {
+            SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
+            config.setPassword(decrypt(config.getPassword()));
+            source.setConfig(JSONUtils.toString(config));
+        }
+        return source;
+    }
+
     @PostConstruct
     public void getEnvironment(){
-        AES_BASE_PATH = this.fileBasePath + "AES\\";
-        RSA_BASE_PATH = this.fileBasePath + "RSA\\";
         ENCRYPT_TYPE = this.type;
         MAX_ENCRYPT_SIZE = this.maxEncryptSize;
     }
@@ -109,7 +129,9 @@ public class SourcePasswordEncryptUtils {
         if (ENCRYPT_TYPE.equals(ALGORITHM_AES)){
             // AES encryption
             return AESEncrypt(contents);
-        }else if (ENCRYPT_TYPE.equals(ALGORITHM_RSA)){
+        }
+
+        if (ENCRYPT_TYPE.equals(ALGORITHM_RSA)){
             // RSA encryption
             try{
                 Key publicKey = loadPublicKeyFromFile();
@@ -119,6 +141,7 @@ public class SourcePasswordEncryptUtils {
                 return contents;
             }
         }
+
         return contents;
     }
 
@@ -145,8 +168,7 @@ public class SourcePasswordEncryptUtils {
      * @throws Exception
      */
     private static PublicKey loadPublicKeyFromFile() throws Exception {
-        String keyString = FileUtils.readFileToString(RSA_BASE_PATH + RSA_PUBLIC, CODE_TYPE);
-        return loadPublicKeyFromString(ALGORITHM_RSA, keyString);
+        return loadPublicKeyFromString(ALGORITHM_RSA, RSA_PUBLIC_KEY);
     }
 
     /**
@@ -170,8 +192,7 @@ public class SourcePasswordEncryptUtils {
      * @throws Exception
      */
     private static PrivateKey loadPrivateKeyFromFile() throws Exception {
-        String keyString = FileUtils.readFileToString(RSA_BASE_PATH + RSA_PRIVATE, CODE_TYPE);
-        return loadPrivateKeyFromString(ALGORITHM_RSA, keyString);
+        return loadPrivateKeyFromString(ALGORITHM_RSA, RSA_PRIVATE_KEY);
     }
 
     /**
@@ -251,8 +272,9 @@ public class SourcePasswordEncryptUtils {
     public static String AESEncrypt(String cleartext) {
         try {
             KeyGenerator kgen = KeyGenerator.getInstance(ALGORITHM_AES);
-            String keyString = FileUtils.readFileToString(AES_BASE_PATH + AES_PRIVATE, CODE_TYPE);
-            kgen.init(KEY_LENGTH, new SecureRandom(keyString.getBytes()));
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            random.setSeed(AES_PRIVATE_KEY.getBytes());
+            kgen.init(KEY_LENGTH, random);
             SecretKey secretKey = kgen.generateKey();
             byte[] enCodeFormat = secretKey.getEncoded();
             SecretKeySpec key = new SecretKeySpec(enCodeFormat, ALGORITHM_AES);
@@ -276,8 +298,9 @@ public class SourcePasswordEncryptUtils {
         try {
             byte[] byteMi = new BASE64Decoder().decodeBuffer(encrypted);
             KeyGenerator kgen = KeyGenerator.getInstance(ALGORITHM_AES);
-            String keyString = FileUtils.readFileToString(AES_BASE_PATH + AES_PRIVATE, CODE_TYPE);
-            kgen.init(KEY_LENGTH, new SecureRandom(keyString.getBytes()));
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            random.setSeed(AES_PRIVATE_KEY.getBytes());
+            kgen.init(KEY_LENGTH, random);
             SecretKey secretKey = kgen.generateKey();
             byte[] enCodeFormat = secretKey.getEncoded();
             SecretKeySpec key = new SecretKeySpec(enCodeFormat, ALGORITHM_AES);
@@ -305,9 +328,8 @@ public class SourcePasswordEncryptUtils {
         byte[] privateKeyEncoded = privateKey.getEncoded();
         String publicKeyString = Base64.encode(publicKeyEncoded);
         String privateKeyString = Base64.encode(privateKeyEncoded);
-        FileUtils.writeStringToFile("userfiles/" + "RSA", RSA_PUBLIC, publicKeyString, Charset.forName(CODE_TYPE));
-        FileUtils.writeStringToFile("userfiles/" + "RSA", RSA_PRIVATE, privateKeyString, Charset.forName(CODE_TYPE));
-
+        FileUtils.writeStringToFile(RSA_BASE_PATH, RSA_PUBLIC, publicKeyString, Charset.forName(CODE_TYPE));
+        FileUtils.writeStringToFile(RSA_BASE_PATH, RSA_PRIVATE, privateKeyString, Charset.forName(CODE_TYPE));
     }
 
     /**
@@ -320,7 +342,7 @@ public class SourcePasswordEncryptUtils {
         KeyGenerator kgen = KeyGenerator.getInstance(ALGORITHM_AES);
         kgen.init(KEY_LENGTH);
         SecretKey skey = kgen.generateKey();
-        FileUtils.writeStringToFile("userfiles/" + "AES", AES_PRIVATE, org.apache.commons.codec.binary.Base64.encodeBase64String(skey.getEncoded()), Charset.forName(CODE_TYPE));
+        FileUtils.writeStringToFile(AES_BASE_PATH, AES_PRIVATE, org.apache.commons.codec.binary.Base64.encodeBase64String(skey.getEncoded()), Charset.forName(CODE_TYPE));
     }
 
     public static void main(String[] args) throws Exception {

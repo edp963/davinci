@@ -19,22 +19,6 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.commons.Constants.*;
-import static edp.davinci.data.commons.Constants.DATABASE_DEFAULT_VERSION;
-import static edp.davinci.data.commons.Constants.EXT_LIB_PATH_FORMATTER;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PATTERN;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATTER;
-
-import java.io.File;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-
-import javax.sql.DataSource;
-
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
@@ -48,6 +32,18 @@ import edp.davinci.data.pojo.SourceProperty;
 import edp.davinci.data.runner.LoadSupportDatabaseRunner;
 import edp.davinci.data.source.JdbcDataSource;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.sql.DataSource;
+import java.io.File;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+
+import static edp.davinci.commons.Constants.*;
+import static edp.davinci.data.commons.Constants.*;
 
 @Slf4j
 public class JdbcSourceUtils {
@@ -205,9 +201,9 @@ public class JdbcSourceUtils {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append(AT_SIGN);
 		sb.append(url.trim()).append(AT_SIGN);
-		sb.append(version).append(AT_SIGN);
-		sb.append(username).append(AT_SIGN);
-		sb.append(password).append(AT_SIGN);
+        sb.append(StringUtils.isEmpty(version) ? "null" : version).append(AT_SIGN);
+		sb.append(StringUtils.isEmpty(username) ? "null" : username).append(AT_SIGN);
+		sb.append(StringUtils.isEmpty(password) ? "null" : password).append(AT_SIGN);
 
 		return MD5Utils.getMD5(sb.toString(), true, 64);
     }

@@ -41,7 +41,7 @@ public class CronJobRunner implements ApplicationRunner {
     private boolean reloadAll;
 
     /**
-     * 应用启动后开启已启动的cronjob
+     * 是否重新加载已启动的cronjob
      *
      * @param args
      * @throws Exception

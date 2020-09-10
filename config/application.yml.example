@@ -38,7 +38,7 @@ jwtToken:
   algorithm: HS512
 
 
-##your datasouce config
+##your datasource config
 source:
   initial-size: 1
   min-idle: 1
@@ -203,6 +203,10 @@ spring:
             isClustered: true
 
 
+cronjob:
+  reload-all: false
+
+
 screenshot:
   default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
   timeout_second: 600
@@ -239,10 +243,7 @@ statistic:
   java.security.principal:
 
 
+# Source password encrypt
 encryption:
   maxEncryptSize: 1024
   type: Off # Off is to turn off encryption, to enable encryption, please select AES or RSA
-
-
-cronjob:
-  reload-all: false
