@@ -344,7 +344,6 @@ export class ProjectList extends React.PureComponent<
       onCheckUniqueName,
       collectProjects,
       starUserList,
-      vizs,
       organizations
     } = this.props
 
@@ -466,7 +465,6 @@ export class ProjectList extends React.PureComponent<
 }
 
 const mapStateToProps = createStructuredSelector({
-  vizs: makeSelectVizs(),
   starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
   projectDetail: makeSelectCurrentOrganizationProject(),
