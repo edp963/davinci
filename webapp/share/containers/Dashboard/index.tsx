@@ -50,7 +50,7 @@ import DownloadList from 'components/DownloadList'
 import { getValidColumnValue } from 'app/components/Control/util'
 import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 import { Row, Col } from 'antd'
-import { querystring } from '../../util'
+import { querystring } from 'app/utils/util'
 import DashboardActions from './actions'
 import ControlActions from 'app/containers/ControlPanel/actions'
 const {

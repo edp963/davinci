@@ -1,11 +1,14 @@
 import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
 import LoginForm from 'app/containers/Login/LoginForm'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 import Background from 'share/components/Background'
 import { AppActions } from 'share/containers/App/actions'
-import checkLogin from 'utils/checkLogin'
-import { setToken } from 'utils/request'
+import { checkLoginStatus } from 'utils/checkLogin'
+import { querystring } from 'utils/util'
 import { message } from 'antd'
+import { compose } from 'redux'
+import {setToken} from 'utils/request'
 interface ILoginProps {
   loading: boolean
   shareToken: any
@@ -25,7 +28,7 @@ interface ILoginStates {
   password: string
 }
 
-class Login extends React.PureComponent<ILoginProps, ILoginStates> {
+class Login extends React.PureComponent<ILoginProps & RouteComponentProps, ILoginStates> {
   constructor(props) {
     super(props)
     this.state = {
@@ -40,15 +43,20 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
   private checkNormalLogin = () => {
     const { loginCallback } = this.props
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.logged(JSON.parse(loginUser))
+    const {
+      location: { pathname }
+    } = this.props
+    const { userToken } = querystring(window.location.search.substr(1))
+    checkLoginStatus(userToken, pathname, (loginUser?) => {
+      const loginedUser = localStorage.getItem('loginUser')
+      if (loginUser) {
+        this.props.logged(loginUser)
+      }
+      this.props.logged(JSON.parse(loginedUser))
       if (loginCallback) {
         loginCallback()
       }
-    }
+    })
   }
 
   private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
@@ -111,9 +119,14 @@ export function mapDispatchToProps(dispatch) {
       shareToken: any,
       resolve: () => void,
       reject?: () => void
-    ) => dispatch(AppActions.login(username, password, shareToken, resolve, reject)),
+    ) =>
+      dispatch(
+        AppActions.login(username, password, shareToken, resolve, reject)
+      ),
     logged: (user) => dispatch(AppActions.logged(user))
   }
 }
 
-export default connect<{}, {}, ILoginProps>(null, mapDispatchToProps)(Login)
+const withConnect = connect<{}, {}, ILoginProps>(null, mapDispatchToProps)
+
+export default compose(withConnect, withRouter)(Login)

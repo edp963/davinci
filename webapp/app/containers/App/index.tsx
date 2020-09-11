@@ -22,7 +22,13 @@ import React, { useCallback } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Route, HashRouter as Router, Switch, Redirect, withRouter } from 'react-router-dom'
+import {
+  Route,
+  HashRouter as Router,
+  Switch,
+  Redirect,
+  withRouter
+} from 'react-router-dom'
 import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
@@ -34,8 +40,8 @@ import saga from './sagas'
 
 import { makeSelectLogged } from './selectors'
 
-import checkLogin from 'utils/checkLogin'
-import { setToken } from 'utils/request'
+import { checkLoginStatus } from 'utils/checkLogin'
+import { querystring } from 'utils/util'
 import { statistic } from 'utils/statistic/statistic.dv'
 import FindPassword from 'containers/FindPassword'
 
@@ -56,82 +62,56 @@ interface IAppDispatchProps {
 type AppProps = IAppStateProps & IAppDispatchProps & RouteComponentWithParams
 
 export class App extends React.PureComponent<AppProps> {
-
-  constructor (props: AppProps) {
+  constructor(props: AppProps) {
     super(props)
     this.checkTokenLink()
   }
 
-  private getQs = () => {
-    const search = location.search
-    const qs = search ? search.substr(1) : ''
-    if (qs) {
-      return qs
-        .split('&')
-        .reduce((rdc, val) => {
-          const pair = val.split('=')
-          rdc[pair[0]] = pair[1]
-          return rdc
-        }, {})
-    } else {
-      return false
-    }
-  }
-
   private checkTokenLink = () => {
     const {
-      history,
-      onGetLoginUser
+      location: { pathname }
     } = this.props
-
-    const qs = this.getQs()
-    const token = qs['usertoken']
-    // TODO allow take other parameters
-    // const dashboard = qs['dashboard']
-
-    // @FIXME login with token from url query
-    // if (token) {
-    //   setToken(token)
-    //   // onGetLoginUser(() => {
-    //     history.replace('/projects')
-    //     // if (dashboard) {
-    //     //   router.replace(`/project/${this.props.params.projectId}/dashboard/${dashboard}`)
-    //     // } else {
-
-    //     // }
-    //   // })
-    // } else {
-    this.checkNormalLogin()
-    // }
+    const { userToken } = querystring(window.location.search.substr(1))
+    checkLoginStatus(
+      userToken,
+      pathname,
+      (loginUser?) => {
+        const loginedUser = localStorage.getItem('loginUser')
+        if (loginUser) {
+          this.props.onLogged(loginUser)
+        }
+        this.props.onLogged(JSON.parse(loginedUser))
+        statistic.sendPrevDurationRecord()
+      },
+      () => {
+        this.props.onLogout()
+      }
+    )
   }
 
-  private checkNormalLogin = () => {
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.onLogged(JSON.parse(loginUser))
-      statistic.sendPrevDurationRecord()
-    } else {
-      this.props.onLogout()
-    }
-  }
+  // private checkNormalLogin = () => {
+  //   if (checkLogin()) {
+  //     const token = localStorage.getItem('TOKEN')
+  //     const loginUser = localStorage.getItem('loginUser')
+  //     setToken(token)
+  //     this.props.onLogged(JSON.parse(loginUser))
+  //     statistic.sendPrevDurationRecord()
+  //   } else {
+  //     this.props.onLogout()
+  //   }
+  // }
 
   private renderRoute = () => {
     const { logged } = this.props
 
-    return (
-      logged ? (
-        <Redirect to="/projects" />
-      ) : (
-        <Redirect to="/login" />
-      )
-    )
+    return logged ? <Redirect to="/projects" /> : <Redirect to="/login" />
   }
 
-  public render () {
+  public render() {
     const { logged } = this.props
-    if (typeof logged !== 'boolean') { return null }
+    if (typeof logged !== 'boolean') {
+      return null
+    }
 
     return (
       <div>
@@ -172,13 +152,6 @@ const mapDispatchToProps = (dispatch) => ({
   onGetLoginUser: (token) => dispatch(getUserByToken(token))
 })
 
-const withConnect = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect
-)(App)
+export default compose(withReducer, withSaga, withConnect, withRouter)(App)

@@ -22,7 +22,7 @@ import React, { ChangeEvent, FormEvent } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { RouteComponentProps } from 'react-router-dom'
+import { RouteComponentProps, withRouter } from 'react-router-dom'
 
 import LoginForm from './LoginForm'
 
@@ -30,7 +30,8 @@ import { compose } from 'redux'
 
 import { login, logged, getVersion } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
-import checkLogin from 'utils/checkLogin'
+import {checkLoginStatus} from 'utils/checkLogin'
+import { querystring } from 'utils/util'
 import { setToken } from 'utils/request'
 import { statistic } from 'utils/statistic/statistic.dv'
 import ExternalLogin from '../ExternalLogin'
@@ -67,13 +68,22 @@ export class Login extends React.PureComponent<
   }
 
   private checkNormalLogin = () => {
-    if (checkLogin()) {
-      const token = localStorage.getItem('TOKEN')
-      const loginUser = localStorage.getItem('loginUser')
-      setToken(token)
-      this.props.onLogged(JSON.parse(loginUser))
-      this.props.history.replace('/')
-    }
+    const {
+      location: { pathname }
+    } = this.props
+    const { userToken } = querystring(window.location.search.substr(1))
+    checkLoginStatus(
+      userToken,
+      pathname,
+      (loginUser?) => {
+        const loginedUser = localStorage.getItem('loginUser')
+        if (loginUser) {
+          this.props.onLogged(loginUser)
+        }
+        this.props.onLogged(JSON.parse(loginedUser))
+        this.props.history.replace('/')
+      }
+    )
   }
 
   private findPassword = () => {
@@ -177,4 +187,4 @@ const withConnect = connect<{}, {}, ILoginProps>(
   mapDispatchToProps
 )
 
-export default compose(withConnect)(Login)
+export default compose(withConnect, withRouter)(Login)

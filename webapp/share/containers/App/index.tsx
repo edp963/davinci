@@ -22,7 +22,7 @@ import React, { useEffect, memo, useMemo } from 'react'
 import Helmet from 'react-helmet'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppActions } from './actions'
-import { querystring } from '../../util'
+import { querystring } from 'app/utils/util'
 import {
   Route,
   HashRouter as Router,

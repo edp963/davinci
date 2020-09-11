@@ -204,3 +204,43 @@ export function filterTreeSelectOption(
   const text = treeNode.props.title
   return text.toLowerCase().includes(input.toLowerCase())
 }
+
+export function querystring(str) {
+  return str.split('&').reduce((o, kv) => {
+    const [key, value] = kv.split('=')
+    if (!value) {
+      return o
+    }
+    deep_set(
+      o,
+      key.split(/[\[\]]/g).filter((x) => x),
+      value
+    )
+    return o
+  }, {})
+}
+
+function deep_set(o, path, value) {
+  let i = 0
+  const val = decodeURIComponent(value)
+  for (; i < path.length - 1; i++) {
+    if (o[path[i]] === undefined) {
+      o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
+    }
+    o = o[decodeURIComponent(path[i])]
+  }
+  if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
+    const isInclude =
+      Array.isArray(o[decodeURIComponent(path[i])]) &&
+      o[decodeURIComponent(path[i])].includes(val)
+
+    const isEqual = o[decodeURIComponent(path[i])] === val
+    if (!(isInclude || isEqual)) {
+      o[decodeURIComponent(path[i])] = [val].concat(
+        o[decodeURIComponent(path[i])]
+      )
+    }
+  } else {
+    o[decodeURIComponent(path[i])] = val
+  }
+}

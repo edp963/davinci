@@ -28,12 +28,12 @@ import { makeSelectShareType, makeSelectPermissionLoading } from './selectors'
 import Password from 'share/components/Password'
 import Login from 'share/components/Login'
 import {
-  querystring,
   isAuthPassword,
   localStorageCRUD,
   removeNoAuthedPassword,
   getExpirationTime
 } from '../../util'
+import { querystring } from 'app/utils/util'
 import reducer from './reducer'
 import saga from './sagas'
 import { Tmode } from 'app/components/SharePanel/types'
