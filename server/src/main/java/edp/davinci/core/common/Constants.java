@@ -19,12 +19,7 @@
 
 package edp.davinci.core.common;
 
-import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
-import edp.core.exception.ServerException;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 常量
@@ -69,11 +64,6 @@ public class Constants extends Consts {
     public static final String USER_REST_PASSWORD_EMAIL_SUBJECT = "[Davinci] 重置密码";
 
     /**
-     * 用户默认Organization描述
-     */
-    public static final String DEFAULT_ORGANIZATION_DES = "my default organization";
-
-    /**
      * 用户头像上传地址
      */
     public static final String USER_AVATAR_PATH = "/image/user/";
@@ -89,11 +79,6 @@ public class Constants extends Consts {
      */
     public static final String DISPLAY_AVATAR_PATH = "/image/display/";
 
-
-    /**
-     * CSV地址
-     */
-    public static final String SOURCE_CSV_PATH = "/source/csv/";
 
     /**
      * 邀请组织成员邮件主题
@@ -148,55 +133,17 @@ public class Constants extends Consts {
 
     public static final String REG_USER_PASSWORD = ".{6,20}";
 
-    public static final String EXCEL_FORMAT_KEY = "format";
-
-    public static final String EXCEL_FORMAT_TYPE_KEY = "formatType";
-
     public static final String REG_SQL_PLACEHOLDER = "%s.+%s";
 
-    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
+    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-`\"'[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
 
-    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
+    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-`\"'\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
 
     public static final String REG_IGNORE_CASE = "(?i)";
-
-    public static final String REG_CHINESE = "[\\u4e00-\\u9fa5]+";
-
-    public static final Pattern REG_CHINESE_PATTERN = Pattern.compile(REG_CHINESE);
 
     public static final String LDAP_USER_PASSWORD = "LDAP";
 
     public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
 
     public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
-
-
-    public static char getSqlTempDelimiter(String sqlTempDelimiter) {
-        return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
-    }
-
-    public static boolean checkSheetName(String name, String value) {
-        if (!StringUtils.isEmpty(value)) {
-            if (value.length() > INVALID_SHEET_NAEM_LENGTH) {
-                throw new ServerException(name + " length cannot exceed 18 digits");
-            }
-            Matcher matcher = INVALID_SHEET_NAME.matcher(value);
-            if (matcher.find()) {
-                throw new ServerException(name + " cannot contain the following characters: !,:,\\,\\/,?,*,[,],");
-            }
-        }
-        return true;
-    }
-
-    public static String getReg(String express, char delimiter, boolean isAuthPress) {
-        String arg = String.valueOf(delimiter);
-        if (delimiter == DOLLAR_DELIMITER) {
-            arg = "\\" + arg;
-        }
-        if (isAuthPress) {
-            return String.format(express, arg, arg, arg, arg);
-        } else {
-            return String.format(express, arg, arg);
-        }
-    }
 }

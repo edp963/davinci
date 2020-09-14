@@ -26,7 +26,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -316,7 +315,7 @@ public class JdbcDataSource {
 
             } else {
             	druidDataSource.setDriverClassName(CustomDataSourceUtils.getInstance(jdbcUrl, dbVersion).getDriver());
-            	String path = System.getenv("DAVINCI3_HOME") + File.separator  + String.format(Consts.PATH_EXT_FORMATER, jdbcSourceInfo.getDatabase(), dbVersion);
+            	String path = System.getenv("DAVINCI3_HOME") + File.separator  + String.format(Consts.PATH_EXT_FORMATTER, jdbcSourceInfo.getDatabase(), dbVersion);
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 
