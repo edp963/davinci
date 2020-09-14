@@ -38,7 +38,7 @@ jwtToken:
   algorithm: HS512
 
 
-##your datasource config
+## your datasource config
 source:
   initial-size: 1
   min-idle: 1
@@ -76,8 +76,13 @@ spring:
   mvc:
     async:
       request-timeout: 30s
+  rest:
+    proxy-host:
+    proxy-port:
+    proxy-ignore:
 
-## davinci datasource config
+
+  ## davinci datasource config
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
