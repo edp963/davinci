@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useContext, useCallback, useState } from 'react'
+import React, { useContext, useCallback, useState, useEffect } from 'react'
 
 import { useDispatch } from 'react-redux'
 import Toolbar from 'components/RichText/Toolbar'
@@ -54,15 +54,20 @@ const LabelEditor: React.FC = () => {
         return
       }
       setValue(updatedContent)
-      dispatch(
-        DisplayActions.editSlideLayerParams(
-          layerId,
-          onLabelEditorStylesChange(['richText', 'content'], updatedContent)
-        )
-      )
     },
     [editorContent]
   )
+
+  useEffect(() => {
+    if (!editing) {
+      dispatch(
+        DisplayActions.editSlideLayerParams(
+          layerId,
+          onLabelEditorStylesChange(['richText', 'content'], value)
+        )
+      )
+    }
+  }, [editing])
   return (
     <Editor
       className={Styles.editor}

@@ -171,6 +171,17 @@ const displayReducer = (
         draft.lastOperationType = ActionTypes.ADD_SLIDE_LAYERS_SUCCESS
         draft.lastLayers = action.payload.layers
         slideId = action.payload.slideId
+        Object.entries(layersOperationInfo).forEach(
+          ([id, layerOperationInfo]: [string, any]) => {
+            draft.slideLayersOperationInfo[slideId][+id] = {
+              ...layerOperationInfo,
+              selected: false
+            }
+          }
+        )
+        draft.slideLayersOperationInfo[slideId] = {
+          ...layersOperationInfo
+        }
         action.payload.layers.forEach((layer) => {
           draft.slideLayers[slideId][layer.id] = layer
           draft.slideLayersInfo[slideId][layer.id] =
@@ -194,9 +205,8 @@ const displayReducer = (
                   datasource: { resultList: [] },
                   loading: false
                 }
-
           draft.slideLayersOperationInfo[slideId][layer.id] = {
-            selected: false,
+            selected: true,
             resizing: false,
             dragging: false,
             editing: false
@@ -248,20 +258,25 @@ const displayReducer = (
       case ActionTypes.CHANGE_LAYER_OPERATION_INFO:
         Object.entries(layersOperationInfo).forEach(
           ([id, layerOperationInfo]: [string, any]) => {
-              Object.entries(action.payload.changedInfo).forEach(
-                ([ type, status ]: [ string, boolean]) => {
-                  if(status){
-                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
-                      ...layerOperationInfo,
-                      [type]: +id === action.payload.layerId
-                    }
-                  } else {
-                    return draft.slideLayersOperationInfo[draft.currentSlideId][id] = {
-                      ...layerOperationInfo,
-                      [type]: status
-                    }
-                  }
-                })
+            Object.entries(action.payload.changedInfo).forEach(
+              ([type, status]: [string, boolean]) => {
+                if (status) {
+                  return (draft.slideLayersOperationInfo[draft.currentSlideId][
+                    id
+                  ] = {
+                    ...layerOperationInfo,
+                    [type]: +id === action.payload.layerId
+                  })
+                } else {
+                  return (draft.slideLayersOperationInfo[draft.currentSlideId][
+                    id
+                  ] = {
+                    ...layerOperationInfo,
+                    [type]: status
+                  })
+                }
+              }
+            )
           }
         )
         draft.slideLayersOperationInfo[draft.currentSlideId] = {
@@ -393,12 +408,14 @@ const displayReducer = (
         break
 
       case ActionTypes.CLEAR_LAYERS_OPERATION_INFO:
-        if(layersOperationInfo){
+        if (layersOperationInfo) {
           Object.values(layersOperationInfo).forEach(
             (layerOperationInfo: any) => {
-              return Object.entries(action.payload.changedInfo).forEach(([type, value]: [string, boolean])=>{
-                layerOperationInfo[type] = value
-              })
+              return Object.entries(action.payload.changedInfo).forEach(
+                ([type, value]: [string, boolean]) => {
+                  layerOperationInfo[type] = value
+                }
+              )
             }
           )
         }

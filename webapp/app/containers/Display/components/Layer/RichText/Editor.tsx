@@ -109,6 +109,7 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
           renderLeaf={renderLeaf}
           readOnly={readOnly}
           spellCheck
+          autoFocus={!!toolbar}
         />
       </Slate>
     </div>

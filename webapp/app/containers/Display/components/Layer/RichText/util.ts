@@ -19,10 +19,7 @@
  */
 import { ElementTypes } from 'components/RichText/Element'
 import { RichTextNode } from 'components/RichText'
-import {
-  EDITOR_DEFAULT_TEXT_ALIGN,
-  EDITOR_DEFAULT_FONT_WEIGHT_BOLD
-} from './contants'
+import { EDITOR_DEFAULT_FONT_WEIGHT_BOLD } from './contants'
 import { ILayerParams } from '../../types'
 import {
   IEditorSelection,
@@ -74,8 +71,7 @@ export const migrationLabelRichTextStyles = (params: ILayerParams) => {
 
   const fontStyles: Partial<IElementFontStyles> = {
     fontSize: Number(`${fontSize}`),
-    color: `rgba(${fontColor.join()})`,
-    fontFamily: `${fontFamily}`
+    color: `rgba(${fontColor.join()})`
   }
 
   const textStyles: Partial<IElementTextStyles> = {
@@ -92,6 +88,9 @@ export const migrationLabelRichTextStyles = (params: ILayerParams) => {
     fontStyles.underline = textStyle.indexOf('underline') > -1
   }
 
+  if (fontFamily) {
+    fontStyles.fontFamily = `${fontFamily}`
+  }
   return {
     fontStyles,
     textStyles

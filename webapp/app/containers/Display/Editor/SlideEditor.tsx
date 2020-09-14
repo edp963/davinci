@@ -29,7 +29,8 @@ import {
 } from 'containers/Viz/selectors'
 import {
   makeSelectCurrentLayerList,
-  makeSelectCurrentLayersOperationInfo
+  makeSelectCurrentLayersOperationInfo,
+  makeSelectCurrentSelectedLayerList
 } from '../selectors'
 
 import { DisplayActions } from '../actions'
@@ -50,6 +51,7 @@ import { LayerOperations } from '../components/constants'
 import { DeltaPosition } from '../components/types'
 import { DragTriggerTypes } from '../constants'
 import { ILayerOperationInfo } from 'app/containers/Display/components/types'
+import { SecondaryGraphTypes } from 'app/containers/Display/components/Setting'
 
 const SlideEditor: React.FC = () => {
   const dispatch = useDispatch()
@@ -62,7 +64,9 @@ const SlideEditor: React.FC = () => {
   const layersOperationInfo = useSelector(
     makeSelectCurrentLayersOperationInfo()
   )
-
+  const currentSelectedLayerList = useSelector(
+    makeSelectCurrentSelectedLayerList()
+  )
   const {
     id: slideId,
     config: { slideParams }
@@ -71,6 +75,13 @@ const SlideEditor: React.FC = () => {
   useEffect(() => {
     dispatch(DisplayActions.loadSlideDetail(displayId, slideId))
   }, [displayId, slideId])
+
+  useEffect(() => {
+    const selectLayerLabel = currentSelectedLayerList.some((item) => SecondaryGraphTypes.Label === item.subType)
+    if (!selectLayerLabel && currentSelectedLayerList.length > 0) {
+      refBackground.current.focus()
+    }
+  }, [layersOperationInfo])
 
   const refContent = React.useRef<HTMLDivElement>(null)
   const refBackground =  React.useRef() as React.MutableRefObject<HTMLInputElement>
@@ -118,7 +129,6 @@ const SlideEditor: React.FC = () => {
   const commandLayers = useCallback((operation) => {
     dispatch(DisplayActions.changeLayersStack(operation))
   }, [])
-
   const selectionChange = useCallback(
     (layerId: number, checked: boolean, exclusive: boolean) => {
       refBackground.current.focus()
