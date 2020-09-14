@@ -24,7 +24,7 @@ import static edp.core.consts.Consts.COLON;
 import static edp.core.consts.Consts.DOUBLE_SLASH;
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
-import static edp.core.consts.Consts.JDBC_PREFIX_FORMATER;
+import static edp.core.consts.Consts.JDBC_PREFIX_FORMATTER;
 import static edp.core.consts.Consts.NEW_LINE_CHAR;
 import static edp.core.consts.Consts.PATTERN_JDBC_TYPE;
 import static edp.core.consts.Consts.SPACE;
@@ -172,7 +172,7 @@ public class SourceUtils {
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
 			String path = System.getenv("DAVINCI3_HOME") + File.separator
-					+ String.format(Consts.PATH_EXT_FORMATER, dataSourceName, version);
+					+ String.format(Consts.PATH_EXT_FORMATTER, dataSourceName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
 			try {
@@ -210,7 +210,7 @@ public class SourceUtils {
             throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
         }
 
-        String urlPrefix = String.format(JDBC_PREFIX_FORMATER, dataSourceName);
+        String urlPrefix = String.format(JDBC_PREFIX_FORMATTER, dataSourceName);
         String checkUrl = jdbcUrl.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SYMBOL, EMPTY);
         if (urlPrefix.equals(checkUrl)) {
             throw new SourceException("Communications link failure");

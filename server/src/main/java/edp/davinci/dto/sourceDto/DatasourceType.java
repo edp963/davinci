@@ -35,7 +35,7 @@ public class DatasourceType {
 
     public DatasourceType(String name, List<String> versions) {
         this.name = name;
-        this.prefix = name.equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATER, name);
+        this.prefix = name.equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATTER, name);
         this.versions = versions;
     }
 }

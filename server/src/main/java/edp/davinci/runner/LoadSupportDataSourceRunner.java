@@ -63,7 +63,7 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
 
         supportDatasourceList.forEach(s -> supportDatasourceMap.put(
                 s.getName(),
-                s.getName().equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATER, s.getName())
+                s.getName().equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATTER, s.getName())
         ));
 
         supportDatasourceList.sort(Comparator.comparing(DatasourceType::getName));

@@ -20,7 +20,9 @@
 package edp.davinci.controller;
 
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
+import edp.core.exception.ServerException;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -48,6 +50,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.regex.Matcher;
 
 @Api(value = "/dashboardPortals", tags = "dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "dashboardPortal not found"))
@@ -383,7 +386,7 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
-            Constants.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
+            checkAliasName(memDashboardWidgetCreate.getAlias());
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -399,6 +402,24 @@ public class DashboardController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(memDashboardWidget));
     }
 
+    /**
+     * check alias for excel, because SheetName cannot include some special characters
+     *
+     * @param value
+     * @return
+     */
+    private boolean checkAliasName(String value) {
+        if (!StringUtils.isEmpty(value)) {
+            if (value.length() > Constants.INVALID_SHEET_NAME_LENGTH) {
+                throw new ServerException("Alias length cannot exceed 18 digits");
+            }
+            Matcher matcher = Constants.INVALID_SHEET_NAME.matcher(value);
+            if (matcher.find()) {
+                throw new ServerException("Alias cannot contain the following characters: !,:,\\,\\/,?,*,[,],");
+            }
+        }
+        return true;
+    }
 
     /**
      * 修改dashboard下的widget关联信息
@@ -426,7 +447,7 @@ public class DashboardController extends BaseController {
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
 
-            Constants.checkSheetName("Alias", memDashboardWidget.getAlias());
+            checkAliasName(memDashboardWidget.getAlias());
 
             if (invalidId(memDashboardWidget.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");

@@ -38,7 +38,7 @@ jwtToken:
   algorithm: HS512
 
 
-##your datasouce config
+## your datasource config
 source:
   initial-size: 1
   min-idle: 1
@@ -71,7 +71,7 @@ spring:
     proxy-ignore:
 
 
-  ## davinci datasouce config
+  ## davinci datasource config
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
@@ -207,4 +207,4 @@ statistic:
 
 encryption:
   maxEncryptSize: 1024
-  type: OFF # Off is to turn off encryption, to enable encryption, please select AES or RSA
+  type: Off # Off is to turn off encryption, to enable encryption, please select AES or RSA

@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -154,7 +153,7 @@ public class ScreenshotUtil {
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
             File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            File tempDir = new File(fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
+            File tempDir = new File(fileUtils.fileBasePath + Consts.DIR_TEMP + DateUtils.getNowDateYYYYMMDD());
             if (!tempDir.exists()) {
                 tempDir.mkdirs();
             }

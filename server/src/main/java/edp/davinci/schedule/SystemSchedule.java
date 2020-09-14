@@ -63,7 +63,7 @@ public class SystemSchedule {
 
         //下载内容文件保留7天，记录保留1月
         String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforAWeekYYYYMMDD();
-        String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMPL + DateUtils.getTheDayBeforNowDateYYYYMMDD();
+        String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMP + DateUtils.getTheDayBeforNowDateYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
 
         final String download = fileUtils.formatFilePath(downloadDir);
