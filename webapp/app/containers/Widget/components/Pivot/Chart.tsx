@@ -62,7 +62,7 @@ interface IChartProps {
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   selectedChart: number
-  selectedItems?: string[]
+  selectedItems?: string[] | number[]
   onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
