@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Icon, Breadcrumb } from 'antd'
 
 export interface IDataDrillHistoryProps {

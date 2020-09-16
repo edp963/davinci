@@ -18,8 +18,8 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
 import { Form, Row, Col, Table, Input, InputNumber, Select, Steps } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'

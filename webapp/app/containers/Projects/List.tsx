@@ -27,7 +27,7 @@ import React, {
   useRef,
   useImperativeHandle
 } from 'react'
-import * as classnames from 'classnames'
+import classnames from 'classnames'
 import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button } from 'antd'
 const styles = require('../Organizations/Project.less')

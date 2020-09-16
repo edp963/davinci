@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IDataParamSource } from '../Workbench/Dropbox'
 import { IChartStyles } from 'containers/Widget/components/Widget'

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { decodeMetricName } from '../util'
 import { Radio, Button } from 'antd'

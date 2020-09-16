@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { Col, Row, Input, Button, Form } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
