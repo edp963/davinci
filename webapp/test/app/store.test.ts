@@ -22,19 +22,25 @@
  * Test store addons
  */
 
-import { browserHistory } from 'react-router'
-import configureStore from '../store'
+import history from 'app/utils/history'
+import configureStore, { IWindow } from 'app/configureStore'
 
 describe('configureStore', () => {
   let store
 
   beforeAll(() => {
-    store = configureStore({}, browserHistory)
+    store = configureStore({}, history)
   })
 
-  describe('asyncReducers', () => {
-    it('should contain an object for async reducers', () => {
-      expect(typeof store.asyncReducers).toBe('object')
+  describe('injectedReducers', () => {
+    it('should contain an object for reducers', () => {
+      expect(typeof store.injectedReducers).toBe('object')
+    })
+  })
+
+  describe('injectedSagas', () => {
+    it('should contain an object for sagas', () => {
+      expect(typeof store.injectedSagas).toBe('object')
     })
   })
 
@@ -42,5 +48,17 @@ describe('configureStore', () => {
     it('should contain a hook for `sagaMiddleware.run`', () => {
       expect(typeof store.runSaga).toBe('function')
     })
+  })
+})
+
+declare const window: IWindow
+describe('configureStore params', () => {
+  it('should call window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__', () => {
+    /* eslint-disable no-underscore-dangle */
+    const compose = jest.fn()
+    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = () => compose
+    configureStore(undefined, history)
+    expect(compose).toHaveBeenCalled()
+    /* eslint-enable */
   })
 })
