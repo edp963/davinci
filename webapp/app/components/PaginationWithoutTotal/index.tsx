@@ -33,10 +33,12 @@ interface IPaginationWithoutTotalProps {
   size?: ButtonSize
   defaultPageSize?: number
   showSizeChanger?: boolean
-  showQuickJumper?: boolean
+  showQuickJumper?: boolean | {
+    goButton?: React.ReactNode
+  }
   pageSizeOptions?: string[]
   className?: string
-  onChange: (current: number, pageSize: number) => void
+  onChange?: (current: number, pageSize: number) => void
 }
 
 interface IPaginationWithoutTotalStates {

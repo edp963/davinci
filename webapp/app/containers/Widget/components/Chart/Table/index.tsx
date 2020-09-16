@@ -646,7 +646,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       withPaging && tablePagination.total === -1 ? (
         <PaginationWithoutTotal
           dataLength={data.length}
-          size="small"
+          size={'small' as any}
           {...paginationConfig}
         />
       ) : null
