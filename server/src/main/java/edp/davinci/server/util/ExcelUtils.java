@@ -19,18 +19,27 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.commons.Constants.BACK_SLASH;
-import static edp.davinci.commons.Constants.COMMA;
-import static edp.davinci.commons.Constants.DOT;
-import static edp.davinci.commons.Constants.DOUBLE_QUOTES;
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.commons.Constants.PERCENT_SIGN;
-import static edp.davinci.commons.Constants.POUND_SIGN;
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.data.pojo.Param;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.NumericUnitEnum;
+import edp.davinci.server.enums.SqlColumnMappingEnum;
+import edp.davinci.server.enums.SqlColumnTypeEnum;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.model.*;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,42 +47,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
-import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.enums.SqlColumnMappingEnum;
-import edp.davinci.server.enums.SqlColumnTypeEnum;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DataFormat;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.web.multipart.MultipartFile;
-
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.data.pojo.Param;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.NumericUnitEnum;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.DataUploadEntity;
-import edp.davinci.server.model.ExcelHeader;
-import edp.davinci.server.model.FieldCurrency;
-import edp.davinci.server.model.FieldCustom;
-import edp.davinci.server.model.FieldNumeric;
-import edp.davinci.server.model.FieldPercentage;
-import edp.davinci.server.model.FieldScientificNotation;
-import edp.davinci.server.model.QueryColumn;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import static edp.davinci.commons.Constants.*;
 
 public class ExcelUtils {
 
@@ -563,9 +537,9 @@ public class ExcelUtils {
 
     public static void checkSheetName(String sheetName, String value) {
         if (!StringUtils.isEmpty(value)) {
-            if (value.length() > Constants.INVALID_SHEET_NAEM_LENGTH) {
+            if (value.length() > Constants.INVALID_SHEET_NAME_LENGTH) {
                 throw new ServerException(
-                        sheetName + " length cannot exceed " + Constants.INVALID_SHEET_NAEM_LENGTH + " digits");
+                        sheetName + " length cannot exceed " + Constants.INVALID_SHEET_NAME_LENGTH + " digits");
             }
             Matcher matcher = Constants.PATTERN_INVALID_SHEET_NAME.matcher(value);
             if (matcher.find()) {

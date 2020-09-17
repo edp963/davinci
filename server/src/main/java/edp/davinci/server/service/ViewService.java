@@ -19,24 +19,16 @@
 
 package edp.davinci.server.service;
 
-import java.util.List;
-import java.util.Map;
-
 import edp.davinci.core.dao.entity.User;
-import edp.davinci.server.component.excel.SQLContext;
-import edp.davinci.server.dto.view.WidgetDistinctParam;
-import edp.davinci.server.dto.view.ViewBaseInfo;
-import edp.davinci.server.dto.view.ViewCreate;
-import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.dto.view.ViewUpdate;
-import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
+import edp.davinci.server.dto.view.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedExecption;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+
+import java.util.List;
+import java.util.Map;
 
 public interface ViewService extends CheckEntityService {
     

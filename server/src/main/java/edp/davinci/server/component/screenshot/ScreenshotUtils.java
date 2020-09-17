@@ -152,7 +152,7 @@ public class ScreenshotUtils {
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
             File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            File tempDir = new File(fileUtils.fileBasePath + Constants.DIR_TEMPL + DateUtils.getNowDateYYYYMMDD());
+            File tempDir = new File(fileUtils.fileBasePath + Constants.DIR_TEMP + DateUtils.getNowDateYYYYMMDD());
             if (!tempDir.exists()) {
                 tempDir.mkdirs();
             }

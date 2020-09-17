@@ -62,8 +62,8 @@ public class SqlParseUtils {
 
     public static final String REG_IGNORE_CASE = "(?i)";
 
-    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
-    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
+    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-`\"'\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
+    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-`\"'[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
     public static final String REG_CRITERION = "^'.*?'$";
 
     public static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";

@@ -72,7 +72,7 @@ public class Constants {
 
     public static final String DOLLAR_SIGN = "$";
 
-    public static final String MYSQL_KEY_SIGN = "`";
+    public static final String BACKQUOTE = "`";
 
     public static final String SINGLE_QUOTES = "'";
 
