@@ -20,6 +20,8 @@
 
 import { GraphTypes, SecondaryGraphTypes } from './constants'
 
+import { RichTextNode } from 'components/RichText'
+
 export * from './Layer/List/types'
 export * from './Layer/types'
 export * from './Container/types'
@@ -39,7 +41,6 @@ export interface ILayerRaw extends LayerBase {
 }
 
 export interface ILayerParams {
-
   backgroundColor: [number, number, number]
   backgroundRepeat: 'repeat' | 'repeat-x' | 'repeat-y' | 'no-repeat'
   backgroundSize: 'auto' | 'contain' | 'cover'
@@ -66,8 +67,9 @@ export interface ILayerParams {
   paddingBottom: number
   paddingLeft: number
   paddingRight: number
-  contentText: string
-
+  richText: IRichTextConfig
+  contentText: string,
+  
   src: string
   controlSetting: string[]
   start?: number
@@ -75,7 +77,19 @@ export interface ILayerParams {
 
   timeFormat: string
   timeDuration: number
+
 }
+
+export interface ILayerOperationInfo {
+  dragging: boolean,
+  resizing: boolean,
+  selected: boolean,
+  editing: boolean
+}
+
+export interface IRichTextConfig {
+  content: string | RichTextNode[]
+} 
 
 export type ILayerFormed = LayerBase & {
   params: ILayerParams

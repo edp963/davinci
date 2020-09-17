@@ -23,14 +23,12 @@ import classnames from 'classnames'
 import { Editable, withReact, Slate, RenderLeafProps } from 'slate-react'
 import { createEditor, Node } from 'slate'
 import { withHistory } from 'slate-history'
-import { withHtml } from './decorators'
-import { parseHtml } from './util'
+import { withHtml } from 'components/RichText/decorators'
+import { parseHtml } from 'components/RichText/util'
 
-import Toolbar from './Toolbar'
-import { Element, withElements, TextStyles, ElementTypes } from './Element'
-import { Leaf } from './Leaf'
-
-import './RichText.less'
+import Toolbar from 'components/RichText/Toolbar'
+import { Element, withElements } from 'components/RichText/Element'
+import { Leaf } from 'components/RichText/Leaf'
 
 interface IEditorProps {
   value?: Node[] | string
@@ -41,8 +39,27 @@ interface IEditorProps {
   onChange?: (newVal: Node[]) => void
 }
 
+interface IEditorProps {
+  value?: Node[] | string
+  className?: string
+  readOnly?: boolean
+  toolbar?: React.ReactNode
+  styles?: React.CSSProperties
+  onFormatText?: (text: string) => string
+  onChange?: (newVal: Node[]) => void
+}
+
 const Editor: React.FC<IEditorProps> = (props, ref) => {
-  const { value, className, readOnly, toolbar, onFormatText, onChange } = props
+  const {
+    value,
+    className,
+    readOnly,
+    toolbar,
+    onFormatText,
+    onChange,
+    styles
+  } = props
+
   const initialValue = useMemo(() => {
     let parsedValue: Node[]
     if (typeof value === 'string') {
@@ -59,6 +76,7 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
     }
     return parsedValue
   }, [value])
+
   const editor = useMemo(
     () => withElements(withHtml(withReact(withHistory(createEditor())))),
     []
@@ -73,8 +91,8 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
   const cls = useMemo(
     () =>
       classnames({
-        richtext: true,
-        'richtext-editor': !readOnly,
+        'richtext': true,
+        'display-slide-layer-editor': true,
         [className]: !!className
       }),
     []
@@ -83,17 +101,15 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
 
   return (
     <div className={cls}>
-      <Slate
-        editor={editor}
-        value={initialValue}
-        onChange={onChange}
-      >
+      <Slate editor={editor} value={initialValue} onChange={onChange}>
         {toolbar === false ? null : toolbar || <Toolbar.Toolbar />}
         <Editable
+          style={styles}
           renderElement={Element}
           renderLeaf={renderLeaf}
           readOnly={readOnly}
           spellCheck
+          autoFocus={!!toolbar}
         />
       </Slate>
     </div>

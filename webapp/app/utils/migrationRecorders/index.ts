@@ -7,6 +7,8 @@ import {
   IScheduleMailConfig,
   IScheduleWeChatWorkConfig
 } from 'app/containers/Schedule/components/types'
+import displayParamsConfig from './displayParams'
+import { ILayerParams } from 'app/containers/Display/components/types'
 
 export interface IMigrationRecorder {
   versions: string[]
@@ -35,9 +37,11 @@ const dashboardConfigMigrationRecorder = (data: IDashboardConfig) =>
 const scheduleConfigMigrationRecorder = (
   data: IScheduleMailConfig | IScheduleWeChatWorkConfig
 ) => executeMigration(scheduleConfig, data)
-
+const displayParamsMigrationRecorder = (data: ILayerParams) => 
+  executeMigration(displayParamsConfig, data)
 export {
   widgetConfigMigrationRecorder,
   dashboardConfigMigrationRecorder,
-  scheduleConfigMigrationRecorder
+  scheduleConfigMigrationRecorder,
+  displayParamsMigrationRecorder
 }

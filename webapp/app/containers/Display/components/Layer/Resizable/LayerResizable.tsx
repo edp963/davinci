@@ -18,12 +18,13 @@
  * >>
  */
 
-import React, { useContext, useState, useEffect, useCallback } from 'react'
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import {
   ContainerContext,
   SlideContext
 } from 'containers/Display/components/Container'
 import { LayerListContext, LayerContext } from '../util'
+import { SecondaryGraphTypes } from '../../Setting'
 
 import { Resizable, ResizeCallbackData } from 'libs/react-resizable'
 import { DeltaSize } from '../types'
@@ -34,7 +35,7 @@ const LayerResizable: React.FC = (props) => {
 
   const { onResize } = useContext(LayerListContext)
   const {
-    layer: { id: layerId, params }
+    layer: { id: layerId, params, subType }
   } = useContext(LayerContext)
 
   const { width: slideWidth, height: slideHeight } = slideParams
@@ -43,6 +44,14 @@ const LayerResizable: React.FC = (props) => {
     slideWidth - positionX,
     slideHeight - positionY
   ]
+
+  const resizeProps = useMemo(
+    (): Array<'s' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne'> =>
+    subType === SecondaryGraphTypes.Label
+        ? ['w', 'e']
+        : ['se'],
+    [subType]
+  )
 
   const resize = useCallback(
     (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
@@ -63,6 +72,7 @@ const LayerResizable: React.FC = (props) => {
     [layerId, width, height, onResize]
   )
 
+
   return (
     <Resizable
       width={width}
@@ -74,6 +84,7 @@ const LayerResizable: React.FC = (props) => {
       minConstraints={[50, 50]}
       maxConstraints={maxConstraints}
       handleSize={[20, 20]}
+      resizeHandles={resizeProps}
     >
       {props.children as React.ReactElement}
     </Resizable>

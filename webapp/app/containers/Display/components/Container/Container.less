@@ -84,6 +84,10 @@
           z-index: 999999;
         }
 
+        & > span:nth-last-child(2) {
+          z-index: 999999;
+        }
+
         &-tools {
           display: none;
           position: absolute;
@@ -122,6 +126,16 @@
         }
         &:hover &-tooltips {
           display: block;
+        }
+        &-editor {
+          border-radius: @border-radius-base;
+          .richtext {
+            &-toolbar {
+              border: @border-width-base @border-style-base @border-color-base;
+              user-select: none;
+              border-radius: 4px;
+            }
+          }
         }
       }
     }

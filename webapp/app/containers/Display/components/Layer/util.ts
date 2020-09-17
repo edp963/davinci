@@ -28,7 +28,8 @@ export const LayerListContext = React.createContext<LayerListContextValue>({
   getChartData: () => {},
   onDrag: () => {},
   onResize: () => {},
-  onSelectionChange: () => {}
+  onSelectionChange: () => {},
+  onEditLabelChange: () => {}
 })
 
 export const LayerContext = React.createContext<LayerContextValue>({
@@ -37,6 +38,7 @@ export const LayerContext = React.createContext<LayerContextValue>({
   operationInfo: {
     dragging: false,
     resizing: false,
-    selected: false
+    selected: false,
+    editing: false
   }
 })
