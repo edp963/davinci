@@ -1208,7 +1208,7 @@ export function mapDispatchToProps (dispatch) {
     ) => dispatch(loadDashboardDetail(portalId, dashboardId)),
     onAddDashboardItems: (
       portalId: number,
-      items: Array<Omit<Omit<IDashboardItem, 'id'>, 'config'>>,
+      items: Array<Omit<IDashboardItem, 'id' | 'config'>>,
       resolve: (items: IDashboardItem[]) => void
     ) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (

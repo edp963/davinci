@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import widgetlibs from '../../config'
 const pivotlibs = widgetlibs['pivot']
 import { Dropdown, Menu } from 'antd'

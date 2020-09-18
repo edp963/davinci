@@ -249,16 +249,13 @@ const viewReducer = (
         break
       case ActionTypes.COPY_VIEW_SUCCESS:
         const fromViewId = action.payload.fromViewId
-        const copiedViewKeys: Array<keyof IViewBase> = [
-          'id',
-          'name',
-          'description'
-        ]
-        const copiedView: IViewBase = pick(
-          action.payload.result,
-          copiedViewKeys
-        )
-        copiedView.sourceName = action.payload.result.source.name
+        const { id, name, description, source } = action.payload.result
+        const copiedView: IViewBase = {
+          id,
+          name,
+          description,
+          sourceName: source.name
+        }
         draft.views.splice(
           draft.views.findIndex(({ id }) => id === fromViewId) + 1,
           0,

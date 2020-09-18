@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'

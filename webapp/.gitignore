@@ -2,6 +2,7 @@
 coverage
 build
 node_modules
+__snapshots__
 stats.json
 package-lock.json
 

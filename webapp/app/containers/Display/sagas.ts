@@ -607,19 +607,19 @@ export function* undoOperation (action: DisplayActionType) {
   const { undoOperationDone, undoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
-      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
-        yield call(request, `${api.display}/${displayId}/slides`, {
-          method: 'put',
-          data: [
-            {
-              ...slide,
-              displayId
-            }
-          ]
-        })
-        break
+      // case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+      //   yield call(request, `${api.display}/${displayId}/slides`, {
+      //     method: 'put',
+      //     data: [
+      //       {
+      //         ...slide,
+      //         displayId
+      //       }
+      //     ]
+      //   })
+      //   break
       case ActionTypes.ADD_SLIDE_LAYERS_SUCCESS:
-      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+      // case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
         const deleteLayerIds = lastLayers.map((l) => l.id)
         yield call(
           request,
@@ -669,19 +669,19 @@ export function* redoOperation (action: DisplayActionType) {
   const { redoOperationDone, redoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
-      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
-        yield call(request, `${api.display}/${displayId}/slides`, {
-          method: 'put',
-          data: [
-            {
-              ...slide,
-              displayId
-            }
-          ]
-        })
-        break
+      // case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+      //   yield call(request, `${api.display}/${displayId}/slides`, {
+      //     method: 'put',
+      //     data: [
+      //       {
+      //         ...slide,
+      //         displayId
+      //       }
+      //     ]
+      //   })
+      //   break
       case ActionTypes.ADD_SLIDE_LAYERS_SUCCESS:
-      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+      // case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
         yield call(
           request,
           `${api.display}/${displayId}/slides/${slideId}/widgets`,
