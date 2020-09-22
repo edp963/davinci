@@ -66,7 +66,7 @@ import java.util.stream.Collectors;
 import static edp.core.consts.Consts.COMMA;
 import static edp.core.consts.Consts.MINUS;
 import static edp.davinci.core.common.Constants.NO_AUTH_PERMISSION;
-import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVARE;
+import static edp.davinci.core.enums.SqlVariableTypeEnum.AUTHVAR;
 import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
 @Slf4j
@@ -747,9 +747,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewId);
             authVariables = getAuthVariables(roleViewList, variables);
             if (null != excludeColumns) {
-                Set<String> eclmns = getExcludeColumnsViaOneView(roleViewList);
-                if (!CollectionUtils.isEmpty(eclmns)) {
-                    excludeColumns.addAll(eclmns);
+                Set<String> columns = getExcludeColumnsViaOneView(roleViewList);
+                if (!CollectionUtils.isEmpty(columns)) {
+                    excludeColumns.addAll(columns);
                 }
             }
         }
@@ -880,39 +880,61 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             return list;
         }
 
-        Map<String, SqlVariable> map = new HashMap<>();
-        List<SqlVariable> authVarables = variables.stream()
-                .filter(v -> AUTHVARE == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
-        authVarables.forEach(v -> map.put(v.getName(), v));
-        List<SqlVariable> dacVars = authVarables.stream()
+
+        List<SqlVariable> authVars = variables.stream()
+                .filter(v -> AUTHVAR == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+
+        Map<String, SqlVariable> authVarMap = new HashMap<>();
+        authVars.forEach(v -> authVarMap.put(v.getName(), v));
+
+        List<SqlVariable> dacVars = authVars.stream()
                 .filter(v -> null != v.getChannel() && !v.getChannel().getBizId().equals(0L))
                 .collect(Collectors.toList());
 
         roleViewList.forEach(r -> {
             if (!StringUtils.isEmpty(r.getRowAuth())) {
                 List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
-                authParamValues.forEach(v -> {
-                    if (map.containsKey(v.getName())) {
-                        SqlVariable sqlVariable = map.get(v.getName());
-                        if (v.isEnable()) {
-                            if (CollectionUtils.isEmpty(v.getValues())) {
-                                List values = new ArrayList<>();
-                                values.add(NO_AUTH_PERMISSION);
-                                sqlVariable.setDefaultValues(values);
-                            } else {
-                                List<Object> values = sqlVariable.getDefaultValues() == null ? new ArrayList<>()
-                                        : sqlVariable.getDefaultValues();
-                                values.addAll(v.getValues());
-                                sqlVariable.setDefaultValues(values);
+                authVarMap.forEach((k, v) -> {
+                    SqlVariable sqlVariable = v;
+                    List<Object> defaultValues = sqlVariable.getDefaultValues();
+                    if (defaultValues == null) {
+                        sqlVariable.setDefaultValues(new ArrayList<>());
+                        if (authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().isPresent()) {
+                            AuthParamValue authParamValue = authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().get();
+                            if (authParamValue.isEnable()) {
+                                if (CollectionUtils.isEmpty(authParamValue.getValues())) {
+                                    sqlVariable.setDefaultValues(Arrays.asList(new String[]{NO_AUTH_PERMISSION}));
+                                } else {
+                                    sqlVariable.setDefaultValues(authParamValue.getValues());
+                                }
                             }
-                        } else {
-                            sqlVariable.setDefaultValues(new ArrayList<>());
                         }
-                        list.add(sqlVariable);
+                        return;
                     }
+
+                    if (authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().isPresent()) {
+                        AuthParamValue authParamValue = authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().get();
+                        if (authParamValue.isEnable()) {
+                            if (!CollectionUtils.isEmpty(authParamValue.getValues())) {
+                                boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
+                                boolean disable = defaultValues.size() == 0;
+                                if (denied) {
+                                    sqlVariable.setDefaultValues(authParamValue.getValues());
+                                    return;
+                                } else if (!disable) {
+                                    defaultValues.addAll(authParamValue.getValues());
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    sqlVariable.setDefaultValues(new ArrayList<>());
+
                 });
+                list.addAll(authVarMap.values());
             } else {
-                dacVars.forEach(v -> list.add(v));
+                list.addAll(dacVars);
             }
         });
 

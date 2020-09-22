@@ -37,5 +37,6 @@ public class RelRoleView extends RecordInfo<RelRoleView> {
     }
 
     public RelRoleView() {
+
     }
 }

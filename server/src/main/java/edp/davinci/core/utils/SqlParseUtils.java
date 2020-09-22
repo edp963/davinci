@@ -38,11 +38,11 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -111,7 +111,7 @@ public class SqlParseUtils {
                                 queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum
                                         .getValues(variable.getValueType(), variable.getDefaultValues(), variable.isUdf()));
                                 break;
-                            case AUTHVARE:
+                            case AUTHVAR:
                                 if (null != variable) {
                                     List<String> v = getAuthVarValue(variable, null);
                                     authParamMap.put(variable.getName().trim(), null == v ? new ArrayList<>() : v);

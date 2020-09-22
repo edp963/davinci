@@ -358,7 +358,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         // 已经激活，不需要再次激活
         if (user.getActive()) {
-            return resultMap.fail(302).message("The current user is activated and doesn't need to be reactivated");
+            return resultMap.fail().message("The current user is activated and doesn't need to be reactivated");
         }
 
         BaseLock lock = LockFactory.getLock("ACTIVATE" + Consts.AT_SYMBOL + username.toUpperCase(), 5, LockType.REDIS);
