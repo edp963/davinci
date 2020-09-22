@@ -238,7 +238,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATE_FORMAT)
     const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATE_FORMAT)
-    const tml = {
+    const tml: IFilters = {
       name,
       operator: '>=',
       type: 'filter',

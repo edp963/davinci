@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { AggregatorType, IDataParamSource, IDataParamSourceInBox } from '../Dropbox'
 import PivotChartSelector from '../PivotChartSelector'
 import { getFieldAlias } from '../../Config/Field'

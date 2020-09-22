@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form, Divider } from 'antd'
