@@ -18,10 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
-import * as classnames from 'classnames'
+import classnames from 'classnames'
 import { Icon, Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form } from 'antd'
 const FormItem = Form.Item
 const InputGroup = Input.Group

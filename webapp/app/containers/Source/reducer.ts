@@ -24,14 +24,18 @@ import { ISourceState } from './types'
 import { ActionTypes } from './constants'
 import { SourceActionType } from './actions'
 
-const initialState: ISourceState = {
-  sources: null,
-  listLoading: false,
-  formLoading: false,
-  testLoading: false,
-  resetLoading: false,
-  datasourcesInfo: []
+export function getSourceInitialState(): ISourceState {
+  return {
+    sources: null,
+    listLoading: false,
+    formLoading: false,
+    testLoading: false,
+    resetLoading: false,
+    datasourcesInfo: []
+  }
 }
+
+const initialState: ISourceState = getSourceInitialState()
 
 const sourceReducer = (state = initialState, action: SourceActionType) =>
   produce(state, (draft) => {

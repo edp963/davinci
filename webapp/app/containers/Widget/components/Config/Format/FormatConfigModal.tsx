@@ -62,6 +62,7 @@ class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps, IForm
       formatType: selectedFormatType
     }
     if (selectedFormatType !== FieldFormatTypes.Default && !localConfig[selectedFormatType]) {
+      // @ts-ignore
       nextLocalConfig[selectedFormatType] = { ...defaultFormatConfig[selectedFormatType] }
     }
     this.setState({

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { IWidgetMetric, IChartStyles } from '../Widget'
 import { ILegend } from './Pivot'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'

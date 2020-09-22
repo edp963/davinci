@@ -63,7 +63,6 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
     () => withElements(withHtml(withReact(withHistory(createEditor())))),
     []
   )
-
   const renderLeaf = useCallback(
     (props: RenderLeafProps) => {
       return <Leaf {...props} onFormatText={onFormatText} />
@@ -80,8 +79,8 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
       }),
     []
   )
-
   useImperativeHandle(ref, () => ({}))
+
   return (
     <div className={cls}>
       <Slate
@@ -95,7 +94,6 @@ const Editor: React.FC<IEditorProps> = (props, ref) => {
           renderLeaf={renderLeaf}
           readOnly={readOnly}
           spellCheck
-          autoFocus
         />
       </Slate>
     </div>

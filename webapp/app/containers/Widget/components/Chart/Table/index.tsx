@@ -265,7 +265,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     headerFixed: boolean,
     tableBodyHeght: number
   ) {
-    const scroll: TableProps<any>['scroll'] = { }
+    const scroll: TableProps<any>['scroll'] = {}
     const columnsTotalWidth = columns.reduce(
       (acc, c) => acc + (c.width as number),
       0
@@ -375,7 +375,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     )
   }
 
-  private asyncEmitDrillDetail () {
+  private asyncEmitDrillDetail() {
     const { getDataDrillDetail } = this.props
     setTimeout(() => {
       if (this.props.getDataDrillDetail) {
@@ -416,31 +416,33 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableStyle
   }
 
-  private filterSameNeighbourSibings = (arr, targetIndex ) => {
+  private filterSameNeighbourSibings = (arr, targetIndex) => {
     let s = targetIndex
     let e = targetIndex
     let flag = -1
     const orgIndex = targetIndex
 
     do {
-        const target = arr[targetIndex]
-        if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
-            s = targetIndex -= 1
-        } else if (flag === 1 && arr[targetIndex + 1] === target) {
-            e = (targetIndex += 1)
-        } else if (flag === -1) {
-          flag = 1
-          targetIndex = orgIndex
-        } else {
-            break
-        }
-
+      const target = arr[targetIndex]
+      if (flag === -1 && targetIndex > 0 && arr[targetIndex - 1] === target) {
+        s = targetIndex -= 1
+      } else if (flag === 1 && arr[targetIndex + 1] === target) {
+        e = targetIndex += 1
+      } else if (flag === -1) {
+        flag = 1
+        targetIndex = orgIndex
+      } else {
+        break
+      }
     } while (targetIndex > -1 && targetIndex < arr.length)
     return { s, e }
   }
 
-  private coustomFilter (array, column, index) {
-    const nativeIndex = array.reduce((a , b, c) => b.index === index ? c : a, 0)
+  private coustomFilter(array, column, index) {
+    const nativeIndex = array.reduce(
+      (a, b, c) => (b.index === index ? c : a),
+      0
+    )
     const columns = array.map((a) => a[column])
     const { s: start, e: end } = this.filterSameNeighbourSibings(
       columns,
@@ -453,7 +455,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private collectCell = (target, index, dataIndex: string) => (event) => {
-    let { group, cell } = this.state.selectItems
+    const { group, cell } = this.state.selectItems
     const { data } = this.props
     const groupName = this.matchAttrInBrackets(dataIndex)
     if (this.isValueModelType(groupName)) {
@@ -512,7 +514,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { group, cell } = this.state.selectItems
     if (group.includes(dataIndex)) {
       group.forEach((a, index) => {
-        if (a === dataIndex) group.splice(index, 1)
+        if (a === dataIndex) {
+          group.splice(index, 1)
+        }
       })
     } else {
       group.push(dataIndex)
@@ -548,7 +552,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private isValueModelType = (modelName) => {
     const target = this.getModelTypecollectByModel()
-    return hasProperty(target, modelName) === ViewModelTypes.Value
+    const result = hasProperty(target, modelName as never)
+    return typeof result !== 'boolean' ? result === ViewModelTypes.Value : false
   }
 
   private getModelTypecollectByModel = () => {
@@ -641,7 +646,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       withPaging && tablePagination.total === -1 ? (
         <PaginationWithoutTotal
           dataLength={data.length}
-          size="small"
+          size={'small' as any}
           {...paginationConfig}
         />
       ) : null
@@ -749,7 +754,7 @@ function getTableColumns(props: IChartProps) {
         headerText
       )
       if (dimension.field?.desc) {
-        headerWidth += (14 + 16)
+        headerWidth += 14 + 16
       }
       if (columnConfigItem?.sort) {
         headerWidth += 30
