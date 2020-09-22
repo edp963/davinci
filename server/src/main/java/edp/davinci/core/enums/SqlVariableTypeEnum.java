@@ -21,7 +21,7 @@ package edp.davinci.core.enums;
 
 public enum SqlVariableTypeEnum {
     QUERYVAR("query"),
-    AUTHVARE("auth");
+    AUTHVAR("auth");
 
 
     private String type;

@@ -109,35 +109,6 @@ public class UserController extends BaseController {
         }
     }
 
-//    /**
-//     * 用户激活
-//     *
-//     * @param token
-//     * @param user
-//     * @param request
-//     * @return
-//     */
-//    @ApiOperation(value = "active user")
-//    @PostMapping(value = "/user/active/{token:.*}")
-//    public ResponseEntity activate(@PathVariable String token,
-//                              @ApiIgnore @CurrentUser User user,
-//                              HttpServletRequest request) {
-//
-//        if (StringUtils.isEmpty(token)) {
-//            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        }
-//
-//        try {
-//            ResultMap resultMap = userService.activateUser(user, token, request);
-//            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage());
-//            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-//        }
-//    }
-
     /**
      * 重发邮件
      *
