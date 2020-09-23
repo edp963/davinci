@@ -427,10 +427,11 @@ export function* initiateDownloadTask(action: DashboardActionType) {
     }
   )
 
+  const { dataToken, password } = relatedWidget
   try {
     yield call(request, {
       method: 'POST',
-      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${relatedWidget.dataToken}`,
+      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${dataToken}?password=${password}`,
       data: [
         {
           id: relatedWidget.id,
