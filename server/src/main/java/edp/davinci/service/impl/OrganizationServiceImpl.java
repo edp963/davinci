@@ -23,7 +23,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.MailContentTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.model.MailContent;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
@@ -155,7 +155,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long id = organizationPut.getId();
         Organization organization = getOrganization(id);
@@ -205,7 +205,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, id);
         if (!organization.getUserId().equals(userId)
                 && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-            throw new UnAuthorizedExecption("you have not permission to " + operation + " this organization");
+            throw new UnAuthorizedException("you have not permission to " + operation + " this organization");
         }
     }
 
@@ -219,7 +219,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Organization organization = getOrganization(id);
 
@@ -273,7 +273,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Organization organization = getOrganization(id);
 
@@ -303,13 +303,13 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      * @return
      */
     @Override
-    public OrganizationInfo getOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+    public OrganizationInfo getOrganization(Long id, User user) throws NotFoundException, UnAuthorizedException {
 
         Organization organization = getOrganization(id);
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), id);
         if (null == rel) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+            throw new UnAuthorizedException("Insufficient permissions");
         }
 
         OrganizationInfo organizationInfo = new OrganizationInfo();
@@ -357,7 +357,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      * @return
      */
     @Override
-    public void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         //验证组织
         Organization organization = getOrganization(orgId);
 
@@ -371,7 +371,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         // 验证用户权限，只有organization的owner可以邀请
         RelUserOrganization relOwner = relUserOrganizationMapper.getRel(user.getId(), orgId);
         if (null == relOwner || relOwner.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("you cannot invite anyone to join this organization, cause you are not the owner of this ordination");
+            throw new UnAuthorizedException("you cannot invite anyone to join this organization, cause you are not the owner of this ordination");
         }
 
         //验证被邀请用户是否已经加入
@@ -389,14 +389,14 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
 
     @Override
-    public BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         //验证组织
         Organization organization = getOrganization(orgId);
 
         // 验证用户权限，只有organization的owner可以邀请
         RelUserOrganization relOwner = relUserOrganizationMapper.getRel(user.getId(), orgId);
         if (null == relOwner || relOwner.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("you cannot invite anyone to join this organization, cause you are not the owner of this organization");
+            throw new UnAuthorizedException("you cannot invite anyone to join this organization, cause you are not the owner of this organization");
         }
 
         BatchInviteMemberResult result = new BatchInviteMemberResult();
@@ -594,7 +594,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
         if (null == rel) {
@@ -607,7 +607,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
 
         Organization organization = getOrganization(orgId);
         if (organization.getUserId().equals(rel.getUserId())) {
-            throw new UnAuthorizedExecption("you have not permission delete the creator of the organization");
+            throw new UnAuthorizedException("you have not permission delete the creator of the organization");
         }
 
         if (rel.getUserId().equals(user.getId())) {
@@ -628,7 +628,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     private void checkOwner(Long userId, Long orgId, String operation) {
         RelUserOrganization ownerRel = relUserOrganizationMapper.getRel(userId, orgId);
         if (null != ownerRel && ownerRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
-            throw new UnAuthorizedExecption("you cannot " + operation + " any member of this organization, cause you are not the owner of this ordination");
+            throw new UnAuthorizedException("you cannot " + operation + " any member of this organization, cause you are not the owner of this ordination");
         }
     }
 
@@ -642,7 +642,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
      */
     @Override
     @Transactional
-    public boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemberRole(Long relationId, User user, int role) throws NotFoundException, UnAuthorizedException, ServerException {
 
         RelUserOrganization rel = relUserOrganizationMapper.getById(relationId);
 

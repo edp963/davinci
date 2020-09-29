@@ -20,7 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.core.enums.DownloadType;
@@ -70,25 +70,25 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
     }
 
     @Override
-    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedExecption {
+    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedException {
         if (StringUtils.isEmpty(token)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         String username = tokenUtils.getUsername(token);
         if (StringUtils.isEmpty(username)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         User user = userMapper.selectByUsername(username);
         if (null == user) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         DownloadRecord record = downloadRecordMapper.getById(id);
 
         if (!record.getUserId().equals(user.getId())) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         record.setLastDownloadTime(new Date());

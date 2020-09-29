@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
-import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -55,30 +54,27 @@ public class StringZipUtil {
     }
 
     /**
-     * uncompress
+     * string decompress
      *
      * @param source
      * @return
      */
-    public static String uncompress(String source) {
+    public static String decompress(String source) {
         byte[] decode = Base64.getUrlDecoder().decode(source);
-
         Inflater inflater = new Inflater();
         inflater.setInput(decode);
         final byte[] bytes = new byte[BYTES_LENGTH];
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(BYTES_LENGTH);
-        try {
+        try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream(BYTES_LENGTH);) {
             while (!inflater.finished()) {
                 int length = inflater.inflate(bytes);
                 outputStream.write(bytes, 0, length);
             }
-        } catch (DataFormatException e) {
-            log.debug(e.getMessage(), e);
-            return null;
+            source = outputStream.toString();
+            return source;
+        } catch (Exception e) {// compatible with older versions
+            return source;
         } finally {
             inflater.end();
         }
-
-        return outputStream.toString();
     }
 }

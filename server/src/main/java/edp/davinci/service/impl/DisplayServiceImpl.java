@@ -22,7 +22,7 @@ package edp.davinci.service.impl;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.utils.BaseLock;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
@@ -121,7 +121,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = displayInfo.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -175,7 +175,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         DisplayWithProject displayWithProject = getDisplayWithProject(id, false);
         if (null == displayWithProject) {
@@ -224,7 +224,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Display display = displayMapper.getById(displayUpdate.getId());
         if (null == display) {
@@ -292,7 +292,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         }
     }
 
-    public Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         Display display = displayMapper.getById(displayId);
         if (display == null) {
             throw new NotFoundException("Display is not found");
@@ -307,7 +307,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
                 && !display.getPublish();
         if (disable || noPublish) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
         }
         return display;
     }
@@ -321,7 +321,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     public List<Display> getDisplayListByProject(Long projectId, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         if (!checkReadPermission(entity, projectId, user)) {
             return null;
@@ -378,7 +378,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
     @Override
     public ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         DisplayWithProject displayWithProject = getDisplayWithProject(id, true);
 
@@ -414,7 +414,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
     @Override
     @Transactional
     public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         Display display = displayMapper.getById(vizVisibility.getId());
         if (null == display) {
             throw new NotFoundException("display is not found");
@@ -444,7 +444,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
      */
     @Override
     @Transactional
-    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         DisplayWithProject originDisplay = getDisplayWithProject(id, true);
 
         Long projectId = originDisplay.getProjectId();

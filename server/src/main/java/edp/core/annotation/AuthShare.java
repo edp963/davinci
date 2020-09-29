@@ -35,6 +35,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AuthShare {
     ShareType type();
-
     ShareOperation operation() default ShareOperation.READ;
 }

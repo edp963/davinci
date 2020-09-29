@@ -19,31 +19,17 @@
 
 package edp.davinci.service.impl;
 
-import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
-
-import java.util.Date;
-import java.util.List;
-
-import edp.core.utils.*;
-import edp.davinci.core.enums.LockType;
-import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSON;
-
 import edp.core.common.quartz.QuartzJobExecutor;
 import edp.core.consts.Consts;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
+import edp.core.utils.*;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobStatusEnum;
+import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.model.RedisMessageEntity;
 import edp.davinci.dao.CronJobMapper;
@@ -55,6 +41,18 @@ import edp.davinci.model.User;
 import edp.davinci.service.CronJobService;
 import edp.davinci.service.excel.ExecutorUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
+
+import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
 @Slf4j
 @Service("cronJobService")
@@ -109,7 +107,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	}
 
 	@Override
-	public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 		CronJob cronJob = cronJobMapper.getById(id);
 		return checkReadPermission(entity, cronJob.getProjectId(), user) == true ? cronJob : null;
 	}
@@ -136,7 +134,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	@Override
 	@Transactional
 	public CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		Long projectId = cronJobBaseInfo.getProjectId();
 		checkWritePermission(entity, projectId, user, "create");
@@ -187,7 +185,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	@Override
 	@Transactional
 	public boolean updateCronJob(CronJobUpdate cronJobUpdate, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 		
 		Long id = cronJobUpdate.getId();
 		Long projectId = cronJobUpdate.getProjectId();
@@ -244,7 +242,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	 */
 	@Override
 	@Transactional
-	public boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		CronJob cronJob = getCronJob(id);
 
@@ -261,7 +259,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 	@Override
 	@Transactional
-	public CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		CronJob cronJob = getCronJob(id);
 
@@ -291,7 +289,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	
 	@Override
 	@Transactional
-	public CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 		
 		CronJob cronJob = getCronJob(id);
 
@@ -338,7 +336,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	}
 
 	@Override
-	public boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		CronJob cronJob = getCronJob(id);
 

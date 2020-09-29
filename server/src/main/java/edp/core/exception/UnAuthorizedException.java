@@ -21,18 +21,17 @@ package edp.core.exception;
 
 import edp.core.enums.HttpCodeEnum;
 
-public class UnAuthorizedExecption extends RuntimeException {
+public class UnAuthorizedException extends RuntimeException {
 
-    public UnAuthorizedExecption(String message, Throwable cause) {
+    public UnAuthorizedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public UnAuthorizedExecption(String message) {
+    public UnAuthorizedException(String message) {
         super(message);
     }
 
-
-    public UnAuthorizedExecption() {
+    public UnAuthorizedException() {
         super(HttpCodeEnum.UNAUTHORIZED.getMessage());
     }
 }

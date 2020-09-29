@@ -82,6 +82,7 @@ public class ShareController extends BaseController {
                                      @RequestParam String type,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
+
         Map<String, Object> result = shareService.getSharePermissions();
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(result));
@@ -129,8 +130,8 @@ public class ShareController extends BaseController {
                                             @RequestParam(required = false) String password,
                                             @ApiIgnore @CurrentUser User user,
                                             HttpServletRequest request) {
-        ShareDashboard shareDashboard = shareService.getShareDashboard(user);
 
+        ShareDashboard shareDashboard = shareService.getShareDashboard(user);
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDashboard));
         } else {
@@ -153,8 +154,8 @@ public class ShareController extends BaseController {
                                           @RequestParam(required = false) String password,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
-        ShareDisplay shareDisplay = shareService.getShareDisplay(user);
 
+        ShareDisplay shareDisplay = shareService.getShareDisplay(user);
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDisplay));
         } else {
@@ -177,8 +178,8 @@ public class ShareController extends BaseController {
                                          @RequestParam(required = false) String password,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
-        ShareWidget shareWidget = shareService.getShareWidget(user);
 
+        ShareWidget shareWidget = shareService.getShareWidget(user);
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareWidget));
         } else {
@@ -234,7 +235,6 @@ public class ShareController extends BaseController {
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
-
 
         List<Map<String, Object>> resultList = shareService.getDistinctValue(viewId, param, user);
         if (null == user || user.getId() == null) {
