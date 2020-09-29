@@ -224,6 +224,8 @@ public class SqlUtils {
                 } else {
                     jdbcTemplate.setMaxRows(Math.min(limit, pageSize));
                 }
+            } else {
+                jdbcTemplate.setMaxRows(pageNo * pageSize);
             }
 
             paginateWithQueryColumns.setTotalCount(totalCount);
