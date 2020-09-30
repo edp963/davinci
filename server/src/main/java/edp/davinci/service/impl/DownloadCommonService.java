@@ -20,7 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.google.common.collect.Lists;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.DateUtils;
 import edp.core.utils.TokenUtils;
@@ -195,7 +195,7 @@ public class DownloadCommonService {
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
                 log.info("user {} have not permission to download the widget {}", user.getUsername(), id);
-                throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+                throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
         }

@@ -31,7 +31,6 @@ import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import edp.davinci.core.utils.SqlParseUtils;
-import edp.davinci.model.Source;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -225,6 +224,8 @@ public class SqlUtils {
                 } else {
                     jdbcTemplate.setMaxRows(Math.min(limit, pageSize));
                 }
+            } else {
+                jdbcTemplate.setMaxRows(pageNo * pageSize);
             }
 
             paginateWithQueryColumns.setTotalCount(totalCount);
@@ -1050,7 +1051,12 @@ public class SqlUtils {
     }
 
     public static String formatSql(String sql) {
-        return SQLUtils.formatMySql(sql);
+        try {
+            return SQLUtils.formatMySql(sql);
+        } catch (Exception e) {
+            // ignore
+        }
+        return sql;
     }
 }
 

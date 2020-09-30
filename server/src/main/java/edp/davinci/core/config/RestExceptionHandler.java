@@ -20,10 +20,10 @@
 package edp.davinci.core.config;
 
 import edp.core.enums.HttpCodeEnum;
-import edp.core.exception.ForbiddenExecption;
+import edp.core.exception.ForbiddenException;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ResultMap;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ public class RestExceptionHandler {
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = ForbiddenExecption.class)
+    @ExceptionHandler(value = ForbiddenException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
     private ResultMap forbiddenExceptionHandler(HttpServletRequest request, Exception e) {
@@ -67,7 +67,7 @@ public class RestExceptionHandler {
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = UnAuthorizedExecption.class)
+    @ExceptionHandler(value = UnAuthorizedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     private ResultMap unAuthorizedExceptionHandler(HttpServletRequest request, Exception e) {

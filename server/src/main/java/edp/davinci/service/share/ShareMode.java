@@ -25,8 +25,8 @@ public enum ShareMode {
     COMPATIBLE(0),  // 兼容模式
     NORMAL(1),      // 普通分享
     PASSWORD(2),    // 口令分享
-    AUTH(3),        // 权限分享（用户、角色）
-    ;
+    AUTH(3);        // 权限分享（用户、角色）
+
     @Getter
     private int mode;
 

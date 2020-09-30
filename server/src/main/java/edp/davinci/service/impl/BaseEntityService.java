@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 
 import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.utils.BaseLock;
 import edp.core.utils.LockFactory;
 import edp.davinci.core.enums.CheckEntityEnum;
@@ -61,7 +61,7 @@ public abstract class BaseEntityService {
 
 	protected void alertUnAuthorized(CheckEntityEnum entity, User user, String operation) throws ServerException {
 		log.warn("user ({}) don't have permission to {} this {}", user.getId(), operation, entity.getSource());
-		throw new UnAuthorizedExecption("you don't have permission to " + operation + " this " + entity.getSource());
+		throw new UnAuthorizedException("you don't have permission to " + operation + " this " + entity.getSource());
 	}
 
 	protected ProjectPermission getProjectPermission(Long projectId, User user) {
@@ -103,7 +103,7 @@ public abstract class BaseEntityService {
 	}
 	
 	protected void checkDeletePermission(CheckEntityEnum entity, Long projectId, User user)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
@@ -117,7 +117,7 @@ public abstract class BaseEntityService {
 	}
 
 	protected void checkWritePermission(CheckEntityEnum entity, Long projectId, User user, String operation)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
@@ -131,7 +131,7 @@ public abstract class BaseEntityService {
 	}
 	
 	protected void checkSharePermission(CheckEntityEnum entity, Long projectId, User user)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 

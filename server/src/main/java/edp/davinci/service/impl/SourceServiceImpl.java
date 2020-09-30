@@ -26,7 +26,7 @@ import edp.core.enums.DataTypeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.model.DBTables;
 import edp.core.model.JdbcSourceInfo;
 import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
@@ -51,7 +51,6 @@ import edp.davinci.model.View;
 import edp.davinci.runner.LoadSupportDataSourceRunner;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,14 +123,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
      */
     @Override
     public List<Source> getSources(Long projectId, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(projectId, user, false);
         } catch (NotFoundException e) {
             throw e;
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             return null;
         }
 
@@ -149,14 +148,14 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
     @Override
     public SourceDetail getSourceDetail(Long id, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(id);
 
         ProjectPermission projectPermission = getProjectPermission(source.getProjectId(), user);
 
         if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         SourceDetail sourceDetail = new SourceDetail();
@@ -183,7 +182,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
     @Override
     @Transactional
     public Source createSource(SourceCreate sourceCreate, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = sourceCreate.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -264,7 +263,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
     @Override
     @Transactional
     public Source updateSource(SourceInfo sourceInfo, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(sourceInfo.getId());
         checkWritePermission(entity, source.getProjectId(), user, "update");
@@ -339,7 +338,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
      */
     @Override
     @Transactional
-    public boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(id);
 
@@ -417,7 +416,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
      */
     @Override
     public void validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(sourceId);
 
@@ -453,7 +452,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
     @Override
     @Transactional
     public Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user,
-                              String type) throws NotFoundException, UnAuthorizedExecption, ServerException {
+                              String type) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(sourceId);
 
@@ -615,7 +614,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
     @Override
     public boolean reconnect(Long id, DbBaseInfo dbBaseInfo, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(id);
 

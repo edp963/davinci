@@ -20,7 +20,7 @@
 package edp.davinci.service.impl;
 
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;
@@ -79,7 +79,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit: {}", wrapper);
             return true;
-        } catch (UnAuthorizedExecption | ServerException e) {
+        } catch (UnAuthorizedException | ServerException e) {
             throw e;
         } catch (Exception e) {
             log.error("submit download task error,e=", e);
@@ -103,15 +103,15 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
     }
 
     @Override
-    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedExecption {
+    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         ProjectDetail projectDetail = shareFactor.getProjectDetail();
         if (projectDetail == null) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
         }
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
         if (!projectPermission.getDownloadPermission()) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_MSG_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
         }
         ShareDownloadRecord record = shareDownloadRecordMapper.getShareDownloadRecordBy(Long.valueOf(id), uuid);
         if (record != null) {

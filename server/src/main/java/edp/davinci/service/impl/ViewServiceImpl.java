@@ -25,7 +25,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.utils.*;
@@ -125,12 +125,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @return
      */
     @Override
-    public List<ViewBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<ViewBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(projectId, user, false);
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             return null;
         }
 
@@ -154,7 +154,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
     @Override
-    public ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         ViewWithSourceBaseInfo view = viewMapper.getViewWithSourceBaseInfo(id);
         if (null == view) {
             throw new NotFoundException("view is not found");
@@ -162,7 +162,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
         if (isHiddenPermission(projectDetail, user, false)) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+            throw new UnAuthorizedException("Insufficient permissions");
         }
 
         List<RelRoleView> relRoleViews = relRoleViewMapper.getByView(view.getId());
@@ -223,7 +223,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     @Transactional
-    public ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = viewCreate.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -290,7 +290,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     @Transactional
-    public boolean updateView(ViewUpdate viewUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateView(ViewUpdate viewUpdate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long id = viewUpdate.getId();
         View view = getView(id);
@@ -360,20 +360,20 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     @Transactional
-    public boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         View view = getView(id);
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to delete this view");
+        } catch (UnAuthorizedException e) {
+            throw new UnAuthorizedException("you have not permission to delete this view");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getViewPermission() < UserPermissionEnum.DELETE.getPermission()) {
-            throw new UnAuthorizedExecption("you have not permission to delete this view");
+            throw new UnAuthorizedException("you have not permission to delete this view");
         }
 
         if (!CollectionUtils.isEmpty(widgetMapper.getWidgetsByWiew(id))) {
@@ -398,21 +398,21 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @return
      */
     @Override
-    public PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(executeSql.getSourceId());
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to execute sql");
+        } catch (UnAuthorizedException e) {
+            throw new UnAuthorizedException("you have not permission to execute sql");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()
                 || projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
-            throw new UnAuthorizedExecption("you have not permission to execute sql");
+            throw new UnAuthorizedException("you have not permission to execute sql");
         }
 
         //结构化Sql
@@ -477,7 +477,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @return
      */
     @Override
-    public Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException {
+    public Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedException, ServerException, SQLException {
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
@@ -486,7 +486,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         ViewWithSource viewWithSource = getViewWithSource(id);
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
         if (!projectService.allowGetData(projectDetail, user)) {
-            throw new UnAuthorizedExecption("you have not permission to get data");
+            throw new UnAuthorizedException("you have not permission to get data");
         }
 
         return getResultDataList(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
@@ -655,11 +655,11 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
 
     @Override
-    public List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedException {
         ViewWithSource viewWithSource = getViewWithSource(id);
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
         if (!projectService.allowGetData(projectDetail, user)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
         return getDistinctValueData(projectService.isMaintainer(projectDetail, user), viewWithSource, param, user);
     }
@@ -926,6 +926,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                                     return;
                                 }
                             }
+                            return;
                         }
                     }
 
@@ -942,8 +943,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     }
 
 
-    private void checkAndInsertRoleParam(String sqlVarible, List<RelRoleViewDto> roles, User user, View view) {
-        List<SqlVariable> variables = JSONObject.parseArray(sqlVarible, SqlVariable.class);
+    private void checkAndInsertRoleParam(String sqlVariable, List<RelRoleViewDto> roles, User user, View view) {
+        List<SqlVariable> variables = JSONObject.parseArray(sqlVariable, SqlVariable.class);
         if (CollectionUtils.isEmpty(roles)) {
             relRoleViewMapper.deleteByViewId(view.getId());
             return;

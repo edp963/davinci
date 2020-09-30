@@ -21,18 +21,17 @@ package edp.core.exception;
 
 import edp.core.enums.HttpCodeEnum;
 
-public class ForbiddenExecption extends RuntimeException {
+public class ForbiddenException extends RuntimeException {
 
-    public ForbiddenExecption(String message, Throwable cause) {
+    public ForbiddenException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ForbiddenExecption(String message) {
+    public ForbiddenException(String message) {
         super(message);
     }
 
-
-    public ForbiddenExecption() {
+    public ForbiddenException() {
         super(HttpCodeEnum.FORBIDDEN.getMessage());
     }
 }

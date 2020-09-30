@@ -135,7 +135,6 @@ public class DownloadController extends BaseController {
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
         boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, downloadViewExecuteParams);
-
         return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
     }
 
@@ -155,7 +154,7 @@ public class DownloadController extends BaseController {
             is = new FileInputStream(new File(record.getPath()));
             Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
+            log.error("getShareDownloadRecordFile error,id=" + id + ",e=", e);
         } finally {
             FileUtils.closeCloseable(is);
         }

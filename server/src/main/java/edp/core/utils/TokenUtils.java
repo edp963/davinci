@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -200,7 +199,7 @@ public class TokenUtils {
             final Claims claims = getClaims(token);
             username = claims.get(Consts.TOKEN_USER_NAME).toString();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return username;
     }
@@ -212,12 +211,12 @@ public class TokenUtils {
      * @return
      */
     public String getPassword(String token) {
-        String password;
+        String password = null;
         try {
             final Claims claims = getClaims(token);
             password = claims.get(Consts.TOKEN_USER_PASSWORD).toString();
         } catch (Exception e) {
-            password = null;
+            e.printStackTrace();
         }
         return password;
     }
@@ -238,7 +237,6 @@ public class TokenUtils {
                             token.trim())
                     .getBody();
         } catch (Exception e) {
-            log.debug(e.getMessage());
             claims = Jwts.parser()
                     .setSigningKey(TOKEN_SECRET)
                     .parseClaimsJws(token.startsWith(Consts.TOKEN_PREFIX) ?
@@ -284,12 +282,12 @@ public class TokenUtils {
      * @return
      */
     private Date getCreatedDate(String token) {
-        Date created;
+        Date created = null;
         try {
             final Claims claims = getClaims(token);
             created = new Date((Long) claims.get(Consts.TOKEN_CREATE_TIME));
         } catch (Exception e) {
-            created = null;
+            e.printStackTrace();
         }
         return created;
     }
@@ -301,12 +299,12 @@ public class TokenUtils {
      * @return
      */
     private Date getExpirationDate(String token) {
-        Date expiration;
+        Date expiration = null;
         try {
             final Claims claims = getClaims(token);
             expiration = claims.getExpiration();
         } catch (Exception e) {
-            expiration = null;
+            e.printStackTrace();
         }
         return expiration;
     }

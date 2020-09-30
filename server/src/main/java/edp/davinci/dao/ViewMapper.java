@@ -41,19 +41,15 @@ public interface ViewMapper {
     @Select({"select id from `view` where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-
     ViewWithProjectAndSource getViewWithProjectAndSourceById(@Param("id") Long id);
 
     ViewWithProjectAndSource getViewWithProjectAndSourceByWidgetId(@Param("widgetId") Long widgetId);
-
-
 
     @Delete({"delete from `view` where id = #{id}"})
     int deleteById(Long id);
 
     @Select({"select * from `view` where id = #{id}"})
     View getById(Long id);
-
 
     @Update({
             "update `view`",
@@ -82,7 +78,6 @@ public interface ViewMapper {
     })
     ViewWithSourceBaseInfo getViewWithSourceBaseInfo(@Param("id") Long id);
 
-
     @Select({
             "select v.id, v.`name`, v.`description`, s.name as 'sourceName'",
             "from `view` v ",
@@ -90,7 +85,6 @@ public interface ViewMapper {
             "where v.project_id = #{projectId}"
     })
     List<ViewBaseInfo> getViewBaseInfoByProject(@Param("projectId") Long projectId);
-
 
     int insertBatch(@Param("list") List<View> sourceList);
 

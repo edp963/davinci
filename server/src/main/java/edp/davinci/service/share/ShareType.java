@@ -25,11 +25,11 @@ public enum ShareType {
     DASHBOARD(1),
     DISPLAY(2),
 
-
     /**
      * 数据
      */
     DATA(3),
+
     /**
      * 记录
      */

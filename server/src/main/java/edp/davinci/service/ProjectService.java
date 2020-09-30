@@ -22,7 +22,7 @@ package edp.davinci.service;
 import com.github.pagehelper.PageInfo;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.projectDto.*;
 import edp.davinci.dto.roleDto.RoleProject;
@@ -37,29 +37,29 @@ public interface ProjectService extends CheckEntityService {
 
     List<ProjectInfo> getProjects(User user) throws ServerException;
 
-    ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize);
 
-    boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     List<ProjectInfo> getFavoriteProjects(User user);
 
-    boolean removeFavoriteProjects(User user, Long[] projectIds) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean removeFavoriteProjects(User user, Long[] projectIds) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    List<RelProjectAdminDto> addAdmins(Long id, List<Long> adminIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelProjectAdminDto> addAdmins(Long id, List<Long> adminIds, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption;
+    ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedException;
 
-    List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     PageInfo<ProjectWithCreateBy> getProjectsByOrg(Long id, User user, String keyword, int pageNum, int pageSize);
 
@@ -67,7 +67,7 @@ public interface ProjectService extends CheckEntityService {
 
     boolean allowGetData(ProjectDetail projectDetail, User user);
 
-    List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
+    List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedException;
 
     boolean isMaintainer(ProjectDetail projectDetail, User user);
 }
