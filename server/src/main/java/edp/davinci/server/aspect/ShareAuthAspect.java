@@ -35,7 +35,7 @@ import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -96,8 +96,8 @@ public class ShareAuthAspect {
     public ResponseEntity doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         AuthShare authShare = signature.getMethod().getAnnotation(AuthShare.class);
-        ShareType flagShareType = authShare.type();
-        ShareOperation operation = authShare.operation();
+        ShareType shareType = authShare.type();
+        ShareOperation shareOperation = authShare.operation();
 
         Object[] args = joinPoint.getArgs();
         String token = (String) args[0];
@@ -107,6 +107,9 @@ public class ShareAuthAspect {
         }
 
         ShareFactor shareFactor = ShareFactor.parseShareFactor(token, TOKEN_SECRET);
+        if (shareFactor.getType() == null) {
+            shareFactor.setType(shareType);
+        }
 
         User user = null;
         for (Object arg : args) {
@@ -119,12 +122,12 @@ public class ShareAuthAspect {
         }
 
         try {
-            //兼容 老版本，token 信息转换为新版本信息
+            // 兼容老版本，token信息转换为新版本信息
             adaptShareInfo(token, shareFactor, user);
             // 下载接口数据参数语义不唯一，在业务中判断
-            if (operation != ShareOperation.DOWNLOAD) {
-                if (operation == ShareOperation.PERMISSION) {
-                    //获取兼容模式下的分享类型
+            if (ShareOperation.DOWNLOAD != shareOperation) {
+                if (ShareOperation.PERMISSION == shareOperation) {
+                    // 获取兼容模式下的分享类型
                     String type = (String) args[2];
                     if (CheckEntityEnum.WIDGET.getSource().equals(type.toLowerCase())) {
                         shareFactor.setType(ShareType.WIDGET);
@@ -136,18 +139,18 @@ public class ShareAuthAspect {
                         throw new ServerException("Unknown share type");
                     }
                 } else {
-                    shareFactor.setType(flagShareType == ShareType.DATA ? ShareType.WIDGET : flagShareType);
+                    shareFactor.setType(shareType == ShareType.DATA ? ShareType.WIDGET : shareType);
                 }
             }
 
-            if (flagShareType != ShareType.LOGIN) {
-                //校验 token 权限
-                verifyToken(operation, shareFactor, user, args);
-
-                //校验数据权限
-                verifyDataPermission(operation, flagShareType, shareFactor, user);
+            if (shareType != ShareType.LOGIN) {
+                // 校验token权限
+                verifyToken(shareOperation, shareFactor, user, args);
+                // 校验数据权限
+                verifyDataPermission(shareOperation, shareType, shareFactor, user);
             }
-            //thread local share factor
+
+            // thread local share factor
             SHARE_FACTOR_THREAD_LOCAL.set(shareFactor);
             // 处理业务并返回
             return (ResponseEntity) joinPoint.proceed(args);
@@ -165,15 +168,14 @@ public class ShareAuthAspect {
      * @param user
      * @param args
      * @throws ForbiddenException
-     * @throws UnAuthorizedExecption
      */
     private void verifyToken(ShareOperation operation, ShareFactor shareFactor, User user, Object[] args)
-            throws ForbiddenException, UnAuthorizedExecption {
+            throws ForbiddenException, UnAuthorizedException {
         switch (shareFactor.getMode()) {
             case PASSWORD:
                 String password = (String) args[1];
                 if (StringUtils.isEmpty(password)) {
-                    throw new UnAuthorizedExecption(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_EMPTY_PASSWORD);
+                    throw new UnAuthorizedException(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_EMPTY_SHARE_PASSWORD);
                 }
                 if (!password.equals(shareFactor.getPassword())) {
                     throw new ForbiddenException(operation == ShareOperation.LOAD_DATA ? ErrorMsg.ERR_INVALID_DATA_TOKEN : ErrorMsg.ERR_INVALID_PASSWORD);
@@ -181,11 +183,11 @@ public class ShareAuthAspect {
                 break;
             case AUTH:
                 if (user == null) {
-                    throw new UnAuthorizedExecption(ErrorMsg.ERR_AUTHENTICATION);
+                    throw new UnAuthorizedException(ErrorMsg.ERR_AUTHENTICATION);
                 }
                 if (!shareFactor.getViewers().contains(user.getId())) {
                     Set<RelRoleUser> relRoleUsers = relRoleUserExtendMapper.getByUserAndRoles(user.getId(), shareFactor.getRoles());
-                    if (!shareFactor.getViewers().contains(user.getId()) && CollectionUtils.isEmpty(relRoleUsers)) {
+                    if (CollectionUtils.isEmpty(relRoleUsers)) {
                         throw new ForbiddenException(ErrorMsg.ERR_PERMISSION);
                     }
                 }
@@ -200,13 +202,13 @@ public class ShareAuthAspect {
      * 校验数据权限
      *
      * @param shareOperation
-     * @param flagShareType
+     * @param shareType
      * @param shareFactor
      * @param viewer
      */
     @Transactional
-    protected void verifyDataPermission(ShareOperation shareOperation, ShareType flagShareType, ShareFactor shareFactor, User viewer)
-            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
+    protected void verifyDataPermission(ShareOperation shareOperation, ShareType shareType, ShareFactor shareFactor, User viewer)
+            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
         User sharer = userExtendMapper.selectByPrimaryKey(shareFactor.getSharerId());
         if (sharer == null) {
             throw new ForbiddenException(ErrorMsg.ERR_INVALID_SHARER);
@@ -222,12 +224,12 @@ public class ShareAuthAspect {
             Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
             ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
             if (!projectService.allowGetData(projectDetail, user)) {
-                throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+                throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
             }
             shareFactor.setShareEntity(widget);
         } else {
             // 下载权限数据权限在业务中判断
-            if (flagShareType != ShareType.DATA) {
+            if (shareType != ShareType.DATA) {
                 parseEntityAndProject(shareFactor, user);
             }
             return;
@@ -235,7 +237,10 @@ public class ShareAuthAspect {
     }
 
     private void parseEntityAndProject(ShareFactor shareFactor, User user) {
+
         switch (shareFactor.getType()) {
+            case RECORD:
+            case FILE:
             case WIDGET:
                 Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
                 shareFactor.setProjectDetail(projectService.getProjectDetail(widget.getProjectId(), user, false));
@@ -271,13 +276,13 @@ public class ShareAuthAspect {
         }
         ShareInfo shareInfo = shareService.getShareInfo(token, user);
         shareService.verifyShareUser(user, shareInfo);
-        //新老版本字段定义不同
+        // 新老版本字段定义不同
         shareFactor.setSharerId(shareInfo.getShareUser().getId());
         shareFactor.setEntityId(shareInfo.getShareId());
         shareFactor.setPermission(ShareDataPermission.SHARER);
         shareFactor.setMode(ShareMode.NORMAL);
 
-        //授权模式
+        // 授权模式
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {
             shareFactor.setMode(ShareMode.AUTH);
             Long viewerId = userExtendMapper.getIdByName(shareInfo.getSharedUserName());
@@ -286,5 +291,4 @@ public class ShareAuthAspect {
             }});
         }
     }
-
 }

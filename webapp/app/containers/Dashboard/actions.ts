@@ -36,7 +36,11 @@ import { DownloadTypes } from '../App/constants'
 const CancelToken = axios.CancelToken
 
 export const DashboardActions = {
-  addDashboardItems(portalId, items, resolve) {
+  addDashboardItems(
+    portalId: number,
+    items: Array<Omit<IDashboardItem, 'id' | 'config'>>,
+    resolve: (items: IDashboardItem[]) => void
+  ) {
     return {
       type: ActionTypes.ADD_DASHBOARD_ITEMS,
       payload: {
@@ -278,7 +282,7 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardShareLink (params) {
+  loadDashboardShareLink(params) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
       payload: {

@@ -69,7 +69,7 @@ import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.service.ProjectService;
@@ -141,12 +141,12 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(projectId, user, false);
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             return null;
         }
 
@@ -172,7 +172,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Widget widget = widgetExtendMapper.selectByPrimaryKey(id);
 
@@ -184,7 +184,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
         }
 
         return widget;
@@ -199,7 +199,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      */
     @Override
     @Transactional
-    public Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = widgetCreate.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -257,7 +257,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     @Override
     @Transactional
     public boolean updateWidget(WidgetUpdate widgetUpdate, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long id = widgetUpdate.getId();
         Widget widget = getWidget(id);
@@ -318,7 +318,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      */
     @Override
     @Transactional
-    public boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Widget widget = getWidget(id);
 
@@ -342,7 +342,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Widget widget = getWidget(id);
         checkSharePermission(entity, widget.getProjectId(), user);
@@ -360,7 +360,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
 
     @Override
-    public String generationFile(Long id, WidgetQueryParam queryParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public String generationFile(Long id, WidgetQueryParam queryParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedException {
 
         Widget widget = getWidget(id);
 

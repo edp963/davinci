@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 
 import { Input, Button, Form, Modal } from 'antd'
 import { FormComponentProps } from 'antd/lib/form'

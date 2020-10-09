@@ -45,7 +45,7 @@ import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.DashboardService;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.ProjectService;
@@ -169,14 +169,14 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      * @return
      */
     @Override
-    public PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize) throws ServerException, UnAuthorizedException, NotFoundException {
         if (!checkPagingParam(pageNum, pageSize)) {
             throw new ServerException("Invalid paging param");
         }
 
         List<OrganizationInfo> orgs = organizationExtendMapper.getOrganizationByUser(user.getId());
         if (CollectionUtils.isEmpty(orgs)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         PageHelper.startPage(pageNum, pageSize);
@@ -204,7 +204,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public ProjectInfo createProject(ProjectCreat projectCreat, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
     	String name = projectCreat.getName();
     	Long orgId = projectCreat.getOrgId();
@@ -277,7 +277,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
         if (!organization.getUserId().equals(userId)
                 && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
-            throw new UnAuthorizedExecption("You have not permission to " + operation + " this project");
+            throw new UnAuthorizedException("You have not permission to " + operation + " this project");
         }
 	}
 
@@ -291,7 +291,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
     	ProjectDetail project = getProjectDetail(id, user, true);
 
@@ -369,7 +369,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
 
@@ -389,7 +389,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         dashboardService.deleteDashboardAndPortalByProject(project.getId());
         widgetMapper.deleteByProject(project.getId());
         relRoleViewExtendMapper.deleteByProject(project.getId());
-        viewMapper.deleteByPorject(project.getId());
+        viewMapper.deleteByProject(project.getId());
         sourceExtendMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProject(project.getId());
         relProjectAdminExtendMapper.deleteByProject(project.getId());
@@ -417,7 +417,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public Project updateProject(Long id, ProjectUpdate projectUpdate, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
         ProjectDetail project = getProjectDetail(id, user, true);
         
@@ -466,7 +466,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public boolean favoriteProject(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException {
         ProjectDetail project = getProjectDetail(id, user, false);
         Favorite favorite = new Favorite();
         favorite.setUserId(user.getId());
@@ -511,13 +511,13 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	 * @param user
 	 * @return
 	 * @throws ServerException
-	 * @throws UnAuthorizedExecption
+	 * @throws UnAuthorizedException
 	 * @throws NotFoundException
 	 */
 	@Override
 	@Transactional
 	public List<RelProjectAdminDTO> addAdmins(Long id, List<Long> adminIds, User user)
-			throws ServerException, UnAuthorizedExecption, NotFoundException {
+			throws ServerException, UnAuthorizedException, NotFoundException {
 
 		getProjectDetail(id, user, true);
 
@@ -573,12 +573,12 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
     @Override
     @Transactional
-    public boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
         RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.selectByPrimaryKey(relationId);
         if (null == relProjectAdmin) {
@@ -609,11 +609,11 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      * @param modify
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
     @Override
-    public ProjectDetail getProjectDetail(Long projectId, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
+    public ProjectDetail getProjectDetail(Long projectId, User user, boolean modify) throws NotFoundException, UnAuthorizedException {
         ProjectDetail projectDetail = projectExtendMapper.getProjectDetail(projectId);
         if (null == projectDetail) {
             log.error("Project({}) is not found", projectId);
@@ -628,7 +628,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             //项目的创建人和当前项目对应组织的owner可以修改
             if (notOwner) {
                 log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
-                throw new UnAuthorizedExecption();
+                throw new UnAuthorizedException();
             }
         } else {
             //project所在org对普通成员project不可见
@@ -636,7 +636,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
                     && projectDetail.getOrganization().getMemberPermission() < (short) 1
                     && !projectDetail.getVisibility()) {
             	log.error("User({}) have not permission to modify project({})", user.getId(), projectId);
-                throw new UnAuthorizedExecption();
+                throw new UnAuthorizedException();
             }
         }
 
@@ -652,13 +652,13 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 	 * @param user
 	 * @return
 	 * @throws ServerException
-	 * @throws UnAuthorizedExecption
+	 * @throws UnAuthorizedException
 	 * @throws NotFoundException
 	 */
 	@Override
 	@Transactional
 	public List<RoleProject> postRoles(Long projectId, List<Long> roleIds, User user)
-			throws ServerException, UnAuthorizedExecption, NotFoundException {
+			throws ServerException, UnAuthorizedException, NotFoundException {
 
 		ProjectDetail projectDetail = getProjectDetail(projectId, user, true);
 		List<Role> roleList = roleMapper.getByOrgIdAndIds(projectDetail.getOrgId(), roleIds);
@@ -823,7 +823,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
 
     @Override
-    public List<RelProjectAdminDTO> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+    public List<RelProjectAdminDTO> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedException {
         getProjectDetail(id, user, false);
         return relProjectAdminExtendMapper.getByProject(id);
     }

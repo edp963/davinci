@@ -21,6 +21,7 @@ package edp.davinci.server.enums;
 public enum ShareOperation {
     READ,
     LOAD_DATA,
+    LOAD_DISTINCT_DATA,
     DOWNLOAD,
-    PERMISSION
+    PERMISSION;
 }

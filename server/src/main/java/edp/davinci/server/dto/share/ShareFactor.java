@@ -119,8 +119,8 @@ public class ShareFactor {
     public static ShareFactor parseShareFactor(String token, String secret) throws IllegalArgumentException {
         ShareFactor factor = null;
         try {
-            String uncompress = StringUtils.uncompress(token);
-            String decrypt = AESUtils.decrypt(uncompress, secret);
+            String decompress = StringUtils.decompress(token);
+            String decrypt = AESUtils.decrypt(decompress, secret);
             factor = JSONUtils.toObject(decrypt, ShareFactor.class);
             factor.format();
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class ShareFactor {
         if (factor.getMode() != ShareMode.COMPATIBLE && factor.getExpire() != null && factor.getExpire() > 0L) {
             long now = System.currentTimeMillis();
             if (now > factor.getExpire()) {
-                throw new IllegalArgumentException("invalid token: expired!");
+                throw new IllegalArgumentException("Token expired");
             }
         }
         return factor;

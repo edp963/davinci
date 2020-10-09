@@ -19,9 +19,9 @@
 
 package edp.davinci.server.controller;
 
-import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.DownloadRecord;
 import edp.davinci.core.dao.entity.ShareDownloadRecord;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.annotation.AuthIgnore;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.annotation.CurrentUser;
@@ -29,7 +29,6 @@ import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.enums.ShareOperation;
 import edp.davinci.server.enums.ShareType;
 import edp.davinci.server.service.DownloadService;
@@ -129,7 +128,6 @@ public class DownloadController extends BaseController {
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
         boolean rst = shareDownloadService.submit(DownloadType.getDownloadType(type), uuid, downloadViewExecuteParams);
-
         return ResponseEntity.ok(rst ? new ResultMap().success() : new ResultMap().fail());
     }
 
@@ -147,7 +145,7 @@ public class DownloadController extends BaseController {
             encodeFileName(request, response, record.getName() + FileTypeEnum.XLSX.getFormat());
             Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
-            log.error("Get downloadRecordFile error, id:" + id + ", e:", e.getMessage());
+            log.error("Get shareDownloadRecordFile error, id:" + id + ", e:", e.getMessage());
         }
         return null;
     }

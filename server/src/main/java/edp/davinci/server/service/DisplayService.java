@@ -28,8 +28,7 @@ import edp.davinci.server.dto.share.ShareEntity;
 import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.*;
+import edp.davinci.server.exception.UnAuthorizedException;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,25 +36,25 @@ import java.util.List;
 
 public interface DisplayService extends CheckEntityService {
 
-    Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateDisplay(DisplayUpdate displayUpdate, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean deleteDisplay(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     String uploadAvatar(MultipartFile file) throws ServerException;
 
-    ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    ShareResult shareDisplay(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedException, ServerException;
 
     void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException;
 
     List<Long> getDisplayExcludeRoles(Long id);
 
-    boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Display copyDisplay(Long id, DisplayCopy copy, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 }

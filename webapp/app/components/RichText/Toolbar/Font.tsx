@@ -92,9 +92,18 @@ interface FontOptionProps extends OptionProps {
 
 const FontSelectOptions: FontOptionProps[] = [
   { value: '', label: '默认字体' },
+  { value: "Microsoft Yahei", label: "微软雅黑"}, 
+  { value: "SimSun", label: "宋体"}, 
+  { value: "Heiti", label: "黑体"}, 
+  { value: "STXihei", label: "华文细黑"}, 
+  { value: "Verdana", label: "Verdana"}, 
+  { value: "Arial", label: "Arial"}, 
+  { value: "Times New Roman", label: "Times New Roman"}, 
+  { value: "Times", label: "Times"}, 
+  { value: "MS Sans Serif", label: "MS Sans Serif"},
   { value: 'Sans Serif', label: 'Sans Serif' },
   { value: 'Serif', label: 'Serif' },
-  { value: 'Monospace', label: 'Monospace' }
+  { value: 'Monospace', label: 'Monospace' },
 ]
 
 const FontSizeSelectOptions: OptionProps[] = [

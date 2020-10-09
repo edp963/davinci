@@ -20,6 +20,7 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.AESUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.*;
 import edp.davinci.server.aspect.ShareAuthAspect;
@@ -31,20 +32,21 @@ import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.share.*;
 import edp.davinci.server.dto.user.UserLogin;
+import edp.davinci.server.dto.view.ViewWithProjectAndSource;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.dto.view.ViewWithProjectAndSource;
+import edp.davinci.server.enums.ShareDataPermission;
 import edp.davinci.server.enums.ShareMode;
 import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.*;
+import edp.davinci.server.exception.UnAuthorizedException;
+import edp.davinci.server.model.Paging;
+import edp.davinci.server.model.TokenEntity;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.ServerUtils;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -53,10 +55,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static edp.davinci.commons.Constants.*;
-
 import java.sql.SQLException;
 import java.util.*;
+
+import static edp.davinci.commons.Constants.EMPTY;
 
 
 @Service
@@ -109,7 +111,7 @@ public class ShareServiceImpl implements ShareService {
     private String TOKEN_SECRET;
 
     @Override
-    public User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
@@ -136,7 +138,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
+    public ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
 
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
@@ -158,7 +160,7 @@ public class ShareServiceImpl implements ShareService {
      * @return
      */
     @Override
-    public ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
+    public ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Display display = (Display) shareFactor.getShareEntity();
         ShareDisplay shareDisplay = new ShareDisplay();
@@ -217,7 +219,7 @@ public class ShareServiceImpl implements ShareService {
      */
     @Override
     @Transactional
-    public ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption {
+    public ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Dashboard dashboard = (Dashboard) shareFactor.getShareEntity();
         ShareDashboard shareDashboard = new ShareDashboard();
@@ -244,14 +246,21 @@ public class ShareServiceImpl implements ShareService {
      */
     @Override
     public Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user)
-            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption, SQLException {
+            throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
 
         ViewWithProjectAndSource viewWithProjectAndSource = viewExtendMapper.getViewWithProjectAndSourceByWidgetId(widget.getId());
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareFactor.getUser(), false);
-        boolean maintainer = projectService.isMaintainer(projectDetail, shareFactor.getUser());
+        User tempUser;
+        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
+            tempUser = shareFactor.getUser();
+        } else {
+            tempUser = user;
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), tempUser, false);
+        boolean maintainer = projectService.isMaintainer(projectDetail, tempUser);
 
         Paging paging = viewService.getDataWithQueryColumns(maintainer, viewWithProjectAndSource, queryParam, shareFactor.getUser());
         return paging;
@@ -276,17 +285,25 @@ public class ShareServiceImpl implements ShareService {
             throw new NotFoundException("view is not found");
         }
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), shareFactor.getUser(), false);
 
-        if (!projectService.allowGetData(projectDetail, shareFactor.getUser())) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+        User tempUser;
+        if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
+            tempUser = shareFactor.getUser();
+        } else {
+            tempUser = user;
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), tempUser, false);
+
+        if (!projectService.allowGetData(projectDetail, tempUser)) {
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
         }
 
         try {
-            boolean maintainer = projectService.isMaintainer(projectDetail, shareFactor.getUser());
-            list = viewService.getDistinctValue(maintainer, viewWithProjectAndSource, param, shareFactor.getUser());
+            boolean maintainer = projectService.isMaintainer(projectDetail, tempUser);
+            list = viewService.getDistinctValue(maintainer, viewWithProjectAndSource, param, tempUser);
         } catch (ServerException e) {
-            throw new UnAuthorizedExecption(e.getMessage());
+            throw new UnAuthorizedException(e.getMessage());
         }
 
         return list;
@@ -479,7 +496,7 @@ public class ShareServiceImpl implements ShareService {
         shareToken.setUsername(tokenUserName);
         shareToken.setPassword(tokenPassword);
 
-        //生成token 并 aes加密
+        //生成token并aes加密
         return AESUtils.encrypt(tokenUtils.generateContinuousToken(shareToken), null);
     }
 }

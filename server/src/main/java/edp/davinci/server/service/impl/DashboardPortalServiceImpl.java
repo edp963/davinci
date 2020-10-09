@@ -36,7 +36,7 @@ import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
@@ -93,7 +93,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      * @return
      */
     @Override
-    public List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         if (!checkReadPermission(entity, projectId, user)) {
             return null;
@@ -145,7 +145,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      */
     @Override
     @Transactional
-    public DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Long projectId = dashboardPortalCreate.getProjectId();
     	checkWritePermission(entity, projectId, user, "create");
@@ -213,7 +213,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 	@Override
 	@Transactional
 	public DashboardPortal updateDashboardPortal(DashboardPortalUpdate dashboardPortalUpdate, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(dashboardPortalUpdate.getId());
 		Long projectId = dashboardPortal.getProjectId();
@@ -286,7 +286,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
     @Override
     @Transactional
-    public boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardPortal portal =getDashboardPortal(vizVisibility.getId());
 
@@ -319,7 +319,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      */
     @Override
     @Transactional
-    public boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+    public boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(id);
     	checkWritePermission(entity, dashboardPortal.getProjectId(), user, "delete");

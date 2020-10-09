@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { IDrawingData } from './Pivot'
 import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { spanSize, getPivotCellWidth, getAggregatorLocale, getPivot, getStyleConfig } from '../util'

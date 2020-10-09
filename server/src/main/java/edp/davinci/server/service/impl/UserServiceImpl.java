@@ -681,7 +681,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             throw new ServerException("Password cannot be empty");
         }
 
-        String uncompress = StringUtils.uncompress(token);
+        String uncompress = StringUtils.decompress(token);
         user.setPassword(ticket.getCheckCode());
         if (!tokenUtils.validateToken(uncompress, new TokenEntity(user.getUsername(), user.getPassword()))) {
             throw new ServerException("Invalid check code, check code is wrong or expired");

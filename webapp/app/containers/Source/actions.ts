@@ -50,8 +50,7 @@ export const SourceActions = {
   },
   loadSourcesFail() {
     return {
-      type: ActionTypes.LOAD_SOURCES_FAILURE,
-      payload: {}
+      type: ActionTypes.LOAD_SOURCES_FAILURE
     }
   },
 

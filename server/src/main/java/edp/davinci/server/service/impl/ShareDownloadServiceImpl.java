@@ -34,7 +34,7 @@ import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.ShareDownloadService;
 import edp.davinci.server.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
@@ -100,15 +100,15 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
     }
 
     @Override
-    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedExecption {
+    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedException {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         ProjectDetail projectDetail = shareFactor.getProjectDetail();
         if (projectDetail == null) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
         }
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
         if (!projectPermission.getDownloadPermission()) {
-            throw new UnAuthorizedExecption(ErrorMsg.ERR_PERMISSION);
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
         }
         ShareDownloadRecord record = shareDownloadRecordExtendMapper.getByIdAndUuid(Long.valueOf(id), uuid);
         if (record != null) {

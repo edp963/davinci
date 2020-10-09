@@ -72,7 +72,7 @@ export interface IDisplayState {
   clipboardSlides: ISlideFormed[]
   clipboardLayers: ILayerFormed[]
 
-  lastOperationType: (keyof typeof ActionTypes) | (keyof typeof VizActionTypes)
+  lastOperationType: keyof typeof ActionTypes | keyof typeof VizActionTypes
   lastLayers: ILayerFormed[]
 
   editorBaselines: IBaseline[]
@@ -83,7 +83,8 @@ export interface IDisplayState {
   loading: IDisplayLoading
 }
 
-export interface IDisplaySharePanelState extends Pick<ISharePanel, 'id' | 'type' | 'title'> {
+export interface IDisplaySharePanelState
+  extends Pick<ISharePanel, 'id' | 'type' | 'title'> {
   visible: boolean
 }
 

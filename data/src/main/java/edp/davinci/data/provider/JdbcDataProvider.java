@@ -112,26 +112,34 @@ public class JdbcDataProvider extends DataProvider {
 
 			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
 
-			int maxRows = paging.getLimit();
-			if (maxRows > resultLimit || maxRows <= 0) {
-				maxRows = resultLimit;
-			}
-			jdbcTemplate.setMaxRows(maxRows);
 			DatabaseTypeEnum database = DatabaseTypeEnum.featureOf(config.getDatabase());
 			if (database == DatabaseTypeEnum.MYSQL) {
 				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
 			}
-			
+
+			int maxRows = paging.getLimit();
 			int pageNo = paging.getPageNo();
 			int pageSize = paging.getPageSize();
 			int startRow = (pageNo - 1) * pageSize;
 			
 			// query by paging
 			if (pageNo >= 1 && pageSize >= 1) {
+
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				String countSql = SqlUtils.getCountSql(sql);
 				int count = getCount(jdbcTemplate, countSql);
 				logSql(countSql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
+
+				if (maxRows > 0) {
+					count = Math.min(Math.min(maxRows, resultLimit), count);
+					if (maxRows < pageNo * pageSize) {
+						jdbcTemplate.setMaxRows(maxRows - startRow);
+					} else {
+						jdbcTemplate.setMaxRows(Math.min(maxRows, pageSize));
+					}
+				} else {
+					jdbcTemplate.setMaxRows(pageNo * pageSize);
+				}
 				
 				stopwatch = Stopwatch.createStarted();
 				// special for h2,mysql paging query you can extend other databases
@@ -154,6 +162,10 @@ public class JdbcDataProvider extends DataProvider {
 				logSql(sql, dataResult.getCount(), stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 
 			}else {
+				if (maxRows > resultLimit || maxRows <= 0) {
+					maxRows = resultLimit;
+				}
+				jdbcTemplate.setMaxRows(maxRows);
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				dataResult = getData(jdbcTemplate, sql);
 				dataResult.setCount(dataResult.getData().size());

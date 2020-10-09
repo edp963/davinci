@@ -155,7 +155,7 @@ public interface ViewExtendMapper extends ViewMapper {
     int insertBatch(@Param("list") List<View> sourceList);
 
     @Delete({"delete from `view` where project_id = #{projectId}"})
-    int deleteByPorject(@Param("projectId") Long projectId);
+    int deleteByProject (@Param("projectId") Long projectId);
 
     @Select({
             "select ",

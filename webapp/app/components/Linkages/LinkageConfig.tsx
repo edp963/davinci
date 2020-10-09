@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 
 import LinkageForm, { ILinkageForm } from './LinkageForm'

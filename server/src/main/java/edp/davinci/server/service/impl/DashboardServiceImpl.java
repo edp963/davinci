@@ -63,7 +63,7 @@ import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.role.VizVisibility;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.View;
 import edp.davinci.core.dao.entity.Widget;
@@ -131,7 +131,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboard;
     }
 
-    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Dashboard dashboard = getDashboard(dashboardId);
         if (dashboard == null) {
@@ -154,7 +154,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
 
         if (hidden || isDisable || noPublish) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         return dashboard;
@@ -168,7 +168,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * @return
      */
     @Override
-    public List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         DashboardPortal dashboardPortal = getDashboardPortal(portalId, false);
         if (dashboardPortal == null) {
@@ -209,7 +209,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * @return
      */
     @Override
-    public DashboardWithMem getDashboardMemWidgets(Long portalId, Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DashboardWithMem getDashboardMemWidgets(Long portalId, Long dashboardId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Dashboard dashboard = getDashboard(dashboardId);
 
@@ -264,7 +264,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         DashboardPortal dashboardPortal = getDashboardPortal(dashboardCreate.getDashboardPortalId(), true);
 
@@ -343,7 +343,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public void updateDashboards(Long portalId, DashboardDTO[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public void updateDashboards(Long portalId, DashboardDTO[] dashboards, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
     	Long projectId = dashboardPortal.getProjectId();
@@ -372,7 +372,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         	String name = dashboardDTO.getName();
         	Long id = dashboardDTO.getId();
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
-                throw new UnAuthorizedExecption("You have not permission to update dashboard:\"" + name + "\"");
+                throw new UnAuthorizedException("You have not permission to update dashboard:\"" + name + "\"");
             }
 
             if (!dashboardDTO.getDashboardPortalId().equals(portalId)) {
@@ -477,7 +477,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @SuppressWarnings("serial")
 	@Override
     @Transactional
-    public boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(id, false);
 		if (null == dashboardWithPortal) {
@@ -589,7 +589,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
         if (!dashboardWithPortal.getDashboardPortalId().equals(portalId)) {
@@ -649,7 +649,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	@Override
 	@Transactional
 	public boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidgetDTO[] memDashboardWidgets)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
 		Long projectId = dashboardPortal.getProjectId();
@@ -714,7 +714,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         
     	MemDashboardWidget dashboardWidget = memDashboardWidgetExtendMapper.selectByPrimaryKey(relationId);
         
@@ -761,12 +761,12 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * @param shareEntity
      * @return
      * @throws NotFoundException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws ServerException
      */
 	@Override
 	public ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
 		if (dashboardWithPortal.getType() == 0) {
@@ -812,7 +812,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     @Transactional
-    public boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         
     	DashboardWithPortal dashboard = getDashboardWithPortal(vizVisibility.getId(), true);
 
@@ -840,7 +840,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     public boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         MemDashboardWidget dashboardWidget = memDashboardWidgetExtendMapper.selectByPrimaryKey(relationId);
 
         if (null == dashboardWidget) {

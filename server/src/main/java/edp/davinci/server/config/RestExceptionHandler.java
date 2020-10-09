@@ -24,7 +24,7 @@ import edp.davinci.server.enums.HttpCodeEnum;
 import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class RestExceptionHandler {
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = UnAuthorizedExecption.class)
+    @ExceptionHandler(value = UnAuthorizedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     private ResultMap unAuthorizedExceptionHandler(HttpServletRequest request, Exception e) {

@@ -19,7 +19,8 @@
 
 package edp.davinci.commons.util;
 
-import static edp.davinci.commons.Constants.EMPTY;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.text.StrBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
@@ -28,8 +29,7 @@ import java.util.Iterator;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.text.StrBuilder;
+import static edp.davinci.commons.Constants.EMPTY;
 
 public class StringUtils {
 
@@ -58,7 +58,6 @@ public class StringUtils {
             res = Base64.getUrlEncoder().withoutPadding().encodeToString(outputStream.toByteArray());
         
         } catch (Exception e) {
-            e.printStackTrace();
             return src;
         } finally {
             deflater.end();
@@ -67,7 +66,7 @@ public class StringUtils {
         return res;
     }
 
-    public static String uncompress(String src) {
+    public static String decompress(String src) {
         
         String res = null;
         
@@ -86,7 +85,6 @@ public class StringUtils {
             res = outputStream.toString();
         
         } catch (Exception e) {
-            e.printStackTrace();
             return res;
         } finally {
             inflater.end();

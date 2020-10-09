@@ -29,8 +29,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 自定义 验证分享token 注解
- * 注解在 controller 方法
+ * 自定义验证分享token注解
+ * 注解在controller方法
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

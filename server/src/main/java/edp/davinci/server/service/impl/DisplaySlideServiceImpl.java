@@ -70,7 +70,7 @@ import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.View;
 import edp.davinci.core.dao.entity.Widget;
@@ -116,7 +116,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Long displayId = displaySlideCreate.getDisplayId();
         Display display = getDisplay(displayId);
@@ -181,7 +181,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DisplaySlide displaySlide = displaySlideExtendMapper.selectByPrimaryKey(slideId);
 		if (null == displaySlide) {
@@ -216,7 +216,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Display display = getDisplay(displayId);
         
@@ -231,7 +231,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		for (DisplaySlide displaySlide : displaySlides) {
 
 			if (!projectPermission.isProjectMaintainer() && disableSlides.contains(displaySlide.getId())) {
-				throw new UnAuthorizedExecption("Insufficient permissions");
+				throw new UnAuthorizedException("Insufficient permissions");
 			}
 
 			if (!displaySlide.getDisplayId().equals(displayId)) {
@@ -259,7 +259,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public List<MemDisplaySlideWidget> addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<MemDisplaySlideWidget> addMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetCreate[] slideWidgetCreates, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
@@ -371,7 +371,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDTO[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemDisplaySlideWidgets(Long displayId, Long slideId, MemDisplaySlideWidgetDTO[] memDisplaySlideWidgets, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
@@ -453,7 +453,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean updateMemDisplaySlideWidget(MemDisplaySlideWidget memDisplaySlideWidget, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Long slideId = memDisplaySlideWidget.getDisplaySlideId();
     	SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
@@ -499,7 +499,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean deleteMemDisplaySlideWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteMemDisplaySlideWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         MemDisplaySlideWidget slideWidget = getMemDisplaySlideWidget(relationId);
 
@@ -534,7 +534,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      * @return
      */
     @Override
-    public DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         Display display = getDisplay(displayId);
 
         Long projectId = display.getProjectId();
@@ -588,7 +588,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      * @return
      */
     @Override
-    public SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		Display display = getDisplay(displayId);
 
@@ -599,7 +599,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 				&& !display.getPublish();
 		if (noPublish || !checkReadPermission(entity, projectId, user)) {
 			log.info("User({}) have not permission to view widgets in this display slide", user.getId());
-			throw new UnAuthorizedExecption("you have not permission to view widgets in this display slide");
+			throw new UnAuthorizedException("you have not permission to view widgets in this display slide");
 		}
 
 		DisplaySlide displaySlide = displaySlideExtendMapper.selectByPrimaryKey(slideId);
@@ -653,7 +653,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteDisplaySlideWidgetList(Long displayId, Long slideId, Long[] memIds, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(slideId);
 
@@ -687,7 +687,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         
     	SlideWithDisplayAndProject slideWithDispaly = getSlideWithDisplayAndProject(slideId);
         Display display = slideWithDispaly.getDisplay();
@@ -768,7 +768,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	MemDisplaySlideWidget memDisplaySlideWidget = getMemDisplaySlideWidget(relationId);
 
@@ -838,7 +838,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
     @Override
     @Transactional
-    public boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		SlideWithDisplayAndProject slide = getSlideWithDisplayAndProject(vizVisibility.getId());
 

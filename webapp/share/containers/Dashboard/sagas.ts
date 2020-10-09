@@ -88,6 +88,7 @@ export function* getDashboard(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DASHBOARD) {
     return
   }
+
   const { dashboardGetted, loadDashboardFail } = DashboardActions
   const { token, reject } = action.payload
 
@@ -103,6 +104,7 @@ export function* getDashboard(action: DashboardActionType) {
       config,
       ...rest
     } = result.payload as IShareDashboardDetailRaw
+  
     const parsedConfig: IDashboardConfig = JSON.parse(config || '{}')
     const dashboard = {
       ...rest,
@@ -425,10 +427,11 @@ export function* initiateDownloadTask(action: DashboardActionType) {
     }
   )
 
+  const { dataToken, password } = relatedWidget
   try {
     yield call(request, {
       method: 'POST',
-      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${relatedWidget.dataToken}`,
+      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${dataToken}?password=${password}`,
       data: [
         {
           id: relatedWidget.id,

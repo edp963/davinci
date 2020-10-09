@@ -28,7 +28,7 @@ import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
@@ -61,7 +61,7 @@ public abstract class BaseEntityService {
 
 	protected void alertUnAuthorized(CheckEntityEnum entity, User user, String operation) throws ServerException {
 		log.warn("User({}) don't have permission to {} this {}", user.getId(), operation, entity.getSource());
-		throw new UnAuthorizedExecption("You don't have permission to " + operation + " this " + entity.getSource());
+		throw new UnAuthorizedException("You don't have permission to " + operation + " this " + entity.getSource());
 	}
 
 	protected ProjectPermission getProjectPermission(Long projectId, User user) {
@@ -103,7 +103,7 @@ public abstract class BaseEntityService {
 	}
 	
 	protected void checkDeletePermission(CheckEntityEnum entity, Long projectId, User user)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
@@ -117,7 +117,7 @@ public abstract class BaseEntityService {
 	}
 
 	protected void checkWritePermission(CheckEntityEnum entity, Long projectId, User user, String operation)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 
@@ -131,7 +131,7 @@ public abstract class BaseEntityService {
 	}
 	
 	protected void checkSharePermission(CheckEntityEnum entity, Long projectId, User user)
-			throws UnAuthorizedExecption {
+			throws UnAuthorizedException {
 
 		ProjectPermission projectPermission = getProjectPermission(projectId, user);
 

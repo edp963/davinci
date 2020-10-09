@@ -22,7 +22,7 @@ package edp.davinci.server.service;
 import edp.davinci.server.dto.organization.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dto.organization.BatchInviteMemberResult;
 
@@ -35,27 +35,27 @@ public interface OrganizationService extends CheckEntityService {
 
     List<OrganizationInfo> getOrganizations(User user);
 
-    boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateOrganization(OrganizationPut organizationPut, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     OrganizationBaseInfo createOrganization(OrganizationCreate organizationCreate, User user) throws ServerException;
 
-    Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    Map<String, String> uploadAvatar(Long id, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean deleteOrganization(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    OrganizationInfo getOrganization(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
+    OrganizationInfo getOrganization(Long id, User user) throws NotFoundException, UnAuthorizedException;
 
     List<OrganizationMember> getOrgMembers(Long id);
 
-    void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    void inviteMember(Long orgId, Long memId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     OrganizationInfo confirmInvite(String token, User user) throws ServerException;
 
-    boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean deleteOrgMember(Long relationId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateMemberRole(Long relationId, User user, short role) throws NotFoundException, UnAuthorizedException, ServerException;
 
     void confirmInviteNoLogin(String token) throws NotFoundException, ServerException;
 }

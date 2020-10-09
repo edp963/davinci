@@ -33,7 +33,7 @@ import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ProjectService;
@@ -199,7 +199,7 @@ public class DownloadCommonService {
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
                 log.info("User({}) have not permisson to download the {}({})", user.getUsername(), type, id);
-                throw new UnAuthorizedExecption("You have not permission to download the " + type);
+                throw new UnAuthorizedException("You have not permission to download the " + type);
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));
         }

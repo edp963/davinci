@@ -30,7 +30,12 @@ import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATTER;
 public class SqlUtils {
 
     public static String formatSql(String sql) {
-    	return SQLUtils.formatMySql(sql);
+        try {
+            return SQLUtils.formatMySql(sql);
+        } catch (Exception e) {
+            // ignore
+        }
+        return sql;
     }
     
     public static String getCountSql(String sql) {

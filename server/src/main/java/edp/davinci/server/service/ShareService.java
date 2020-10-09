@@ -26,7 +26,7 @@ import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.model.Paging;
 import edp.davinci.core.dao.entity.User;
 
@@ -35,17 +35,17 @@ import java.util.List;
 import java.util.Map;
 
 public interface ShareService {
-    ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption;
+    ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
     String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException;
 
-    User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedException;
 
-    ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption;
+    ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
-    ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption;
+    ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
-    Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedExecption, SQLException;
+    Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException;
 
     List<Map<String, Object>> getDistinctValue(Long viewId, WidgetDistinctParam param, User user);
 

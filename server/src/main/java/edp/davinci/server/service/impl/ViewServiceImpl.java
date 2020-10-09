@@ -51,7 +51,7 @@ import edp.davinci.server.dto.view.*;
 import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.PagingWithQueryColumns;
 import edp.davinci.server.model.SqlVariable;
@@ -139,12 +139,12 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     public List<ViewBaseInfo> getViews(Long projectId, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(projectId, user, false);
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             return null;
         }
 
@@ -169,7 +169,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Override
     public ViewWithSourceBaseInfo getView(Long id, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         ViewWithSourceBaseInfo view = viewExtendMapper.getViewWithSourceBaseInfo(id);
         if (null == view) {
             throw new NotFoundException("View is not found");
@@ -177,7 +177,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         ProjectDetail projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
         if (isHiddenPermission(projectDetail, user)) {
-            throw new UnAuthorizedExecption("Insufficient permissions");
+            throw new UnAuthorizedException("Insufficient permissions");
         }
 
         List<RelRoleView> relRoleViews = relRoleViewExtendMapper.getByView(view.getId());
@@ -195,7 +195,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     @Override
     @Transactional
     public ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = viewCreate.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -280,7 +280,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     @Override
     @Transactional
     public boolean updateView(ViewUpdate viewUpdate, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long id = viewUpdate.getId();
         View view = getView(id);
@@ -355,14 +355,14 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     @Transactional
-    public boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         View view = getView(id);
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             alertUnAuthorized(entity, user, "delete");
         }
 
@@ -392,25 +392,25 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      * @param user
      * @return
      * @throws NotFoundException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws ServerException
      */
     public PagingWithQueryColumns execute(ViewExecuteParam executeParam, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Source source = getSource(executeParam.getSourceId(), true);
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("You have not permission to execute sql");
+        } catch (UnAuthorizedException e) {
+            throw new UnAuthorizedException("You have not permission to execute sql");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()
                 || projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
-            throw new UnAuthorizedExecption("You have not permission to execute sql");
+            throw new UnAuthorizedException("You have not permission to execute sql");
         }
 
         boolean isMaintainer = isMaintainer(user, projectDetail);
@@ -501,7 +501,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
      */
     @Override
     public Paging<Map<String, Object>> getData(Long id, WidgetQueryParam queryParam, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         if (CollectionUtils.isEmpty(queryParam.getGroups())
                 && CollectionUtils.isEmpty(queryParam.getAggregators())) {
@@ -940,7 +940,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Override
     public List<Map<String, Object>> getDistinctValue(Long id, WidgetDistinctParam param, User user)
-            throws NotFoundException, ServerException, UnAuthorizedExecption {
+            throws NotFoundException, ServerException, UnAuthorizedException {
         ViewWithSource viewWithSource = getViewWithSource(id);
         if (viewWithSource.getSource() == null) {
             throw new NotFoundException("Source is not found");
@@ -1049,13 +1049,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Override
     public PagingWithQueryColumns getDataWithQueryColumns(Long id, WidgetQueryParam queryParam, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         return (PagingWithQueryColumns) getData(id, queryParam, user);
     }
 
     @Override
     public String showSql(Long id, WidgetQueryParam queryParam, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         
         ViewWithSource viewWithSource = getViewWithSource(id);
         

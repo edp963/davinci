@@ -16,7 +16,7 @@ export interface IStore<T> extends Store<T> {
   injectedSagas?: ReducersMapObject
 }
 
-declare interface IWindow extends Window {
+export interface IWindow extends Window {
   // __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose
   __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: any
 }

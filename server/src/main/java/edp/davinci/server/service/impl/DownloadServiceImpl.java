@@ -31,7 +31,7 @@ import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DownloadService;
 import edp.davinci.server.enums.LogNameEnum;
@@ -70,25 +70,25 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
     }
 
     @Override
-    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedExecption {
+    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedException {
         if (StringUtils.isEmpty(token)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         String username = tokenUtils.getUsername(token);
         if (StringUtils.isEmpty(username)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         User user = userMapper.selectByUsername(username);
         if (null == user) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         DownloadRecord record = downloadRecordExtendMapper.selectByPrimaryKey(id);
 
         if (!record.getUserId().equals(user.getId())) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         record.setLastDownloadTime(new Date());

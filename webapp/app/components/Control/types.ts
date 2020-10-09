@@ -141,7 +141,7 @@ export interface IMapControlOptions {
 export interface IFilters {
   name: string
   type: string
-  value: string[]
+  value: string[] | string
   operator: string
   sqlType: string
   children?: IFilters
