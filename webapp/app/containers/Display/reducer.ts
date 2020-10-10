@@ -489,5 +489,5 @@ const displayReducer = (
         break
     }
   })
-
+export { initialState as displayDefaultState}
 export default displayReducer

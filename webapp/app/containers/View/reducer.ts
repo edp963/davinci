@@ -328,4 +328,5 @@ const viewReducer = (
     }
   })
 
+export { initialState as viewInitState}
 export default viewReducer

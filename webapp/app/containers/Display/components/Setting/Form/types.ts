@@ -39,7 +39,7 @@ type SettingComponent =
   | {
       component: 'checkbox',
       valuePropName: 'checked'
-      default: boolean
+      default: string
   } | {
       component: 'checkboxGroup'
       values: Array<{ label: string; value: string }>
