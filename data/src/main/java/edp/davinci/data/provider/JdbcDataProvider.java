@@ -112,41 +112,40 @@ public class JdbcDataProvider extends DataProvider {
 
 			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
 
+			int maxRows = paging.getLimit();
 			DatabaseTypeEnum database = DatabaseTypeEnum.featureOf(config.getDatabase());
 			if (database == DatabaseTypeEnum.MYSQL) {
 				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
 			}
 
-			int maxRows = paging.getLimit();
-			int pageNo = paging.getPageNo();
-			int pageSize = paging.getPageSize();
+			int pageNo = Math.max(paging.getPageNo(), 1);
+			int pageSize = Math.max(paging.getPageSize(), 10);
 			int startRow = (pageNo - 1) * pageSize;
 			
 			// query by paging
 			if (pageNo >= 1 && pageSize >= 1) {
-
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				String countSql = SqlUtils.getCountSql(sql);
 				int count = getCount(jdbcTemplate, countSql);
 				logSql(countSql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 
 				if (maxRows > 0) {
-					count = Math.min(Math.min(maxRows, resultLimit), count);
 					if (maxRows < pageNo * pageSize) {
 						jdbcTemplate.setMaxRows(maxRows - startRow);
 					} else {
 						jdbcTemplate.setMaxRows(Math.min(maxRows, pageSize));
 					}
 				} else {
-					jdbcTemplate.setMaxRows(pageNo * pageSize);
+					maxRows = resultLimit;
+					jdbcTemplate.setMaxRows(Math.min(pageNo * pageSize, resultLimit));
 				}
-				
+
 				stopwatch = Stopwatch.createStarted();
 				// special for h2,mysql paging query you can extend other databases
 				switch(database) {
 					case H2:
 					case MYSQL:
-						if (maxRows < pageNo * pageSize) {
+						if (maxRows > 0 && maxRows < pageNo * pageSize) {
 							sql = sql + " limit " + startRow + ", " + (maxRows - startRow);
 						} else {
 							sql = sql + " limit " + startRow + ", " + pageSize;
@@ -157,8 +156,8 @@ public class JdbcDataProvider extends DataProvider {
 						dataResult = getData(jdbcTemplate, sql, startRow);
 						break;
 				}
-				
-				dataResult.setCount(Math.min(count, maxRows));
+
+				dataResult.setCount(maxRows <= 0 ? Math.min(resultLimit, count) : Math.min(Math.min(maxRows, resultLimit), count));
 				logSql(sql, dataResult.getCount(), stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 
 			}else {

@@ -30,7 +30,7 @@ import java.util.Map;
 
 public enum SqlOperatorEnum {
     IN("IN"),
-    NoTIN("NOT IN"),
+    NOTIN("NOT IN"),
     EQUALSTO("="),
     BETWEEN("BETWEEN"),
     GREATERTHAN(">"),
@@ -76,7 +76,7 @@ public enum SqlOperatorEnum {
                 list.add(expr.getRightItemsList().toString());
 
                 if (expr.isNot()) {
-                    map.put(SqlOperatorEnum.NoTIN, list);
+                    map.put(SqlOperatorEnum.NOTIN, list);
                 } else {
                     map.put(SqlOperatorEnum.IN, list);
                 }

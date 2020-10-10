@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
 
 import static edp.davinci.commons.Constants.*;
 import static edp.davinci.server.commons.Constants.NO_AUTH_PERMISSION;
+import static edp.davinci.server.enums.SqlVariableTypeEnum.AUTHVAR;
 
 @Slf4j
 @Service("viewService")
@@ -767,26 +768,63 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private void setAuthVarValue(Map<String, List<String>> authParams, List<SqlVariable> variables,
             List<RelRoleView> roleViewList, User user) {
 
-        for (SqlVariable var : variables) {
-            SqlVariableTypeEnum typeEnum = SqlVariableTypeEnum.typeOf(var.getType());
-            if (typeEnum != SqlVariableTypeEnum.AUTHVAR) {
-                continue;
+        if (CollectionUtils.isEmpty(variables)) {
+            return;
+        }
+
+        List<SqlVariable> authVars = variables.stream()
+                .filter(v -> AUTHVAR == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
+
+        roleViewList.forEach(r -> {
+
+            if (StringUtils.isEmpty(r.getRowAuth())) {
+                return;
             }
 
-            String varName = var.getName().trim();
+            List<AuthParamValue> paramValues = JSONUtils.toObjectArray(r.getRowAuth(), AuthParamValue.class);
+            authVars.forEach((v) -> {
+                List<Object> defaultValues = v.getDefaultValues();
+                if (defaultValues == null) {
+                    v.setDefaultValues(new ArrayList<>());
+                    paramValues.stream().filter(paramValue -> paramValue.getName().equals(v.getName()))
+                            .findFirst().ifPresent(paramValue -> {
+                        if (paramValue.isEnable()) {
+                            if (CollectionUtils.isEmpty(paramValue.getValues())) {
+                                v.setDefaultValues(Arrays.asList(new String[]{NO_AUTH_PERMISSION}));
+                            } else {
+                                v.setDefaultValues(paramValue.getValues());
+                            }
+                        }
+                    });
+                    return;
+                }
 
-            roleViewList.forEach(r -> {
-                List<AuthParamValue> paramValues = JSONUtils.toObjectArray(r.getRowAuth(), AuthParamValue.class);
-                paramValues.stream().filter(paramValue -> paramValue.isEnable() && paramValue.getName().equals(varName))
+                paramValues.stream().filter(paramValue -> paramValue.getName().equals(v.getName()))
                         .findFirst().ifPresent(paramValue -> {
-                            var.setDefaultValues(paramValue.getValues());
-                        });
+                    if (paramValue.isEnable()) {
+                        if (!CollectionUtils.isEmpty(paramValue.getValues())) {
+                            boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
+                            boolean disable = defaultValues.size() == 0;
+                            if (denied) {
+                                v.setDefaultValues(paramValue.getValues());
+                                return;
+                            } else if (!disable) {
+                                defaultValues.addAll(paramValue.getValues());
+                                return;
+                            }
+                        }
+                        return;
+                    }
+                });
             });
+        });
 
+        for (SqlVariable var : authVars) {
+            String varName = var.getName();
             List<String> values = authVarUtils.getValue(var, user.getEmail());
             if (values == null) {
-                authParams.put(varName, Arrays.asList(new String[] { NO_AUTH_PERMISSION }));
-            } else if (!values.isEmpty()) {
+                authParams.put(varName, Arrays.asList(new String[]{NO_AUTH_PERMISSION}));
+            } else {
                 authParams.put(varName, values);
             }
         }
