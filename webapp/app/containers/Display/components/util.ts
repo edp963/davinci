@@ -57,8 +57,8 @@ export function getDefaultLayerSetting(
   return defaultSetting as ILayerParams
 }
 
-export const captureVideosWithImages = () => {
-  const canvas = this.canvas || document.createElement('canvas')
+export const captureVideosWithImages = (canvasDom) => {
+  const canvas = canvasDom || document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   const videos = document.querySelectorAll('video')
   Array.prototype.forEach.call(videos, (v) => {
