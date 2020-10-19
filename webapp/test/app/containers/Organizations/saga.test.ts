@@ -127,10 +127,10 @@ describe('Organizations Sagas', () => {
 
   describe('getOrganizationDetail Saga', () => {
     const loadOrganizationDetailActions = actions.loadOrganizationDetail(orgId)
-    it('should dispatch the organizationDeleted action if it requests the data successfully', () => {
+    it('should dispatch the organizationDetailLoaded action if it requests the data successfully', () => {
       return expectSaga(getOrganizationDetail, loadOrganizationDetailActions)
         .provide([[matchers.call.fn(request), getMockResponse(organization)]])
-        .put(actions.organizationDetailLoaded(orgId))
+        .put(actions.organizationDetailLoaded(organization))
         .run()
     })
   })
