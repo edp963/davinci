@@ -76,14 +76,14 @@ describe('Schedule Sagas', () => {
   describe('addSchedule Saga', () => {
     const addScheduleActions = actions.addSchedule(schedule, () => void 0)
     it('should dispatch the scheduleAdded action if it requests the data successfully', () => {
-      return expectSaga(getScheduleDetail, addScheduleActions)
+      return expectSaga(addSchedule, addScheduleActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
         .put(actions.scheduleAdded(schedule))
         .run()
     })
     it('should call the addScheduleFail action if the response errors', () => {
       const errors = new Error('error')
-      return expectSaga(getScheduleDetail, addScheduleActions)
+      return expectSaga(addSchedule, addScheduleActions)
         .provide([[matchers.call.fn(request), throwError(errors)]])
         .put(actions.addScheduleFail())
         .run()
@@ -93,14 +93,14 @@ describe('Schedule Sagas', () => {
   describe('deleteSchedule Saga', () => {
     const deleteScheduleActions = actions.deleteSchedule(schedule.id)
     it('should dispatch the scheduleDeleted action if it requests the data successfully', () => {
-      return expectSaga(getScheduleDetail, deleteScheduleActions)
+      return expectSaga(deleteSchedule, deleteScheduleActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule.id)]])
         .put(actions.scheduleDeleted(schedule.id))
         .run()
     })
     it('should call the deleteScheduleFail action if the response errors', () => {
       const errors = new Error('error')
-      return expectSaga(getScheduleDetail, deleteScheduleActions)
+      return expectSaga(deleteSchedule, deleteScheduleActions)
         .provide([[matchers.call.fn(request), throwError(errors)]])
         .put(actions.deleteScheduleFail())
         .run()
@@ -110,14 +110,14 @@ describe('Schedule Sagas', () => {
   describe('editSchedule Saga', () => {
     const editScheduleActions = actions.editSchedule(schedule, () => void 0)
     it('should dispatch the scheduleEdited action if it requests the data successfully', () => {
-      return expectSaga(getScheduleDetail, editScheduleActions)
+      return expectSaga(editSchedule, editScheduleActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
         .put(actions.scheduleEdited(schedule))
         .run()
     })
     it('should call the editScheduleFail action if the response errors', () => {
       const errors = new Error('error')
-      return expectSaga(getScheduleDetail, editScheduleActions)
+      return expectSaga(editSchedule, editScheduleActions)
         .provide([[matchers.call.fn(request), throwError(errors)]])
         .put(actions.editScheduleFail())
         .run()
