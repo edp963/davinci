@@ -24,6 +24,7 @@ import {
   ISchedule,
   JobStatus
 } from 'app/containers/Schedule/components/types'
+import { IDashboard } from 'app/containers/Dashboard/types'
 
 interface ImockStore {
   schedule: ISchedule
@@ -35,6 +36,7 @@ interface ImockStore {
   mails: IUserInfo[]
   keywords: string
   jobStatus: JobStatus
+  dashboard: IDashboard
 }
 
 const scheduleDemo: ISchedule = {
@@ -73,5 +75,18 @@ export const mockStore: ImockStore = {
       email: '',
       avatar: ''
     }
-  ]
+  ],
+  dashboard: {
+    id: 1,
+    name: 'string',
+    parentId: 1,
+    index: 1,
+    dashboardPortalId: 1,
+    type: 0,
+    config: {
+      filters: [],
+      linkages: [],
+      queryMode: 0
+    }
+  }
 }

@@ -20,23 +20,37 @@
 
 import { ActionTypes } from 'app/containers/Schedule/constants'
 import actions from 'app/containers/Schedule/actions'
-import {mockStore} from './fixtures'
+import { mockStore } from './fixtures'
 
 describe('Schedule Actions', () => {
-  const { schedule, projectId, mails, schedules, scheduleId, resolve, jobType } = mockStore
+  const {
+    schedule,
+    projectId,
+    mails,
+    schedules,
+    scheduleId,
+    resolve,
+    jobType
+  } = mockStore
   describe('loadSchedules', () => {
     it('loadSchedules should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_SCHEDULES, payload: {
-        projectId
-      } }
+      const expectedResult = {
+        type: ActionTypes.LOAD_SCHEDULES,
+        payload: {
+          projectId
+        }
+      }
       expect(actions.loadSchedules(projectId)).toEqual(expectedResult)
     })
   })
   describe('schedulesLoaded', () => {
     it('schedulesLoaded should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_SCHEDULES_SUCCESS, payload: {
-        schedules
-      } }
+      const expectedResult = {
+        type: ActionTypes.LOAD_SCHEDULES_SUCCESS,
+        payload: {
+          schedules
+        }
+      }
       expect(actions.schedulesLoaded(schedules)).toEqual(expectedResult)
     })
   })
@@ -82,67 +96,91 @@ describe('Schedule Actions', () => {
   })
   describe('addSchedule', () => {
     it('addSchedule should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.ADD_SCHEDULE, payload: {
-        schedule,
-        resolve
-      } }
+      const expectedResult = {
+        type: ActionTypes.ADD_SCHEDULE,
+        payload: {
+          schedule,
+          resolve
+        }
+      }
       expect(actions.addSchedule(schedule, resolve)).toEqual(expectedResult)
     })
   })
   describe('scheduleAdded', () => {
     it('scheduleAdded should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.ADD_SCHEDULE_SUCCESS, payload: {
-        result: schedule
-      } }
+      const expectedResult = {
+        type: ActionTypes.ADD_SCHEDULE_SUCCESS,
+        payload: {
+          result: schedule
+        }
+      }
       expect(actions.scheduleAdded(schedule)).toEqual(expectedResult)
     })
   })
   describe('addScheduleFail', () => {
     it('addScheduleFail should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.ADD_SCHEDULE_FAILURE, payload: {} }
+      const expectedResult = {
+        type: ActionTypes.ADD_SCHEDULE_FAILURE,
+        payload: {}
+      }
       expect(actions.addScheduleFail()).toEqual(expectedResult)
     })
   })
   describe('editSchedule', () => {
     it('editSchedule should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.EDIT_SCHEDULE, payload: {
-        schedule,
-        resolve
-      } }
-      expect(actions.editSchedule(schedule,
-        resolve)).toEqual(expectedResult)
+      const expectedResult = {
+        type: ActionTypes.EDIT_SCHEDULE,
+        payload: {
+          schedule,
+          resolve
+        }
+      }
+      expect(actions.editSchedule(schedule, resolve)).toEqual(expectedResult)
     })
   })
   describe('scheduleEdited', () => {
     it('scheduleEdited should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.EDIT_SCHEDULE_SUCCESS, payload: {
-        result: schedule
-      } }
+      const expectedResult = {
+        type: ActionTypes.EDIT_SCHEDULE_SUCCESS,
+        payload: {
+          result: schedule
+        }
+      }
       expect(actions.scheduleEdited(schedule)).toEqual(expectedResult)
     })
   })
   describe('editScheduleFail', () => {
     it('editScheduleFail should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.EDIT_SCHEDULE_FAILURE, payload: {} }
+      const expectedResult = {
+        type: ActionTypes.EDIT_SCHEDULE_FAILURE,
+        payload: {}
+      }
       expect(actions.editScheduleFail()).toEqual(expectedResult)
     })
   })
   describe('deleteSchedule', () => {
     it('deleteSchedule should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.DELETE_SCHEDULE, payload: {
-        id: scheduleId
-      } }
+      const expectedResult = {
+        type: ActionTypes.DELETE_SCHEDULE,
+        payload: {
+          id: scheduleId
+        }
+      }
       expect(actions.deleteSchedule(scheduleId)).toEqual(expectedResult)
     })
   })
   describe('scheduleDeleted', () => {
     it('scheduleDeleted should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.DELETE_SCHEDULE, payload: {
-        id: scheduleId
-      } }
+      const expectedResult = {
+        type: ActionTypes.DELETE_SCHEDULE_SUCCESS,
+        payload: {
+          id: scheduleId
+        }
+      }
       expect(actions.scheduleDeleted(scheduleId)).toEqual(expectedResult)
     })
   })
+
   describe('deleteScheduleFail', () => {
     it('deleteScheduleFail should return the correct type', () => {
       const expectedResult = {
@@ -161,7 +199,9 @@ describe('Schedule Actions', () => {
           currentStatus: 'new'
         }
       }
-      expect(actions.changeSchedulesStatus(scheduleId, 'new')).toEqual(expectedResult)
+      expect(actions.changeSchedulesStatus(scheduleId, 'new')).toEqual(
+        expectedResult
+      )
     })
   })
   describe('scheduleStatusChanged', () => {
@@ -204,7 +244,9 @@ describe('Schedule Actions', () => {
           resolve
         }
       }
-      expect(actions.executeScheduleImmediately(scheduleId, resolve)).toEqual(expectedResult)
+      expect(actions.executeScheduleImmediately(scheduleId, resolve)).toEqual(
+        expectedResult
+      )
     })
   })
   describe('resetScheduleState', () => {
@@ -218,9 +260,12 @@ describe('Schedule Actions', () => {
   })
   describe('loadSuggestMails', () => {
     it('loadSuggestMails should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_SUGGEST_MAILS, payload: {
-        keyword: ''
-      } }
+      const expectedResult = {
+        type: ActionTypes.LOAD_SUGGEST_MAILS,
+        payload: {
+          keyword: ''
+        }
+      }
       expect(actions.loadSuggestMails('')).toEqual(expectedResult)
     })
   })
@@ -253,28 +298,36 @@ describe('Schedule Actions', () => {
           dashboards: []
         }
       }
-      expect(actions.portalDashboardsLoaded(scheduleId, [])).toEqual(expectedResult)
+      expect(actions.portalDashboardsLoaded(scheduleId, [])).toEqual(
+        expectedResult
+      )
     })
   })
   describe('loadVizs', () => {
     it('loadVizs should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_VIZS, payload: {
-        projectId: scheduleId
-      } }
+      const expectedResult = {
+        type: ActionTypes.LOAD_VIZS,
+        payload: {
+          projectId: scheduleId
+        }
+      }
       expect(actions.loadVizs(scheduleId)).toEqual(expectedResult)
     })
   })
   describe('vizsLoaded', () => {
     it('vizsLoaded should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_VIZS_SUCCESS, payload: {
-        result: schedule
-      } }
+      const expectedResult = {
+        type: ActionTypes.LOAD_VIZS_SUCCESS,
+        payload: {
+          result: schedule
+        }
+      }
       expect(actions.vizsLoaded(schedule)).toEqual(expectedResult)
     })
   })
   describe('loadVizsFail', () => {
     it('loadVizsFail should return the correct type', () => {
-      const expectedResult = { type: ActionTypes.LOAD_VIZS_FAILUER}
+      const expectedResult = { type: ActionTypes.LOAD_VIZS_FAILUER }
       expect(actions.loadVizsFail()).toEqual(expectedResult)
     })
   })

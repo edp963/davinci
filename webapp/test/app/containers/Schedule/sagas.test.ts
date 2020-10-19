@@ -37,13 +37,14 @@ import {
 import { mockStore } from './fixtures'
 import { getMockResponse } from 'test/utils/fixtures'
 
+
 describe('Schedule Sagas', () => {
   const { schedule, projectId, schedules, keywords, jobStatus, mails } = mockStore
   describe('getSchedules Saga', () => {
     const getSchedulesActions = actions.loadSchedules(projectId)
     it('should dispatch the schedulesLoaded action if it requests the data successfully', () => {
       return expectSaga(getSchedules, getSchedulesActions)
-        .provide([[matchers.call.fn(request), getMockResponse(schedules)]])
+        .provide([[matchers.call.fn(request), getMockResponse(projectId)]])
         .put(actions.schedulesLoaded(schedules))
         .run()
     })
@@ -57,7 +58,7 @@ describe('Schedule Sagas', () => {
   })
 
   describe('getScheduleDetail Saga', () => {
-    const getScheduleDetailActions = actions.loadScheduleDetail(projectId)
+    const getScheduleDetailActions = actions.loadScheduleDetail(schedule.id)
     it('should dispatch the scheduleDetailLoaded action if it requests the data successfully', () => {
       return expectSaga(getScheduleDetail, getScheduleDetailActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
