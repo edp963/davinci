@@ -225,6 +225,9 @@ export function* editSlideLayerParams (action: DisplayActionType) {
   }
   const layerList: ILayerFormed[] = yield select(makeSelectCurrentLayerList())
   const layer = layerList.find(({ id }) => id === action.payload.layerId)
+  if (!layerList.length) {
+    return
+  }
   const { id: displayId } = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
   const updateLayer = {
@@ -463,7 +466,7 @@ export function* copySlideLayers (action: DisplayActionType) {
   yield put(DisplayActions.slideLayersCopied(selectedLayers))
 }
 
-export function* pasteSlideLayers(action: DisplayActionType) {
+export function* pasteSlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.PASTE_SLIDE_LAYERS) {
     return
   }

@@ -29,7 +29,9 @@ module.exports = {
     '.*\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/test/mocks/image.js',
     '^app/(.*)$': '<rootDir>/app/$1',
-    '^test/(.*)$': '<rootDir>/test/$1'
+    '^test/(.*)$': '<rootDir>/test/$1',
+    'assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js',
+    '^libs/(.*)$': '<rootDir>/libs/$1'
   },
   setupFilesAfterEnv: [
     // '<rootDir>/test/utils/test-bundler.js',
