@@ -296,4 +296,5 @@ const vizReducer = (
     }
   })
 
+export { initialState as vizInitialState}
 export default vizReducer

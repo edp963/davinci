@@ -117,5 +117,5 @@ const appReducer = (state = initialState, action) =>
         break
     }
   })
-
+export { initialState as appInitialState }
 export default appReducer
