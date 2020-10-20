@@ -21,6 +21,7 @@
 import { expectSaga } from 'redux-saga-test-plan'
 import * as matchers from 'redux-saga-test-plan/matchers'
 import { throwError } from 'redux-saga-test-plan/providers'
+import {call} from 'redux-saga/effects'
 import request from 'app/utils/request'
 import actions from 'app/containers/Schedule/actions'
 import {
@@ -37,15 +38,22 @@ import {
 import { mockStore } from './fixtures'
 import { getMockResponse } from 'test/utils/fixtures'
 
-
 describe('Schedule Sagas', () => {
-  const { schedule, projectId, schedules, keywords, jobStatus, mails } = mockStore
+  const {
+    schedule,
+    projectId,
+    schedules,
+    keywords,
+    jobStatus,
+    mails,
+    api
+  } = mockStore
   describe('getSchedules Saga', () => {
     const getSchedulesActions = actions.loadSchedules(projectId)
     it('should dispatch the schedulesLoaded action if it requests the data successfully', () => {
       return expectSaga(getSchedules, getSchedulesActions)
         .provide([[matchers.call.fn(request), getMockResponse(projectId)]])
-        .put(actions.schedulesLoaded(schedules))
+        .dispatch(actions.schedulesLoaded(schedules))
         .run()
     })
     it('should call the loadSchedulesFail action if the response errors', () => {
@@ -62,7 +70,7 @@ describe('Schedule Sagas', () => {
     it('should dispatch the scheduleDetailLoaded action if it requests the data successfully', () => {
       return expectSaga(getScheduleDetail, getScheduleDetailActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
-        .put(actions.scheduleDetailLoaded(schedule))
+        .dispatch(actions.scheduleDetailLoaded(schedule))
         .run()
     })
     it('should call the loadScheduleDetailFail action if the response errors', () => {
@@ -79,7 +87,7 @@ describe('Schedule Sagas', () => {
     it('should dispatch the scheduleAdded action if it requests the data successfully', () => {
       return expectSaga(addSchedule, addScheduleActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
-        .put(actions.scheduleAdded(schedule))
+        .dispatch(actions.scheduleAdded(schedule))
         .run()
     })
     it('should call the addScheduleFail action if the response errors', () => {
@@ -130,7 +138,7 @@ describe('Schedule Sagas', () => {
     it('should dispatch the suggestMailsLoaded action if it requests the data successfully', () => {
       return expectSaga(getSuggestMails, loadSuggestMailsActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
-        .put(actions.suggestMailsLoaded(mails))
+        .dispatch(actions.suggestMailsLoaded(mails))
         .run()
     })
     it('should call the loadSuggestMailsFail action if the response errors', () => {
@@ -143,20 +151,29 @@ describe('Schedule Sagas', () => {
   })
 
   describe('executeScheduleImmediately Saga', () => {
-    const executeScheduleImmediatelyActions = actions.executeScheduleImmediately(schedule.id, () => void 0)
+    const executeScheduleImmediatelyActions = actions.executeScheduleImmediately(
+      schedule.id,
+      () => void 0
+    )
     it('should dispatch the executeScheduleImmediatelyActions action if it requests the data successfully', () => {
-      return expectSaga(executeScheduleImmediately, executeScheduleImmediatelyActions)
+      return expectSaga(
+        executeScheduleImmediately,
+        executeScheduleImmediatelyActions
+      )
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
         .run()
     })
   })
 
   describe('changeScheduleStatus Saga', () => {
-    const changeScheduleStatusActions = actions.changeSchedulesStatus(schedule.id, jobStatus)
+    const changeScheduleStatusActions = actions.changeSchedulesStatus(
+      schedule.id,
+      jobStatus
+    )
     it('should dispatch the scheduleStatusChanged action if it requests the data successfully', () => {
       return expectSaga(changeScheduleStatus, changeScheduleStatusActions)
         .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
-        .put(actions.scheduleStatusChanged(schedule))
+        .dispatch(actions.scheduleStatusChanged(schedule))
         .run()
     })
     it('should call the changeSchedulesStatusFail action if the response errors', () => {
@@ -172,10 +189,14 @@ describe('Schedule Sagas', () => {
     const loadVizsActions = actions.loadVizs(projectId)
     it('should dispatch the vizsLoaded action if it requests the data successfully', () => {
       return expectSaga(getVizsData, loadVizsActions)
-        .provide([[matchers.call.fn(request), getMockResponse(schedule)]])
-        .put(actions.vizsLoaded(schedule))
+        .provide([
+          [call(request, api), getMockResponse(projectId)],
+          [matchers.call.fn(request), getMockResponse(projectId)]
+        ])
+        .dispatch(actions.vizsLoaded(schedule))
         .run()
     })
+
     it('should call the loadVizsFail action if the response errors', () => {
       const errors = new Error('error')
       return expectSaga(getVizsData, loadVizsActions)
@@ -184,5 +205,4 @@ describe('Schedule Sagas', () => {
         .run()
     })
   })
-
 })

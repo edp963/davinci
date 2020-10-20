@@ -37,6 +37,7 @@ interface ImockStore {
   keywords: string
   jobStatus: JobStatus
   dashboard: IDashboard
+  api: string
 }
 
 const scheduleDemo: ISchedule = {
@@ -88,5 +89,6 @@ export const mockStore: ImockStore = {
       linkages: [],
       queryMode: 0
     }
-  }
+  },
+  api: '/api/v3/protal/projectId'
 }
