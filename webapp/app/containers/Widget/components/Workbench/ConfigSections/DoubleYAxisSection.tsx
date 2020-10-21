@@ -121,7 +121,7 @@ export class DoubleYAxisSection extends React.PureComponent<IDoubleYAxisSectionP
                 placeholder="yAxisSplitNumber"
                 className={styles.blockElm}
                 value={yAxisSplitNumber}
-                min={2}
+                min={3}
                 onChange={this.inputNumberChange('yAxisSplitNumber')}
               />
             </Col>

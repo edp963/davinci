@@ -18,24 +18,21 @@
  * >>
  */
 
-import { IChartProps } from '../../components/Chart'
+import { IChartProps } from 'containers/Widget/components/Chart'
 import {
   decodeMetricName,
-  getChartTooltipLabel,
-  getTextWidth,
-  getAggregatorLocale,
   metricAxisLabelFormatter
-} from '../../components/util'
+} from 'containers/Widget/components/util'
 import {
   getLegendOption,
   getGridPositions,
   getDimetionAxisOption,
   getCartesianChartReferenceOptions
 } from './util'
-import { getFormattedValue } from '../../components/Config/Format'
-import { getFieldAlias } from '../../components/Config/Field'
-import ChartTypes from '../../config/chart/ChartTypes'
-
+import { getFormattedValue } from 'containers/Widget/components/Config/Format'
+import { getFieldAlias } from 'containers/Widget/components/Config/Field'
+import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
+import DoubleY from './helper'
 export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
@@ -47,56 +44,19 @@ export default function (chartProps: IChartProps, drillOptions) {
     references
   } = chartProps
 
-  const {
-    legend,
-    spec,
-    doubleYAxis,
-    xAxis,
-    splitLine
-  } = chartStyles
+  const { legend, spec, doubleYAxis, xAxis, splitLine } = chartStyles
 
-  const {
-    legendPosition,
-    fontSize
-  } = legend
+  const { stack, smooth, step, symbol, label } = spec
 
-  const {
-    stack,
-    smooth,
-    step,
-    symbol,
-    label
-  } = spec
+  const { yAxisLeft, yAxisRight, yAxisSplitNumber } = doubleYAxis
 
-  const {
-    yAxisLeft,
-    yAxisRight,
-    yAxisSplitNumber,
-    dataZoomThreshold
-  } = doubleYAxis
-
-  const {
-    labelColor,
-    labelFontFamily,
-    labelFontSize,
-    lineColor,
-    lineSize,
-    lineStyle,
-    showLabel,
-    showLine,
-    xAxisInterval,
-    xAxisRotate
-  } = xAxis
+  const { showLabel } = xAxis
 
   const {
     showVerticalLine,
     verticalLineColor,
     verticalLineSize,
-    verticalLineStyle,
-    showHorizontalLine,
-    horizontalLineColor,
-    horizontalLineSize,
-    horizontalLineStyle
+    verticalLineStyle
   } = splitLine
 
   const labelOption = {
@@ -113,10 +73,37 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
   const seriesData = secondaryMetrics
-    ? getAixsMetrics('metrics', metrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
-      .concat(getAixsMetrics('secondaryMetrics', secondaryMetrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisRight', type: yAxisRight}))
-    : getAixsMetrics('metrics', metrics, data, stack, labelOption, references, selectedItems, {key: 'yAxisLeft', type: yAxisLeft})
-
+    ? getAixsMetrics(
+        'metrics',
+        metrics,
+        data,
+        stack,
+        labelOption,
+        references,
+        selectedItems,
+        { key: 'yAxisLeft', type: yAxisLeft }
+      ).concat(
+        getAixsMetrics(
+          'secondaryMetrics',
+          secondaryMetrics,
+          data,
+          stack,
+          labelOption,
+          references,
+          selectedItems,
+          { key: 'yAxisRight', type: yAxisRight }
+        )
+      )
+    : getAixsMetrics(
+        'metrics',
+        metrics,
+        data,
+        stack,
+        labelOption,
+        references,
+        selectedItems,
+        { key: 'yAxisLeft', type: yAxisLeft }
+      )
   const seriesObj = {
     series: seriesData.map((series) => {
       if (series.type === 'line') {
@@ -140,47 +127,73 @@ export default function (chartProps: IChartProps, drillOptions) {
       legend: getLegendOption(legend, seriesNames)
     }
     gridOptions = {
-      grid: getGridPositions(legend, seriesNames, 'doubleYAxis', false, null, xAxis, xAxisData)
+      grid: getGridPositions(
+        legend,
+        seriesNames,
+        'doubleYAxis',
+        false,
+        null,
+        xAxis,
+        xAxisData
+      )
     }
   }
 
   let leftMax
+  let leftMin
   let rightMax
-
-  if (stack) {
-    leftMax = metrics.reduce((num, m) => num + Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])), 0)
-    rightMax = secondaryMetrics.reduce((num, m) => num + Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])), 0)
-  } else {
-    leftMax = Math.max(...metrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`]))))
-    rightMax = Math.max(...secondaryMetrics.map((m) => Math.max(...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`]))))
-  }
-
-  const leftInterval = getYaxisInterval(leftMax, (yAxisSplitNumber - 1))
-  const rightInterval = rightMax > 0 ? getYaxisInterval(rightMax, (yAxisSplitNumber - 1)) : leftInterval
-
-  const inverseOption = xAxis.inverse ? { inverse: true } : null
-
+  let rightMin
+  [leftMin, leftMax, rightMin, rightMax] = computeMetricsMinAndMax(
+    [metrics, secondaryMetrics],
+    data,
+    stack
+  )
   const xAxisSplitLineConfig = {
     showLine: showVerticalLine,
     lineColor: verticalLineColor,
     lineSize: verticalLineSize,
     lineStyle: verticalLineStyle
   }
+  const allMetrics = secondaryMetrics
+    ? [].concat(metrics).concat(secondaryMetrics)
+    : metrics
 
-  const allMetrics = secondaryMetrics ? [].concat(metrics).concat(secondaryMetrics) : metrics
+  const leftY = new DoubleY([leftMin, leftMax], yAxisSplitNumber - 2)
+  const rightY = new DoubleY([rightMin, rightMax], yAxisSplitNumber - 2)
+  let { interval: leftInterval, extent: leftExtent } = leftY.computeExtendInterval()
+  let { interval: rightInterval, extent: rightExtent } = rightY.computeExtendInterval()
+  const [leftExtentMin, leftExtentMax] = leftExtent
+  const [rightExtentMin, rightExtentMax] = rightExtent
+  if (rightInterval < leftInterval) {
+    leftInterval = (leftExtentMax - leftExtentMin) / ((rightExtentMax - rightExtentMin) / rightInterval)
+  } else {
+    rightInterval = (rightExtentMax - rightExtentMin) / ((leftExtentMax - leftExtentMin) / leftInterval)
+  }
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: {type: 'cross'},
-      formatter (params) {
-        const tooltipLabels = [getFormattedValue(params[0].name, cols[0].format), '<br/>']
+      axisPointer: { type: 'cross' },
+      formatter(params) {
+        const tooltipLabels = [
+          getFormattedValue(params[0].name, cols[0].format),
+          '<br/>'
+        ]
         params.reduce((acc, param) => {
           const { color, value, seriesIndex } = param
           if (color) {
-            acc.push(`<span class="widget-tooltip-circle" style="background: ${color}"></span>`)
+            acc.push(
+              `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
+            )
           }
-          acc.push(getFieldAlias(allMetrics[seriesIndex].field, {}) || decodeMetricName(allMetrics[seriesIndex].name))
-          acc.push(': ', getFormattedValue(value, allMetrics[seriesIndex].format), '<br/>')
+          acc.push(
+            getFieldAlias(allMetrics[seriesIndex].field, {}) ||
+              decodeMetricName(allMetrics[seriesIndex].name)
+          )
+          acc.push(
+            ': ',
+            getFormattedValue(value, allMetrics[seriesIndex].format),
+            '<br/>'
+          )
           return acc
         }, tooltipLabels)
         return tooltipLabels.join('')
@@ -191,19 +204,39 @@ export default function (chartProps: IChartProps, drillOptions) {
       {
         type: 'value',
         key: 'yAxisIndex0',
-        min: 0,
-        max: rightMax > 0 ? rightInterval * (yAxisSplitNumber - 1) : leftInterval * (yAxisSplitNumber - 1),
-        interval: rightInterval,
+        min: rightExtentMin,
+        max: rightExtentMax,
+        interval: +formatDecimal(rightInterval, 2),
         position: 'right',
+        showTitleAndUnit: true,
+        name: getYAxisName(secondaryMetrics),
+        nameLocation: 'middle',
+        nameGap: 45,
+        nameRotate: 90,
+        nameTextStyle: {
+          color: '#666',
+          fontFamily: 'PingFang SC',
+          fontSize: 12
+        },
         ...getDoubleYAxis(doubleYAxis)
       },
       {
         type: 'value',
         key: 'yAxisIndex1',
-        min: 0,
-        max: leftInterval * (yAxisSplitNumber - 1),
-        interval: leftInterval,
+        min: leftExtentMin,
+        max: leftExtentMax,
+        interval: +formatDecimal(leftInterval, 2),
         position: 'left',
+        showTitleAndUnit: true,
+        name: getYAxisName(metrics),
+        nameLocation: 'middle',
+        nameGap: 45,
+        nameRotate: 90,
+        nameTextStyle: {
+          color: '#666',
+          fontFamily: 'PingFang SC',
+          fontSize: 12
+        },
         ...getDoubleYAxis(doubleYAxis)
       }
     ],
@@ -214,27 +247,51 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   return option
 }
-
-export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, references, selectedItems, axisPosition?: {key: string, type: string}) {
+export function getAixsMetrics(
+  type,
+  axisMetrics,
+  data,
+  stack,
+  labelOption,
+  references,
+  selectedItems,
+  axisPosition?: { key: string; type: string }
+) {
   const seriesNames = []
   const seriesAxis = []
-  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.DoubleYAxis, axisMetrics, data)
+  const referenceOptions = getCartesianChartReferenceOptions(
+    references,
+    ChartTypes.DoubleYAxis,
+    axisMetrics,
+    data
+  )
   axisMetrics.forEach((m, amIndex) => {
     const decodedMetricName = decodeMetricName(m.name)
-    const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     seriesNames.push(decodedMetricName)
-    const stackOption = stack && axisPosition.type === 'bar' && axisMetrics.length > 1 ? { stack: axisPosition.key } : null
+    const stackOption =
+      stack && axisPosition.type === 'bar' && axisMetrics.length > 1
+        ? { stack: axisPosition.key }
+        : null
     const itemData = data.map((g, index) => {
-      const itemStyle = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {normal: {opacity: 1, borderWidth: 6}}} : null
+      const itemStyle =
+        selectedItems &&
+        selectedItems.length &&
+        selectedItems.some((item) => item === index)
+          ? { itemStyle: { normal: { opacity: 1, borderWidth: 6 } } }
+          : null
       return {
         value: g[`${m.agg}(${decodedMetricName})`],
         ...itemStyle
       }
     })
-
     seriesAxis.push({
       name: decodedMetricName,
-      type: axisPosition && axisPosition.type ? axisPosition.type : type === 'metrics' ? 'line' : 'bar',
+      type:
+        axisPosition && axisPosition.type
+          ? axisPosition.type
+          : type === 'metrics'
+          ? 'line'
+          : 'bar',
       ...stackOption,
       yAxisIndex: type === 'metrics' ? 1 : 0,
       data: itemData,
@@ -249,14 +306,50 @@ export function getAixsMetrics (type, axisMetrics, data, stack, labelOption, ref
   })
   return seriesAxis
 }
-
-export function getYaxisInterval (max, splitNumber) {
-  const roughInterval = parseInt(`${max / splitNumber}`, 10)
-  const divisor = Math.pow(10, (`${roughInterval}`.length - 1))
-  return (parseInt(`${roughInterval / divisor}`, 10) + 1) * divisor
+export function getYAxisName(metrics) {
+  return metrics
+    .map((m) => (m.field.alias ? m.field.alias : decodeMetricName(m.name)))
+    .join(` / `)
+}
+export function formatDecimal(num, decimal) {
+  num = num.toString()
+  const index = num.indexOf('.')
+  if (index !== -1) {
+    num = num.substring(0, decimal + index + 1)
+  } else {
+    num = num.substring(0)
+  }
+  return parseFloat(num).toFixed(decimal)
 }
 
-export function getDoubleYAxis (doubleYAxis) {
+export function computeMetricsMinAndMax(metrics, data, stack) {
+  const metricsSource = metrics.map((metrics) =>
+    ['min', 'max'].map((item) => {
+      return { fn: item, data: metrics }
+    })
+  )
+  return metricsSource.flat().map((item) => {
+    if (stack) {
+      return item.data.reduce(
+        (num, m) =>
+          num +
+          Math[item.fn](
+            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
+          ),
+        0
+      )
+    } else {
+      return Math[item.fn](
+        ...item.data.map((m) =>
+          Math[item.fn](
+            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
+          )
+        )
+      )
+    }
+  })
+}
+export function getDoubleYAxis(doubleYAxis) {
   const {
     inverse,
     showLine,
