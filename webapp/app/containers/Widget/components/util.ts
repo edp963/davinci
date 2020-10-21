@@ -289,18 +289,24 @@ export function getChartPieces (total, lines) {
 
 }
 
-export function metricAxisLabelFormatter (value) {
-  if (value >= Math.pow(10, 12)) {
-    return `${precision(value / Math.pow(10, 12))}T`
-  } else if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
-    return `${precision(value / Math.pow(10, 9))}B`
-  } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
-    return `${precision(value / Math.pow(10, 6))}M`
-  } else if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
-    return `${precision(value / Math.pow(10, 3))}K`
-  } else {
-    return value
+export function metricAxisLabelFormatter(value) {
+  const positive = value > 0
+  if (!positive) {
+    value = -value
   }
+  let endValue
+  if (value >= Math.pow(10, 12)) {
+    endValue = `${precision(value / Math.pow(10, 12))}T`
+  } else if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
+    endValue = `${precision(value / Math.pow(10, 9))}B`
+  } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
+    endValue = `${precision(value / Math.pow(10, 6))}M`
+  } else if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
+    endValue = `${precision(value / Math.pow(10, 3))}K`
+  } else {
+    endValue = value
+  }
+  return positive ? endValue : `-${endValue}`
 
   function precision (num) {
     return num >= 10 ? Math.floor(num) : num.toFixed(1)
