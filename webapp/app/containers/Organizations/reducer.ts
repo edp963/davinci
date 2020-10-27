@@ -27,7 +27,7 @@ import { ActionTypes as ProjectActionTypes } from 'containers/Projects/constants
 import { OrganizationActionType } from './actions'
 import { ProjectActionType } from 'containers/Projects/actions'
 
-const initialState: IOrganizationState = {
+export const initialState: IOrganizationState = {
   organizations: [],
   currentOrganization: null,
   currentOrganizationLoading: false,

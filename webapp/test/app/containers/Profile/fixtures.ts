@@ -18,22 +18,12 @@
  * >>
  */
 
-import { createSelector } from 'reselect'
+interface ImockStore {
+  userId: number
+  profile: string
+}
 
-export const selectProfile = (state) => state.profile
-
-const makeSelectUserProfile = () => createSelector(
-  selectProfile,
-  (state) => state.userProfile
-)
-
-const makeSelectLoading = () => createSelector(
-  selectProfile,
-  (state) => state.loading
-)
-
-
-export {
-  makeSelectLoading,
-  makeSelectUserProfile
+export const mockStore: ImockStore = {
+  userId: 1,
+  profile: 'profile'
 }

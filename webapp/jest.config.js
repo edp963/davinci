@@ -30,8 +30,8 @@ module.exports = {
       '<rootDir>/test/mocks/image.js',
     '^app/(.*)$': '<rootDir>/app/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
-    'assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js',
-    '^libs/(.*)$': '<rootDir>/libs/$1'
+    '^libs/(.*)$': '<rootDir>/libs/$1',
+    '^assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js'
   },
   setupFilesAfterEnv: [
     // '<rootDir>/test/utils/test-bundler.js',
