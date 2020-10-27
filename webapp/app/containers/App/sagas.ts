@@ -78,7 +78,7 @@ import api from 'utils/api'
 import { IReduxActionStruct } from 'utils/types'
 import { IResetPasswordParams, IGetgetCaptchaParams } from '../FindPassword/types'
 
-export function* getExternalAuthProviders(): IterableIterator<any> {
+export function* getExternalAuthProviders() {
   try {
     const asyncData = yield call(request, {
       method: 'get',
@@ -92,7 +92,7 @@ export function* getExternalAuthProviders(): IterableIterator<any> {
   }
 }
 
-export function* getDavinciVersion(action): IterableIterator<any> {
+export function* getDavinciVersion(action) {
   const {resolve} = action.payload
   try {
     const version = yield call(request, {
@@ -109,7 +109,7 @@ export function* getDavinciVersion(action): IterableIterator<any> {
   }
 }
 
-export function* tryExternalAuth(action): IterableIterator<any> {
+export function* tryExternalAuth(action) {
   const { resolve } = action.payload
   try {
     const asyncData = yield call(request, {
@@ -124,7 +124,7 @@ export function* tryExternalAuth(action): IterableIterator<any> {
   }
 }
 
-export function* login(action): IterableIterator<any> {
+export function* login(action) {
   const { username, password, resolve } = action.payload
 
   try {
@@ -146,11 +146,11 @@ export function* login(action): IterableIterator<any> {
   }
 }
 
-export function* externalAuthlogout(): IterableIterator<any> {
+export function* externalAuthlogout() {
   location.replace(`${api.externalLogout}`)
 }
 
-export function* logout(): IterableIterator<any> {
+export function* logout() {
   try {
     removeToken()
     localStorage.removeItem('loginUser')
@@ -159,7 +159,7 @@ export function* logout(): IterableIterator<any> {
   }
 }
 
-export function* activeUser(action): IterableIterator<any> {
+export function* activeUser(action) {
   const { token, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
@@ -188,7 +188,7 @@ export function* activeUser(action): IterableIterator<any> {
   }
 }
 
-export function* checkName(action): IterableIterator<any> {
+export function* checkName(action) {
   const { id, name, type, params, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, `${api.checkName}/${type}`, {
@@ -213,7 +213,7 @@ export function* checkName(action): IterableIterator<any> {
   }
 }
 
-export function* checkNameUnique(action): IterableIterator<any> {
+export function* checkNameUnique(action) {
   const { pathname, data, resolve, reject } = action.payload
   try {
     if (!data.name) {
@@ -238,7 +238,7 @@ export function* checkNameUnique(action): IterableIterator<any> {
   }
 }
 
-export function* updateProfile(action): IterableIterator<any> {
+export function* updateProfile(action) {
   const { id, name, description, department, resolve } = action.payload
 
   try {
@@ -267,7 +267,7 @@ export function* updateProfile(action): IterableIterator<any> {
 
 export function* getCaptchaForResetPassword(
   action: IReduxActionStruct<IGetgetCaptchaParams>
-): IterableIterator<any> {
+) {
   const { type, ticket, resolve } = action.payload
 
   try {
@@ -290,7 +290,7 @@ export function* getCaptchaForResetPassword(
 
 export function* resetPasswordUnlogged(
   action: IReduxActionStruct<IResetPasswordParams>
-): IterableIterator<any> {
+) {
   const { ticket, type, token, resolve, checkCode, password } = action.payload
 
   try {
@@ -328,7 +328,7 @@ export function* changeUserPassword({ payload }) {
   }
 }
 
-export function* joinOrganization(action): IterableIterator<any> {
+export function* joinOrganization(action) {
   const { token, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, {
@@ -367,7 +367,7 @@ export function* joinOrganization(action): IterableIterator<any> {
   }
 }
 
-export function* getDownloadList(): IterableIterator<any> {
+export function* getDownloadList() {
   try {
     const result = yield call(request, `${api.download}/page`)
     yield put(downloadListLoaded(result.payload))
@@ -377,7 +377,7 @@ export function* getDownloadList(): IterableIterator<any> {
   }
 }
 
-export function* downloadFile(action): IterableIterator<any> {
+export function* downloadFile(action) {
   const { id } = action.payload
   try {
     location.href = `${api.download}/record/file/${id}/${getToken()}`
@@ -388,7 +388,7 @@ export function* downloadFile(action): IterableIterator<any> {
   }
 }
 
-export function* getUserByToken(action): IterableIterator<any> {
+export function* getUserByToken(action) {
   const { token } = action.payload
   try {
     const result = yield call(request, `${api.user}/check/${token}`)
@@ -401,7 +401,7 @@ export function* getUserByToken(action): IterableIterator<any> {
   }
 }
 
-export default function* rootGroupSaga(): IterableIterator<any> {
+export default function* rootGroupSaga() {
   yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeEvery(ACTIVE, activeUser as any),

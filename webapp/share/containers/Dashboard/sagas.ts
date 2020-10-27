@@ -469,7 +469,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   }
 }
 
-export default function* rootDashboardSaga(): IterableIterator<any> {
+export default function* rootDashboardSaga() {
   yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DASHBOARD, getDashboard),
     takeEvery(ActionTypes.LOAD_SHARE_WIDGET, getWidget),
