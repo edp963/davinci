@@ -177,7 +177,7 @@ class ControlPanel extends PureComponent<
       // get cascading conditions
       Object.entries(relatedViews).forEach(([viewId, relatedView]) => {
         let filters = []
-        let variables = []
+        const variables = []
 
         parents.forEach((parentControl) => {
           const parentValue = controlValues[parentControl.key]
@@ -212,39 +212,15 @@ class ControlPanel extends PureComponent<
                   cascadeRelatedFields &&
                   formedViews[cascadeRelatedViewId]
                 ) {
-                  const { model, variable } = formedViews[cascadeRelatedViewId]
-                  if (parentControl.optionWithVariable) {
-                    variables = variables.concat(
-                      getCustomOptionVariableParams(
-                        parentControl,
-                        Number(cascadeRelatedViewId),
-                        parentValue,
-                        variable
-                      )
+                  const { model } = formedViews[cascadeRelatedViewId]
+                  filters = filters.concat(
+                    getFilterParams(
+                      parentControl,
+                      cascadeRelatedFields,
+                      parentValue,
+                      model
                     )
-                  } else {
-                    if (
-                      parentRelatedView.fieldType === ControlFieldTypes.Column
-                    ) {
-                      filters = filters.concat(
-                        getFilterParams(
-                          parentControl,
-                          cascadeRelatedFields,
-                          parentValue,
-                          model
-                        )
-                      )
-                    } else {
-                      variables = variables.concat(
-                        getVariableParams(
-                          parentControl,
-                          cascadeRelatedFields,
-                          parentValue,
-                          variable
-                        )
-                      )
-                    }
-                  }
+                  )
                 }
               }
             }
