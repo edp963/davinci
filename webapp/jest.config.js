@@ -5,7 +5,6 @@ module.exports = {
   coverageDirectory: './coverage',
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
-    '!app/**/*.test.{ts,tsx}',
     '!app/app.tsx',
     '!app/*/*/Loadable.{ts,tsx}'
   ],
