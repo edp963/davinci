@@ -18,30 +18,20 @@
  * >>
  */
 
-import { IWidgetConfig } from './components/Widget'
-
-export interface IWidgetBase {
-  id: number
-  name: string
-  description: string
-  publish: boolean
-  type: number
-  viewId: number
-  projectId: number
-}
-
-export interface IWidgetRaw extends IWidgetBase {
-  config: string
-}
-
-export interface IWidgetFormed extends IWidgetBase {
-  config: IWidgetConfig
-  dataToken?: string
-}
-
-export interface IWidgetState {
-  widgets: IWidgetFormed[]
-  currentWidget: IWidgetFormed
-  loading: boolean
-  dataLoading: boolean
+export function sliceLength<T, U>(length: number, arr1: T[], arr2: U[]) {
+  let loop = true
+  return () => {
+    return new Array(length)
+      .fill(0)
+      .map(() => {
+        if (loop) {
+          loop = false
+          return arr1.length ? arr1.shift() : arr2.shift()
+        } else {
+          loop = true
+          return arr2.length ? arr2.shift() : arr1.shift()
+        }
+      })
+      .filter((unEmpty) => unEmpty)
+  }
 }

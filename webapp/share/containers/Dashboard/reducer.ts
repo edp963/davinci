@@ -64,7 +64,8 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
         )
 
         const globalControlsInitialValue = getGlobalControlInitialValues(
-          dashboard.config.filters
+          dashboard.config.filters,
+          formedViews
         )
 
         draft.title = dashboard.name
@@ -74,7 +75,10 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
         draft.items = items
         draft.itemsInfo = items.reduce((info, item) => {
           const relatedWidget = widgets.find((w) => w.id === item.widgetId)
-          const initialItemInfo = getShareInitialItemInfo(relatedWidget)
+          const initialItemInfo = getShareInitialItemInfo(
+            relatedWidget,
+            formedViews
+          )
 
           if (globalControlsInitialValue[item.id]) {
             const {
@@ -110,7 +114,10 @@ const shareReducer = (state = initialState, action: DashboardActionType) =>
           }
         ]
         draft.itemsInfo = {
-          1: getShareInitialItemInfo(action.payload.widget)
+          1: getShareInitialItemInfo(
+            action.payload.widget,
+            action.payload.formedViews
+          )
         }
         break
 

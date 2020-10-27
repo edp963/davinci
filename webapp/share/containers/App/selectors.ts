@@ -45,6 +45,13 @@ const makeSelectShareType = () => createSelector(
   }
 )
 
+const makeSelectVizType = () => createSelector(
+  selectGlobal,
+  (globalState) => {
+    return globalState.vizType
+  }
+)
+
 const makeSelectPermission = () => createSelector(
   selectGlobal,
   (globalState) => {
@@ -69,6 +76,7 @@ export {
   makeSelectLogged,
   makeSelectLoginUser,
   makeSelectShareType,
+  makeSelectVizType,
   makeSelectPermission,
   makeSelectPermissionLoading
 }

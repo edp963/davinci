@@ -41,6 +41,7 @@ import {
   makeSelectGlobalControlPanelFormValues,
   makeSelectLocalControlPanelFormValues
 } from 'containers/ControlPanel/selectors'
+import { makeSelectFormedViews } from '../View/selectors'
 import {
   getRequestParams,
   getRequestBody,
@@ -62,6 +63,7 @@ import {
   ILocalControlConditions
 } from 'app/components/Control/types'
 import { IWidgetFormed } from '../Widget/types'
+import { IFormedViews } from '../View/types'
 import { DownloadTypes } from '../App/constants'
 import { dashboardConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 import { ControlPanelTypes } from 'app/components/Control/constants'
@@ -86,7 +88,7 @@ export function* getDashboardDetail(action: DashboardActionType) {
     )
 
     const {
-      widgets: items,
+      relations: items,
       views,
       config,
       ...rest
@@ -101,7 +103,19 @@ export function* getDashboardDetail(action: DashboardActionType) {
 
     operationWidgetProps.widgetIntoPool(widgets)
 
-    yield put(dashboardDetailLoaded(dashboard, items, widgets, views))
+    const formedViews: IFormedViews = views.reduce(
+      (obj, view) => {
+        obj[view.id] = {
+          ...view,
+          model: JSON.parse(view.model || '{}'),
+          variable: JSON.parse(view.variable || '[]')
+        }
+        return obj
+      },
+      {}
+    )
+
+    yield put(dashboardDetailLoaded(dashboard, items, widgets, formedViews))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     errorHandler(err)
@@ -122,7 +136,8 @@ export function* addDashboardItems(action: DashboardActionType) {
       data: items
     })
     const widgets: IWidgetFormed[] = yield select(makeSelectWidgets())
-    yield put(dashboardItemsAdded(result.payload, widgets))
+    const formedViews: IFormedViews = yield select(makeSelectFormedViews())
+    yield put(dashboardItemsAdded(result.payload, widgets, formedViews))
     resolve(result.payload)
   } catch (err) {
     yield put(addDashboardItemsFail())
@@ -273,6 +288,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     return
   }
   const { type, itemId, formValues, cancelTokenSource } = action.payload
+  const formedViews: IFormedViews = yield select(makeSelectFormedViews())
 
   if (type === ControlPanelTypes.Global) {
     const currentDashboard: IDashboard = yield select(
@@ -284,6 +300,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     const globalControlConditionsByItem = getCurrentControlValues(
       type,
       currentDashboard.config.filters,
+      formedViews,
       globalControlFormValues,
       formValues
     )
@@ -315,6 +332,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     const localControlConditions = getCurrentControlValues(
       type,
       relatedWidget.config.controls,
+      formedViews,
       localControlFormValues,
       formValues
     )
@@ -333,12 +351,14 @@ function getDownloadInfo(
   itemId: number,
   itemInfo: IDashboardItemInfo,
   relatedWidget: IWidgetFormed,
+  formedViews: IFormedViews,
   localControlFormValues: object,
   globalControlConditions: IGlobalControlConditions
 ): IDataDownloadStatistic {
   const localControlConditions = getCurrentControlValues(
     ControlPanelTypes.Local,
     relatedWidget.config.controls,
+    formedViews,
     localControlFormValues
   )
   const requestParams = getRequestParams(
@@ -373,12 +393,14 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const currentDashboard: IDashboard = yield select(
     makeSelectCurrentDashboard()
   )
+  const formedViews: IFormedViews = yield select(makeSelectFormedViews())
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
   )
   const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
     ControlPanelTypes.Global,
     currentDashboard.config.filters,
+    formedViews,
     globalControlFormValues
   )
 
@@ -406,6 +428,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
           itemId,
           itemInfo,
           relatedWidget,
+          formedViews,
           localControlFormValues,
           globalControlConditions
         )
@@ -429,6 +452,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
         itemId,
         itemInfo,
         relatedWidget,
+        formedViews,
         localControlFormValues,
         globalControlConditionsByItem[itemId]
       )
@@ -460,18 +484,16 @@ export function* getDashboardShareLink(action: DashboardActionType) {
     loadDashboardShareLinkFail
   } = DashboardActions
 
-  const {id, mode, permission, roles, viewerIds} = action.payload.params
+  const {id, mode, permission, expired, roles, viewers} = action.payload.params
 
   let requestData = null
   switch(mode) {
     case 'AUTH':
-        requestData = { mode, permission, roles, viewers: viewerIds }
+        requestData = { mode, expired, permission, roles, viewers }
         break
       case 'PASSWORD':
-        requestData = { mode }
-        break
       case 'NORMAL':
-        requestData = { mode }
+        requestData = { mode, expired }
         break
       default:
         break
@@ -515,18 +537,16 @@ export function* getWidgetShareLink (action: DashboardActionType) {
     widgetShareLinkLoaded,
     loadWidgetShareLinkFail
   } = DashboardActions
-  const {id, itemId,  mode, permission, roles, viewerIds} = action.payload.params
+  const {id, itemId, mode, expired, permission, roles, viewers} = action.payload.params
 
   let requestData = null
   switch(mode) {
     case 'AUTH':
-        requestData = { mode, permission, roles, viewers: viewerIds }
+        requestData = { mode, expired, permission, roles, viewers }
         break
       case 'PASSWORD':
-        requestData = { mode }
-        break
       case 'NORMAL':
-        requestData = { mode }
+        requestData = { mode, expired }
         break
       default:
         break

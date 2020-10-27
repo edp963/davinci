@@ -48,12 +48,7 @@ class OptionSettingForm extends PureComponent<IOptionSettingFormProps> {
       } else {
         form.setFieldsValue({
           ...values,
-          ...(optionWithVariable &&
-            values.variables &&
-            Object.entries(values.variables).reduce((obj, [viewId, field]) => {
-              obj[viewId] = field.name
-              return obj
-            }, {}))
+          ...(optionWithVariable && values.variables)
         })
       }
     }

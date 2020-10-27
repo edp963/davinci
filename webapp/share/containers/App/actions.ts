@@ -68,11 +68,12 @@ export const AppActions = {
     }
   },
 
-  interceptored(shareType) {
+  interceptored(shareType, vizType) {
     return {
       type: ActionTypes.INTERCEPTOR_PREFLIGHT_SUCCESS,
       payload: {
-        shareType
+        shareType,
+        vizType
       }
     }
   },
@@ -83,12 +84,11 @@ export const AppActions = {
     }
   },
 
-  getPermissions(token: string, type: string, password?: string, resolve?: () => void, reject?: () => void) {
+  getPermissions(token: string, password?: string, resolve?: () => void, reject?: () => void) {
     return {
       type: ActionTypes.GET_PERMISSIONS,
       payload: {
         token,
-        type,
         password,
         resolve,
         reject

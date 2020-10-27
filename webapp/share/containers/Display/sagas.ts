@@ -30,9 +30,10 @@ import { getPasswordUrl } from 'share/util'
 import {
   makeSelectShareType
 } from 'share/containers/App/selectors'
-import { displayParamsMigrationRecorder } from 'app/utils/migrationRecorders'
+import { displayParamsMigrationRecorder, widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 import { SecondaryGraphTypes } from 'app/containers/Display/components/Setting'
 import { ILayerRaw, ILayerParams } from 'app/containers/Display/components/types'
+import { IWidgetConfig } from 'app/containers/Widget/components/Widget'
 export function* getDisplay (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
 
@@ -52,7 +53,7 @@ export function* getDisplay (action: ShareDisplayActionType) {
       yield put(loadDisplayFail(header.msg))
       return
     }
-    const { slides, widgets, ...display } = payload
+    const { slides, widgets, views, ...display } = payload
     display.config = JSON.parse(display.config || '{}')
     slides.sort((s1, s2) => s1.index - s2.index).forEach((slide) => {
       slide.config = JSON.parse(slide.config)
@@ -62,13 +63,28 @@ export function* getDisplay (action: ShareDisplayActionType) {
         layer.params = SecondaryGraphTypes.Label === subType ? displayParamsMigrationRecorder(parsedParams) : parsedParams
       })
     })
-    if (Array.isArray(widgets)) {
-      widgets.forEach((widget) => {
-        widget.config = JSON.parse(widget.config)
-        widget.model = JSON.parse(widget.model)
-      })
-    }
-    yield put(displayLoaded(display, slides, widgets || [])) // @FIXME should return empty array in response
+    const formedWidgets = widgets.map((widget) => {
+      const { config, ...rest } = widget
+      const parsedConfig: IWidgetConfig = JSON.parse(config)
+      return {
+        ...rest,
+        config: widgetConfigMigrationRecorder(parsedConfig, {
+          viewId: widget.viewId
+        })
+      }
+    })
+    const formedViews = views.reduce(
+      (obj, { id, model, variable }) => ({
+        ...obj,
+        [id]: {
+          model: JSON.parse(model),
+          variable: JSON.parse(variable)
+        }
+      }),
+      {}
+    )
+
+    yield put(displayLoaded(display, slides, formedWidgets, formedViews))
     resolve(display, slides, widgets)
   } catch (err) {
     message.destroy()
@@ -81,7 +97,7 @@ export function* getDisplay (action: ShareDisplayActionType) {
 export function* getData (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_LAYER_DATA) { return }
 
-  const { renderType, slideNumber, layerId, dataToken, password, requestParams } = action.payload
+  const { renderType, slideNumber, layerId, dataToken, requestParams } = action.payload
   const {
     filters,
     tempFilters,  // @TODO combine widget static filters with local filters
@@ -99,7 +115,7 @@ export function* getData (action: ShareDisplayActionType) {
   try {
     const response = yield call(request, {
       method: 'post',
-      url: `${api.share}/data/${dataToken}?password=${password}`,
+      url: `${api.share}/data/${dataToken}`,
       data: {
         ...omit(rest, 'customOrders'),
         filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
