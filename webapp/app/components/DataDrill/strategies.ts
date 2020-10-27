@@ -32,7 +32,7 @@ import WidgetAbstract, {
   ISourceDataFilter
 } from './types'
 
-import { IFilters } from '../Control/types'
+import { IFilter } from '../Control/types'
 
 import { getValidColumnValue } from 'app/components/Control/util'
 
@@ -478,7 +478,7 @@ function collectKeyValue(sourceDataFilter) {
   }, {})
 }
 
-function mappingFilters(sourceDataFilter, group): IFilters[] {
+function mappingFilters(sourceDataFilter, group): IFilter[] {
   const mappgingSource = sourceDataFilter.map((source) =>
     source && source[group] ? source[group] : source
   )
@@ -501,7 +501,7 @@ function getSqlType(target: string) {
   )(target)
 }
 
-function combineFilters(keyValuds): IFilters[] {
+function combineFilters(keyValuds): IFilter[] {
   return Object.keys(keyValuds).reduce((iteratee, target) => {
     const sqlType = getSqlType(target)
     return iteratee.concat({

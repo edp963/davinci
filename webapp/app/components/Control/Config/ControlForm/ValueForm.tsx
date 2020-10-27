@@ -44,7 +44,7 @@ import {
   ControlOptionTypes,
   ControlTypes
 } from '../../constants'
-import { IControl, IControlOption, IControlRelatedField } from '../../types'
+import { IControl, IControlOption } from '../../types'
 import { IViewBase, IFormedViews } from 'app/containers/View/types'
 import { OperatorTypesLocale } from 'app/utils/operatorTypes'
 import { getOperatorOptions } from '../../util'
@@ -152,9 +152,7 @@ const ValueForm: FC<IValueFormProps> = ({
       title: '关联变量',
       key: 'variables',
       dataIndex: 'variables',
-      render: (variables) =>
-        variables &&
-        Object.values(variables).map((v: IControlRelatedField) => v.name)
+      render: (variables) => variables && Object.values(variables)
     })
   }
 

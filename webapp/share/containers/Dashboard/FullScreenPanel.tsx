@@ -30,7 +30,7 @@ import {
   IDashboardItem
 } from 'app/containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
-import { IFormedView } from 'app/containers/View/types'
+import { IShareFormedViews } from 'app/containers/View/types'
 import { OnGetControlOptions } from 'app/components/Control/types'
 import { ControlPanelTypes } from 'app/components/Control/constants'
 import { IShareDashboardItemInfo } from './types'
@@ -38,9 +38,7 @@ import { IShareDashboardItemInfo } from './types'
 interface IWrapperBaseProps {
   currentDashboard: IDashboard
   widgets: IWidgetFormed[]
-  formedViews: {
-    [viewId: string]: Pick<IFormedView, 'model'>
-  }
+  formedViews: IShareFormedViews
   currentItems: IDashboardItem[]
   currentItemsInfo: {
     [itemId: string]: IShareDashboardItemInfo

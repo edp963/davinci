@@ -33,13 +33,14 @@ export const ShareDisplayActions = {
       }
     }
   },
-  displayLoaded(display: IDisplayFormed, slides, widgets) {
+  displayLoaded(display: IDisplayFormed, slides, widgets, formedViews) {
     return {
       type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
       payload: {
         display,
         slides,
-        widgets
+        widgets,
+        formedViews
       }
     }
   },
@@ -52,7 +53,7 @@ export const ShareDisplayActions = {
     }
   },
 
-  loadLayerData(renderType, slideNumber, layerId, dataToken, password, requestParams) {
+  loadLayerData(renderType, slideNumber, layerId, dataToken, requestParams) {
     return {
       type: ActionTypes.LOAD_LAYER_DATA,
       payload: {
@@ -60,7 +61,6 @@ export const ShareDisplayActions = {
         slideNumber,
         layerId,
         dataToken,
-        password,
         requestParams
       }
     }

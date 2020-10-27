@@ -27,6 +27,7 @@ import { DashboardItemStatus } from './constants'
 import { IControl } from 'app/components/Control/types'
 import { ControlDefaultValueTypes } from 'app/components/Control/constants'
 import { IWidgetFormed } from 'app/containers/Widget/types'
+import { IShareFormedViews } from 'app/containers/View/types'
 
 export function initDefaultValuesFromShareParams(
   controls: IControl[],
@@ -48,7 +49,8 @@ export function initDefaultValuesFromShareParams(
 }
 
 export function getShareInitialItemInfo(
-  widget: IWidgetFormed
+  widget: IWidgetFormed,
+  formedViews: IShareFormedViews
 ): IShareDashboardItemInfo {
   return {
     status: DashboardItemStatus.Pending,
@@ -66,7 +68,7 @@ export function getShareInitialItemInfo(
       linkageVariables: [],
       globalVariables: [],
       drillpathInstance: [],
-      ...getLocalControlInitialValues(widget.config.controls),
+      ...getLocalControlInitialValues(widget.config.controls, formedViews),
       ...getInitialPaginationAndNativeQuery(widget)
     },
     downloadCsvLoading: false,

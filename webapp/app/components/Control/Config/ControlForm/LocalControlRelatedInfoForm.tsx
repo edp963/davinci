@@ -23,7 +23,7 @@ import { Form, Row, Col, Radio, Select, Divider } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { IFlatRelatedView } from './types'
-import { ControlFieldTypes } from '../../constants'
+import { ControlFieldTypes, ControlTypes, IS_RANGE_TYPE } from '../../constants'
 import { filterSelectOption } from 'app/utils/util'
 import { IViewModelProps } from 'app/containers/View/types'
 const FormItem = Form.Item
@@ -34,6 +34,7 @@ const RadioButton = Radio.Button
 interface ILocalControlRelatedInfoFormProps {
   form: WrappedFormUtils
   relatedView: IFlatRelatedView
+  controlType: ControlTypes
   optionWithVariable: boolean
   onFieldTypeChange: (id: number) => (e: RadioChangeEvent) => void
 }
@@ -41,12 +42,14 @@ interface ILocalControlRelatedInfoFormProps {
 const LocalControlRelatedInfoForm: FC<ILocalControlRelatedInfoFormProps> = ({
   form,
   relatedView,
+  controlType,
   optionWithVariable,
   onFieldTypeChange
 }) => {
   const { getFieldDecorator } = form
-  const { id, fields, fieldType, models, variables } = relatedView
-  const isMultiple = Array.isArray(fields)
+  const { id, fieldType, models, variables } = relatedView
+  const isMultiple =
+    IS_RANGE_TYPE[controlType] && fieldType === ControlFieldTypes.Variable
   const fieldValues = form.getFieldValue(`relatedViews[${id}].fields`) || []
   const colSpan = { xxl: 12, xl: 18 }
   const itemCols = {

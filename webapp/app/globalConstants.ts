@@ -18,6 +18,10 @@
  * >>
  */
 
+export const CLIENT_VERSION = '0.3-beta.9'
+export const API_HOST = '/api/v3'
+export const SHARE_HOST = `${location.origin}/share.html`
+
 const defaultEchartsTheme = require('assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'

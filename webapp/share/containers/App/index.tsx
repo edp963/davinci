@@ -48,7 +48,7 @@ export const App: React.FC = () => {
   useInjectSaga({ key: 'global', saga })
   const shareType: Tmode = useSelector(makeSelectShareType())
 
-  const { shareToken, type } = useMemo(
+  const { shareToken } = useMemo(
     () => querystring(window.location.search.substr(1)),
     [window.location.search]
   )
@@ -75,7 +75,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (shareType === 'NORMAL') {
-      dispatch(AppActions.getPermissions(shareToken, type))
+      dispatch(AppActions.getPermissions(shareToken))
     }
   }, [shareType])
 

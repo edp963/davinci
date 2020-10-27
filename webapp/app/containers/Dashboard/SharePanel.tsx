@@ -36,32 +36,65 @@ import {
   makeSelectCurrentDashboardShareLoading,
   makeSelectCurrentItemsInfo
 } from './selectors'
-import {
-  makeSelectCurrentOrganizationMembers
-} from 'containers/Organizations/selectors'
-import {
-  makeSelectProjectRoles
-} from 'containers/Projects/selectors'
+import { makeSelectCurrentOrganizationMembers } from 'containers/Organizations/selectors'
+import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 
 const SharePanel: FC = () => {
   const dispatch = useDispatch()
   const sharePanelStates = useSelector(makeSelectSharePanel())
-  const dashboardShareToken = useSelector(makeSelectCurrentDashboardShareToken())
-  const dashboardAuthorizedShareToken = useSelector(makeSelectCurrentDashboardAuthorizedShareToken())
-  const dashboardPasswordShareToken = useSelector(makeSelectCurrentDashboardPasswordShareToken())
-  const dashboardPasswordSharePassword = useSelector(makeSelectCurrentDashboardPasswordSharePassword())
-  const dashboardShareLoading = useSelector(makeSelectCurrentDashboardShareLoading())
+  const dashboardShareToken = useSelector(
+    makeSelectCurrentDashboardShareToken()
+  )
+  const dashboardAuthorizedShareToken = useSelector(
+    makeSelectCurrentDashboardAuthorizedShareToken()
+  )
+  const dashboardPasswordShareToken = useSelector(
+    makeSelectCurrentDashboardPasswordShareToken()
+  )
+  const dashboardPasswordSharePassword = useSelector(
+    makeSelectCurrentDashboardPasswordSharePassword()
+  )
+  const dashboardShareLoading = useSelector(
+    makeSelectCurrentDashboardShareLoading()
+  )
   const currentItemsInfo = useSelector(makeSelectCurrentItemsInfo())
   const projectRoles = useSelector(makeSelectProjectRoles())
-  const organizationMembers = useSelector(makeSelectCurrentOrganizationMembers())
+  const organizationMembers = useSelector(
+    makeSelectCurrentOrganizationMembers()
+  )
 
-  const onLoadDashboardShareLink = useCallback(({id, mode, permission, roles, viewerIds}) => {
-    dispatch(loadDashboardShareLink({id, mode, permission, roles, viewerIds}))
-  }, [])
+  const onLoadDashboardShareLink = useCallback(
+    ({ id, mode, expired, permission, roles, viewers }) => {
+      dispatch(
+        loadDashboardShareLink({
+          id,
+          mode,
+          expired,
+          permission,
+          roles,
+          viewers
+        })
+      )
+    },
+    []
+  )
 
-  const onLoadWidgetShareLink = useCallback(({id, itemId, mode, permission, roles, viewerIds}) => {
-    dispatch(loadWidgetShareLink({id, itemId, mode, permission, roles, viewerIds}))
-  }, [])
+  const onLoadWidgetShareLink = useCallback(
+    ({ id, itemId, mode, expired, permission, roles, viewers }) => {
+      dispatch(
+        loadWidgetShareLink({
+          id,
+          itemId,
+          mode,
+          expired,
+          permission,
+          roles,
+          viewers
+        })
+      )
+    },
+    []
+  )
 
   const onCloseSharePanel = useCallback(() => {
     dispatch(closeSharePanel())
@@ -70,23 +103,23 @@ const SharePanel: FC = () => {
   const { type, itemId } = sharePanelStates
   let shareToken = ''
   let authorizedShareToken = ''
-  let pwdToken = ''
-  let pwd = ''
+  let passwordShareToken = ''
+  let password = ''
   let shareLoading = false
   switch (type) {
     case 'dashboard':
       shareToken = dashboardShareToken
       authorizedShareToken = dashboardAuthorizedShareToken
-      pwd = dashboardPasswordSharePassword
-      pwdToken = dashboardPasswordShareToken
+      password = dashboardPasswordSharePassword
+      passwordShareToken = dashboardPasswordShareToken
       shareLoading = dashboardShareLoading
       break
     case 'widget':
       const itemInfo = currentItemsInfo[itemId]
       shareToken = itemInfo.shareToken
       authorizedShareToken = itemInfo.authorizedShareToken
-      pwd = itemInfo.pwd
-      pwdToken = itemInfo.pwdToken
+      password = itemInfo.password
+      passwordShareToken = itemInfo.passwordShareToken
       shareLoading = itemInfo.shareLoading
       break
   }
@@ -95,10 +128,10 @@ const SharePanel: FC = () => {
     <SharePanelComponent
       {...sharePanelStates}
       shareToken={shareToken}
+      passwordShareToken={passwordShareToken}
       authorizedShareToken={authorizedShareToken}
+      password={password}
       loading={shareLoading}
-      pwdToken={pwdToken}
-      pwd={pwd}
       projectRoles={projectRoles}
       organizationMembers={organizationMembers}
       onLoadDashboardShareLink={onLoadDashboardShareLink}

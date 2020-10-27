@@ -48,7 +48,7 @@ const Interceptor: React.FC<any> = (props) => {
   const loading: boolean = useSelector(makeSelectPermissionLoading())
   const loginLoading: boolean = useSelector(makeSelectLoginLoading())
 
-  const { shareToken, type } = useMemo(
+  const { shareToken } = useMemo(
     () => querystring(window.location.search.substr(1)),
     [window.location.search]
   )
@@ -67,7 +67,6 @@ const Interceptor: React.FC<any> = (props) => {
       dispatch(
         AppActions.getPermissions(
           shareToken,
-          type,
           password,
           () => {
             setAuthPwd(true)
@@ -85,12 +84,12 @@ const Interceptor: React.FC<any> = (props) => {
         )
       )
     },
-    [shareToken, type]
+    [shareToken]
   )
 
   const afterLogin = useCallback(() => {
     setLegitimate(true)
-    dispatch(AppActions.getPermissions(shareToken, type))
+    dispatch(AppActions.getPermissions(shareToken))
   }, [islegitimate])
 
   const content = useMemo(() => {

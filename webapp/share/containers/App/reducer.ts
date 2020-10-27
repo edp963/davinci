@@ -27,6 +27,7 @@ interface IState {
   logged: boolean,
   loginUser: object
   shareType: Tmode
+  vizType: 'dashboard' | 'widget' | 'display' | ''
   permissionLoading: boolean
   download: boolean
 }
@@ -36,6 +37,7 @@ export const initialState: IState = {
   logged: false,
   loginUser: null,
   shareType: '',
+  vizType: '',
   permissionLoading: false,
   download: false
 }
@@ -60,6 +62,7 @@ const appReducer = (state = initialState, action) =>
         break
       case ActionTypes.INTERCEPTOR_PREFLIGHT_SUCCESS:
         draft.shareType = action.payload.shareType
+        draft.vizType = action.payload.vizType
         break
       case ActionTypes.GET_PERMISSIONS:
         draft.permissionLoading = true

@@ -30,7 +30,8 @@ export const initialState = {
   display: null,
   slidesLayers: [],
   slideLayersInfo: {},
-  widgets: {}
+  widgets: {},
+  formedViews: {}
 }
 
 const displayReducer = (state = initialState, action) =>
@@ -44,6 +45,7 @@ const displayReducer = (state = initialState, action) =>
           obj[w.id] = w
           return obj
         }, {})
+        draft.formedViews = action.payload.formedViews
         draft.slideLayersInfo = action.payload.slides.reduce(
           (obj, slide, idx) => {
             obj[idx + 1] = slide.relations.reduce((info, layer) => {
