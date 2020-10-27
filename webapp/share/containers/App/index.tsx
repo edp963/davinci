@@ -58,6 +58,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     dispatch(AppActions.interceptor(shareToken))
+    dispatch(AppActions.getServerConfigurations())
   }, [])
 
   useEffect(() => {

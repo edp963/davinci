@@ -28,7 +28,7 @@ import LoginForm from './LoginForm'
 
 import { compose } from 'redux'
 
-import { login, logged, getVersion } from '../App/actions'
+import { login, logged } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
@@ -40,7 +40,6 @@ const styles = require('./Login.less')
 interface ILoginProps {
   loginLoading: boolean
   onLogged: (user) => void
-  onGetVersion: (resolve?: (version: string) => void) => void
   onLogin: (username: string, password: string, resolve: () => any) => any
 }
 
@@ -62,7 +61,6 @@ export class Login extends React.PureComponent<
   }
 
   public componentWillMount() {
-    this.props.onGetVersion()
     this.checkNormalLogin()
   }
 
@@ -167,8 +165,7 @@ export function mapDispatchToProps(dispatch) {
   return {
     onLogin: (username, password, resolve) =>
       dispatch(login(username, password, resolve)),
-    onLogged: (user) => dispatch(logged(user)),
-    onGetVersion: (resolve) => dispatch(getVersion(resolve))
+    onLogged: (user) => dispatch(logged(user))
   }
 }
 

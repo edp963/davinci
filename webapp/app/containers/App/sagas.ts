@@ -32,7 +32,7 @@ import {
   LOGOUT,
   CHECK_NAME,
   ACTIVE,
-  GET_VERSION,
+  GET_SERVER_CONFIGURATIONS,
   UPDATE_PROFILE,
   CHANGE_USER_PASSWORD,
   JOIN_ORGANIZATION,
@@ -46,8 +46,6 @@ import {
   GET_USER_BY_TOKEN
 } from './constants'
 import {
-  logged,
-  getVersion,
   loginError,
   activeSuccess,
   activeError,
@@ -66,17 +64,26 @@ import {
   getCaptchaforResetPasswordError,
   resetPasswordUnloggedSuccess,
   resetPasswordUnloggedFail,
-  getVersionSuccess,
-  getVersionFail,
+  serverConfigurationsGetted,
+  getServerConfigurationsFail,
   getUserByTokenFail,
   getUserByTokenSuccess
 } from './actions'
-import request, { removeToken, getToken } from 'utils/request'
+import request, {
+  removeToken,
+  getToken,
+  setTokenExpired,
+  IDavinciResponse
+} from 'utils/request'
 import { errorHandler } from 'utils/util'
 import api from 'utils/api'
 
 import { IReduxActionStruct } from 'utils/types'
-import { IResetPasswordParams, IGetgetCaptchaParams } from '../FindPassword/types'
+import {
+  IResetPasswordParams,
+  IGetgetCaptchaParams
+} from '../FindPassword/types'
+import { IServerConfigurations } from './types'
 
 export function* getExternalAuthProviders() {
   try {
@@ -92,19 +99,20 @@ export function* getExternalAuthProviders() {
   }
 }
 
-export function* getDavinciVersion(action) {
-  const {resolve} = action.payload
+export function* getServerConfigurations(action) {
   try {
-    const version = yield call(request, {
-      method: 'get',
-      url: api.version
-    })
-    yield put(getVersionSuccess(version))
-    if (resolve) {
-      resolve(version)
-    }
+    const result: IDavinciResponse<IServerConfigurations> = yield call(
+      request,
+      {
+        method: 'get',
+        url: api.configurations
+      }
+    )
+    const configurations = result.payload
+    setTokenExpired(configurations.jwtToken.timeout)
+    yield put(serverConfigurationsGetted(configurations))
   } catch (err) {
-    yield put(getVersionFail(err))
+    yield put(getServerConfigurationsFail(err))
     errorHandler(err)
   }
 }
@@ -403,24 +411,24 @@ export function* getUserByToken(action) {
 
 export default function* rootGroupSaga() {
   yield all([
-    throttle(1000, CHECK_NAME, checkNameUnique as any),
-    takeEvery(ACTIVE, activeUser as any),
-    takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders as any),
-    takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth as any),
-    takeEvery(EXTERNAL_AUTH_LOGOUT, externalAuthlogout as any),
-    takeEvery(LOGIN, login as any),
+    throttle(1000, CHECK_NAME, checkNameUnique),
+    takeEvery(ACTIVE, activeUser),
+    takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders),
+    takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth),
+    takeEvery(EXTERNAL_AUTH_LOGOUT, externalAuthlogout),
+    takeEvery(LOGIN, login),
     takeEvery(LOGOUT, logout),
-    takeEvery(UPDATE_PROFILE, updateProfile as any),
+    takeEvery(UPDATE_PROFILE, updateProfile),
     takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any),
     takeEvery(
       GET_CAPTCHA_FOR_RESET_PASSWORD,
       getCaptchaForResetPassword as any
     ),
-    takeEvery(RESET_PASSWORD_UNLOGGED, resetPasswordUnlogged as any),
-    takeEvery(GET_USER_BY_TOKEN, getUserByToken as any),
-    takeEvery(JOIN_ORGANIZATION, joinOrganization as any),
+    takeEvery(RESET_PASSWORD_UNLOGGED, resetPasswordUnlogged  as any),
+    takeEvery(GET_USER_BY_TOKEN, getUserByToken),
+    takeEvery(JOIN_ORGANIZATION, joinOrganization),
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
     takeLatest(DOWNLOAD_FILE, downloadFile),
-    takeLatest(GET_VERSION, getDavinciVersion)
+    takeLatest(GET_SERVER_CONFIGURATIONS, getServerConfigurations)
   ])
 }

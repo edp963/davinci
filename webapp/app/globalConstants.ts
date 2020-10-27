@@ -206,5 +206,6 @@ export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSyst
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
-export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
-export const DEFAULT_CACHE_EXPIRED = 300
+export const DEFAULT_JWT_TOKEN_EXPIRED = 60 * 60 * 1000 // ms
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000  // ms
+export const DEFAULT_CACHE_EXPIRED = 300  // sec

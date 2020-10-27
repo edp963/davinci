@@ -47,5 +47,5 @@ export default {
   star: `${API_HOST}/star`,
   download: `${API_HOST}/download`,
   buriedPoints: `${API_HOST}/statistic`,
-  version: `${API_HOST}/version`
+  configurations: `${API_HOST}/configurations`
 }

@@ -23,8 +23,9 @@ import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { AppActions, AppActionType } from './actions'
 
-import request from 'utils/request'
+import request, { IDavinciResponse, setTokenExpired } from 'utils/request'
 import { errorHandler } from 'utils/util'
+import { IServerConfigurations } from 'app/containers/App/types'
 import api from 'utils/api'
 
 export function* login(action: AppActionType) {
@@ -101,10 +102,33 @@ export function* getPermissions(action: AppActionType) {
   }
 }
 
+export function* getServerConfigurations(action: AppActionType) {
+  if (action.type !== ActionTypes.GET_SERVER_CONFIGURATIONS) {
+    return
+  }
+  const { serverConfigurationsGetted, getServerConfigurationsFail } = AppActions
+  try {
+    const result: IDavinciResponse<IServerConfigurations> = yield call(
+      request,
+      {
+        method: 'get',
+        url: api.configurations
+      }
+    )
+    const configurations = result.payload
+    setTokenExpired(configurations.jwtToken.timeout)
+    yield put(serverConfigurationsGetted(configurations))
+  } catch (err) {
+    yield put(getServerConfigurationsFail(err))
+    errorHandler(err)
+  }
+}
+
 export default function* rootAppSaga() {
   yield all([
     takeLatest(ActionTypes.LOGIN, login),
     takeEvery(ActionTypes.INTERCEPTOR_PREFLIGHT, interceptor),
-    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions)
+    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions),
+    takeLatest(ActionTypes.GET_SERVER_CONFIGURATIONS, getServerConfigurations)
   ])
 }
