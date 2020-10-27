@@ -82,7 +82,11 @@ describe('getSlideDetail Saga', () => {
           mockSlideId,
           [mockGraphLayerFormed],
           [mockWidgetFormed],
-          [mockViewItem]
+          {[mockWidgetFormed.viewId]: {
+            ...mockViewItem,
+            model: {},
+            variable: []
+          }}
         )
       )
       .run()
