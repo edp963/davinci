@@ -29,7 +29,10 @@ import LoginForm from './LoginForm'
 import { compose } from 'redux'
 
 import { login, logged } from '../App/actions'
-import { makeSelectLoginLoading } from '../App/selectors'
+import {
+  makeSelectLoginLoading,
+  makeSelectOauth2Enabled
+} from '../App/selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { statistic } from 'utils/statistic/statistic.dv'
@@ -37,11 +40,9 @@ import ExternalLogin from '../ExternalLogin'
 
 const styles = require('./Login.less')
 
-interface ILoginProps {
-  loginLoading: boolean
-  onLogged: (user) => void
-  onLogin: (username: string, password: string, resolve: () => any) => any
-}
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+type ILoginProps = MappedStates & MappedDispatches
 
 interface ILoginStates {
   username: string
@@ -122,7 +123,7 @@ export class Login extends React.PureComponent<
   }
 
   public render() {
-    const { loginLoading } = this.props
+    const { loginLoading, oauth2Enabled } = this.props
     const { username, password } = this.state
     return (
       <div className={styles.window}>
@@ -151,19 +152,20 @@ export class Login extends React.PureComponent<
             忘记密码？
           </a>
         </p>
-        <ExternalLogin />
+        {oauth2Enabled && <ExternalLogin />}
       </div>
     )
   }
 }
 
 const mapStateToProps = createStructuredSelector({
-  loginLoading: makeSelectLoginLoading()
+  loginLoading: makeSelectLoginLoading(),
+  oauth2Enabled: makeSelectOauth2Enabled()
 })
 
 export function mapDispatchToProps(dispatch) {
   return {
-    onLogin: (username, password, resolve) =>
+    onLogin: (username: string, password: string, resolve: () => void) =>
       dispatch(login(username, password, resolve)),
     onLogged: (user) => dispatch(logged(user))
   }

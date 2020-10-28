@@ -23,7 +23,6 @@ import { API_HOST } from '../globalConstants'
 export default {
   externalAuthProviders: `${API_HOST}/login/getOauth2Clients`,
   tryExternalAuth: `${API_HOST}/login/externalLogin`,
-  externalLogout: `/login/oauth2/logout`,
   login: `${API_HOST}/login`,
   group: `${API_HOST}/groups`,
   user: `${API_HOST}/users`,

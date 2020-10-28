@@ -22,7 +22,6 @@ import {
   GET_EXTERNAL_AUTH_PROVIDERS,
   GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT,
   GET_SERVER_CONFIGURATIONS,
   GET_SERVER_CONFIGURATIONS_SUCCESS,
   GET_SERVER_CONFIGURATIONS_FAIL,
@@ -92,11 +91,6 @@ export function tryExternalAuth(resolve) {
     payload: {
       resolve
     }
-  }
-}
-export function externalAuthlogout() {
-  return {
-    type: EXTERNAL_AUTH_LOGOUT
   }
 }
 

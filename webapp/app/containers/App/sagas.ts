@@ -40,7 +40,6 @@ import {
   DOWNLOAD_FILE,
   GET_EXTERNAL_AUTH_PROVIDERS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT,
   GET_CAPTCHA_FOR_RESET_PASSWORD,
   RESET_PASSWORD_UNLOGGED,
   GET_USER_BY_TOKEN
@@ -152,10 +151,6 @@ export function* login(action) {
     yield put(loginError())
     errorHandler(err)
   }
-}
-
-export function* externalAuthlogout() {
-  location.replace(`${api.externalLogout}`)
 }
 
 export function* logout() {
@@ -415,7 +410,6 @@ export default function* rootGroupSaga() {
     takeEvery(ACTIVE, activeUser),
     takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders),
     takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth),
-    takeEvery(EXTERNAL_AUTH_LOGOUT, externalAuthlogout),
     takeEvery(LOGIN, login),
     takeEvery(LOGOUT, logout),
     takeEvery(UPDATE_PROFILE, updateProfile),
