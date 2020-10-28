@@ -103,17 +103,14 @@ export function* getDashboardDetail(action: DashboardActionType) {
 
     operationWidgetProps.widgetIntoPool(widgets)
 
-    const formedViews: IFormedViews = views.reduce(
-      (obj, view) => {
-        obj[view.id] = {
-          ...view,
-          model: JSON.parse(view.model || '{}'),
-          variable: JSON.parse(view.variable || '[]')
-        }
-        return obj
-      },
-      {}
-    )
+    const formedViews: IFormedViews = views.reduce((obj, view) => {
+      obj[view.id] = {
+        ...view,
+        model: JSON.parse(view.model || '{}'),
+        variable: JSON.parse(view.variable || '[]')
+      }
+      return obj
+    }, {})
 
     yield put(dashboardDetailLoaded(dashboard, items, widgets, formedViews))
   } catch (err) {
@@ -484,19 +481,26 @@ export function* getDashboardShareLink(action: DashboardActionType) {
     loadDashboardShareLinkFail
   } = DashboardActions
 
-  const {id, mode, permission, expired, roles, viewers} = action.payload.params
+  const {
+    id,
+    mode,
+    permission,
+    expired,
+    roles,
+    viewers
+  } = action.payload.params
 
   let requestData = null
-  switch(mode) {
+  switch (mode) {
     case 'AUTH':
-        requestData = { mode, expired, permission, roles, viewers }
-        break
-      case 'PASSWORD':
-      case 'NORMAL':
-        requestData = { mode, expired }
-        break
-      default:
-        break
+      requestData = { mode, expired, permission, roles, viewers }
+      break
+    case 'PASSWORD':
+    case 'NORMAL':
+      requestData = { mode, expired }
+      break
+    default:
+      break
   }
 
   try {
@@ -506,7 +510,7 @@ export function* getDashboardShareLink(action: DashboardActionType) {
       data: requestData
     })
 
-    const { token, password} = result.payload
+    const { token, password } = result.payload
     switch (mode) {
       case 'AUTH':
         yield put(dashboardAuthorizedShareLinkLoaded(token))
@@ -520,14 +524,13 @@ export function* getDashboardShareLink(action: DashboardActionType) {
       default:
         break
     }
-
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
     errorHandler(err)
   }
 }
 
-export function* getWidgetShareLink (action: DashboardActionType) {
+export function* getWidgetShareLink(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_WIDGET_SHARE_LINK) {
     return
   }
@@ -537,19 +540,27 @@ export function* getWidgetShareLink (action: DashboardActionType) {
     widgetShareLinkLoaded,
     loadWidgetShareLinkFail
   } = DashboardActions
-  const {id, itemId, mode, expired, permission, roles, viewers} = action.payload.params
+  const {
+    id,
+    itemId,
+    mode,
+    expired,
+    permission,
+    roles,
+    viewers
+  } = action.payload.params
 
   let requestData = null
-  switch(mode) {
+  switch (mode) {
     case 'AUTH':
-        requestData = { mode, expired, permission, roles, viewers }
-        break
-      case 'PASSWORD':
-      case 'NORMAL':
-        requestData = { mode, expired }
-        break
-      default:
-        break
+      requestData = { mode, expired, permission, roles, viewers }
+      break
+    case 'PASSWORD':
+    case 'NORMAL':
+      requestData = { mode, expired }
+      break
+    default:
+      break
   }
 
   try {
