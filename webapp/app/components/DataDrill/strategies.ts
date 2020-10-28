@@ -479,6 +479,9 @@ function collectKeyValue(sourceDataFilter) {
 }
 
 function mappingFilters(sourceDataFilter, group): IFilter[] {
+  if (!(sourceDataFilter && sourceDataFilter.length)) {
+    return []
+  }
   const mappgingSource = sourceDataFilter.map((source) =>
     source && source[group] ? source[group] : source
   )

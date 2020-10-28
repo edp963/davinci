@@ -123,7 +123,6 @@ export interface ISourceDataFilter {
   value: string
 }
 
-
 export interface IDataDrillProps {
   widgetConfig: IWidgetConfig
   drillHistory?: IDrillDetail[]
@@ -136,7 +135,7 @@ export interface IDataDrillProps {
 }
 
 export interface IEnhancerPanel {
-  isDrillableChart: boolean
-  isSelectedfilter: boolean | object []
-  isSelectedGroup: boolean | string[]
+  isSelectedfilter: object[]
+  isSelectedGroup: string[]
+  chartStyle: number
 }
