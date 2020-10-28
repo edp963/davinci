@@ -27,13 +27,16 @@ import {
   takeLatest,
   takeEvery
 } from 'redux-saga/effects'
+
+import { IWidgetFormed } from 'app/containers/Widget/types'
 import { ActionTypes } from './constants'
 import { DashboardActions, DashboardActionType } from './actions'
 import {
   makeSelectDashboard,
   makeSelectItemRelatedWidget,
   makeSelectItemInfo,
-  makeSelectFormedViews
+  makeSelectFormedViews,
+  makeSelectWidgets
 } from './selectors'
 import { makeSelectShareType } from 'share/containers/App/selectors'
 import {
@@ -64,7 +67,6 @@ import {
   IDashboard,
   IQueryConditions
 } from 'app/containers/Dashboard/types'
-import { IWidgetFormed } from 'app/containers/Widget/types'
 import { IShareFormedViews } from 'app/containers/View/types'
 import {
   IGlobalControlConditions,
@@ -82,7 +84,7 @@ import api from 'utils/api'
 import { message } from 'antd'
 import { DownloadTypes } from 'app/containers/App/constants'
 import { localStorageCRUD, getPasswordUrl } from '../../util'
-
+import { operationWidgetProps } from 'app/components/DataDrill/abstract/widgetOperating'
 export function* getDashboard(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DASHBOARD) {
     return
@@ -110,6 +112,7 @@ export function* getDashboard(action: DashboardActionType) {
       ...rest,
       config: dashboardConfigMigrationRecorder(parsedConfig)
     }
+
     const formedWidgets = widgets.map((widget) => {
       const { config, ...rest } = widget
       const parsedConfig: IWidgetConfig = JSON.parse(config)
@@ -132,6 +135,8 @@ export function* getDashboard(action: DashboardActionType) {
       {}
     )
     yield put(dashboardGetted(dashboard, relations, formedWidgets, formedViews))
+    const getWidgets: IWidgetFormed = yield select(makeSelectWidgets())
+    operationWidgetProps.widgetIntoPool(getWidgets)
   } catch (err) {
     yield put(loadDashboardFail())
     errorHandler(err)
@@ -171,7 +176,8 @@ export function* getWidget(action: DashboardActionType) {
       {}
     )
     yield put(widgetGetted(formedWidget, formedViews))
-
+    const getWidgets: IWidgetFormed = yield select(makeSelectWidgets())
+    operationWidgetProps.widgetIntoPool(getWidgets)
     if (resolve) {
       resolve(formedWidget, formedViews)
     }
