@@ -19,7 +19,6 @@
 
 package edp.davinci.dto.shareDto;
 
-import edp.davinci.service.share.ShareWidget;
 import lombok.Data;
 
 import java.util.Set;
@@ -31,5 +30,6 @@ public class ShareDisplay {
     private String description;
     private String config;
     private Set<ShareDisplaySlide> slides;
-    private Set<ShareWidget> widgets;
+    private Set<SimpleShareWidget> widgets;
+    private Set<ShareView> views;
 }

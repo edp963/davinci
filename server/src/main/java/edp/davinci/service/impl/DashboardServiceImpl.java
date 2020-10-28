@@ -38,6 +38,7 @@ import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.dto.shareDto.ShareEntity;
+import edp.davinci.dto.viewDto.SimpleView;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.ShareService;
@@ -107,36 +108,10 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboardPortal;
     }
 
-    public Dashboard getDashboard(Long dashboardId) {
+    private Dashboard getDashboard(Long dashboardId) {
         Dashboard dashboard = dashboardMapper.getById(dashboardId);
-        if (null == dashboard) {
-            throw new NotFoundException("dashboard is not found");
-        }
-        return dashboard;
-    }
-
-    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
-        Dashboard dashboard = getDashboard(dashboardId);
         if (dashboard == null) {
-            return null;
-        }
-        DashboardPortal dashboardPortal = getDashboardPortal(dashboard.getDashboardPortalId(), false);
-        if (dashboardPortal == null) {
-            return null;
-        }
-
-        Long projectId = dashboardPortal.getProjectId();
-
-        ProjectPermission projectPermission = getProjectPermission(projectId, user);
-
-        List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
-
-        boolean isDisable = isDisableVizs(projectPermission, disablePortals, dashboardPortal.getId());
-        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
-        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
-
-        if (hidden || isDisable || noPublish) {
-            throw new UnAuthorizedException();
+            throw new NotFoundException("dashboard is not found");
         }
         return dashboard;
     }
@@ -213,7 +188,6 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         }
 
         List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
-
         List<Long> disableDashboards = getDisableVizs(user.getId(), portalId, null, VizEnum.DASHBOARD);
         List<Long> disableMemDashboardWidget = relRoleDashboardWidgetMapper.getDisableByUser(user.getId());
 
@@ -223,17 +197,37 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         }
 
         Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
-        Set<View> views = new HashSet<>();
-        if (!CollectionUtils.isEmpty(widgetIds)) {
-            views = viewMapper.selectByWidgetIds(widgetIds);
+        // widget views
+        Set<SimpleView> simpleViews = CollectionUtils.isEmpty(widgetIds) ? new HashSet<>() : viewMapper.selectSimpleByWidgetIds(widgetIds);
+
+        // global controller views
+        Map<String, Object> dashboardConfig = JSON.parseObject(dashboard.getConfig(), Map.class);
+        if (!CollectionUtils.isEmpty(dashboardConfig)) {
+            setControllerViews(simpleViews, (List<Map<String, Object>>) dashboardConfig.get("filters"));
         }
+
+        // widget controller views
+        memDashboardWidgets.forEach(mw -> {
+            Map<String, Object> widgetConfigMap = JSON.parseObject(widgetMapper.getById(mw.getWidgetId()).getConfig(), Map.class);
+            if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                setControllerViews(simpleViews, (List<Map<String, Object>>)widgetConfigMap.get("controls"));
+            }
+        });
 
         DashboardWithMem dashboardWithMem = new DashboardWithMem();
         BeanUtils.copyProperties(dashboard, dashboardWithMem);
-        dashboardWithMem.setWidgets(memDashboardWidgets);
-        dashboardWithMem.setViews(views);
+        dashboardWithMem.setRelations(memDashboardWidgets);
+        dashboardWithMem.setViews(simpleViews);
 
         return dashboardWithMem;
+    }
+
+    private void setControllerViews(Set<SimpleView> views, List<Map<String, Object>> list) {
+        if (!CollectionUtils.isEmpty(list)) {
+            list.stream().filter(m -> m.containsKey("valueViewId")).collect(Collectors.toList()).forEach(m -> {
+                views.add(viewMapper.getSimpleViewById(Long.parseLong(String.valueOf(m.get("valueViewId")))));
+            });
+        }
     }
 
     /**
@@ -711,6 +705,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
                 .withShareEntity(shareEntity)
                 .withEntityId(dashboardId)
                 .withSharerId(user.getId())
+                .withExpired(shareEntity.getExpired())
                 .build();
 
         return shareFactor.toShareResult(TOKEN_SECRET);

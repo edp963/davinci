@@ -62,8 +62,8 @@ public class SystemSchedule {
     public void clearTempDir() {
 
         //下载内容文件保留7天，记录保留1月
-        String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforAWeekYYYYMMDD();
-        String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMP + DateUtils.getTheDayBeforNowDateYYYYMMDD();
+        String downloadDir = fileUtils.fileBasePath + Consts.DIR_DOWNLOAD + DateUtils.getTheDayBeforeAWeekYYYYMMDD();
+        String tempDir = fileUtils.fileBasePath + Consts.DIR_TEMP + DateUtils.getTheDayBeforeNowDateYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
 
         final String download = fileUtils.formatFilePath(downloadDir);
@@ -77,17 +77,13 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
-
-//        if (redisUtils.isRedisEnable()) {
-//            return;
-//        }
-//
-        List<CronJob> jobs = cronJobMapper.getStopedJob();
+        List<CronJob> jobs = cronJobMapper.getStoppedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {
                     quartzHandler.removeJob(job);
                 } catch (ServerException e) {
+
                 }
             }
         }
@@ -115,8 +111,8 @@ public class SystemSchedule {
                 return;
             }
 
-            File[] childs = file.listFiles();
-            if(childs.length == 0){
+            File[] children = file.listFiles();
+            if(children.length == 0){
                 file.delete();
                 deleteFile(file.getParentFile());
             }else{
@@ -125,8 +121,8 @@ public class SystemSchedule {
 
         }else{
             File parentDir = file.getParentFile();
-            File[] childs = parentDir.listFiles();
-            if(childs.length == 1){
+            File[] children = parentDir.listFiles();
+            if(children.length == 1){
                 file.delete();
                 deleteFile(parentDir);
             }else{

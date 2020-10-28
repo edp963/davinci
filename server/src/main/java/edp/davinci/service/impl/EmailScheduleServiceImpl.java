@@ -126,19 +126,19 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         List<ExcelContent> excels = null;
         List<ImageContent> images = null;
 
-        User creater = userMapper.getById(cronJob.getCreateBy());
+        User creator = userMapper.getById(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creator.getId());
         }
 
         if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-			excels = generateExcels(jobId, cronJobConfig, creater);
+			excels = generateExcels(jobId, cronJobConfig, creator);
         }
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
-            excels = generateExcels(jobId, cronJobConfig, creater);
+            images = generateImages(jobId, cronJobConfig, creator.getId());
+            excels = generateExcels(jobId, cronJobConfig, creator);
         }
 
         List<MailAttachment> attachmentList = new ArrayList<>();

@@ -228,9 +228,16 @@ public class WidgetController extends BaseController {
     @ApiOperation(value = "share widget", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareWidget(@PathVariable Long id,
-                                      @RequestBody ShareEntity shareEntity,
+                                      @Valid @RequestBody ShareEntity shareEntity,
+                                      @ApiIgnore BindingResult bindingResult,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

@@ -27,6 +27,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.shareDto.ShareDashboard;
 import edp.davinci.dto.shareDto.ShareDisplay;
+import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.dto.viewDto.DistinctParam;
@@ -35,7 +36,6 @@ import edp.davinci.model.User;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.share.ShareOperation;
 import edp.davinci.service.share.ShareType;
-import edp.davinci.service.share.ShareWidget;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -79,7 +79,6 @@ public class ShareController extends BaseController {
     @GetMapping(value = "/permissions/{token}")
     public ResponseEntity permission(@PathVariable(name = "token") String token,
                                      @RequestParam(required = false) String password,
-                                     @RequestParam String type,
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
 
@@ -215,10 +214,9 @@ public class ShareController extends BaseController {
 
 
     /**
-     * share 获取唯一值
+     * share获取控制器的值
      *
      * @param token
-     * @param viewId
      * @param param
      * @param bindingResult
      * @param user
@@ -226,17 +224,15 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get share data")
-    @AuthShare(type = ShareType.DATA, operation = ShareOperation.LOAD_DATA)
-    @PostMapping(value = "/data/{token}/distinctvalue/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthShare(type = ShareType.DATA, operation = ShareOperation.LOAD_DISTINCT_DATA)
+    @PostMapping(value = "/data/{token}/distinctvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable("token") String token,
-                                           @RequestParam(required = false) String password,
-                                           @PathVariable("viewId") Long viewId,
                                            @Valid @RequestBody DistinctParam param,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
 
-        List<Map<String, Object>> resultList = shareService.getDistinctValue(viewId, param, user);
+        List<Map<String, Object>> resultList = shareService.getDistinctValue(param, user);
         if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payloads(resultList));
         } else {

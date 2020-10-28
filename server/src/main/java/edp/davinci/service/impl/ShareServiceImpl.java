@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import edp.core.exception.ForbiddenException;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
@@ -38,6 +39,7 @@ import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
+import edp.davinci.dto.viewDto.SimpleView;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.model.*;
@@ -48,7 +50,7 @@ import edp.davinci.service.ViewService;
 import edp.davinci.service.share.ShareDataPermission;
 import edp.davinci.service.share.ShareFactor;
 import edp.davinci.service.share.ShareMode;
-import edp.davinci.service.share.ShareWidget;
+import edp.davinci.dto.shareDto.SimpleShareWidget;
 import edp.davinci.service.share.aspect.ShareAuthAspect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -58,6 +60,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.EMPTY;
 
@@ -140,14 +143,33 @@ public class ShareServiceImpl implements ShareService {
     public ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
 
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
-        Widget widget = (Widget) shareFactor.getShareEntity();
-        ShareWidget shareWidget = widgetMapper.getShareWidgetById(widget.getId());
+        ShareFactor widgetFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, widgetFactor);
+        ShareFactor viewFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, viewFactor);
 
-        if (null == shareWidget) {
-            throw new NotFoundException("widget not found");
+        Widget widget = (Widget) shareFactor.getShareEntity();
+        SimpleShareWidget simpleShareWidget = widgetMapper.getShareWidgetById(widget.getId());
+
+        if (null == simpleShareWidget) {
+            throw new NotFoundException("Widget is not found");
         }
 
-        shareFactor.freshShareDataToken(shareWidget, TOKEN_SECRET);
+        widgetFactor.freshWidgetDataToken(simpleShareWidget, TOKEN_SECRET);
+
+        // widget controller views
+        Set<SimpleView> simpleViews = new HashSet<>();
+        Map<String, Object> widgetConfigMap = JSON.parseObject(simpleShareWidget.getConfig(), Map.class);
+        if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+            setControllerViews(simpleViews, (List<Map<String, Object>>)widgetConfigMap.get("controls"));
+        }
+
+        simpleViews.add(viewMapper.getSimpleViewById(simpleShareWidget.getViewId()));
+
+        ShareWidget shareWidget = new ShareWidget();
+        shareWidget.setWidget(simpleShareWidget);
+        shareWidget.setViews(generateShareViews(simpleViews, viewFactor));
+
         return shareWidget;
     }
 
@@ -160,52 +182,50 @@ public class ShareServiceImpl implements ShareService {
      */
     @Override
     public ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
+
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ShareFactor widgetFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, widgetFactor);
+        ShareFactor viewFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, viewFactor);
+
         Display display = (Display) shareFactor.getShareEntity();
         ShareDisplay shareDisplay = new ShareDisplay();
-
         BeanUtils.copyProperties(display, shareDisplay);
 
         List<MemDisplaySlideWidgetWithSlide> memWithSlides = memDisplaySlideWidgetMapper.getMemWithSlideByDisplayId(display.getId());
         List<DisplaySlide> displaySlides = displaySlideMapper.selectByDisplayId(display.getId());
-        Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = null;
+        Set<MemDisplaySlideWidget> memDisplaySlideWidgetSet = new HashSet<>();
 
-        if (!CollectionUtils.isEmpty(memWithSlides)) {
-            memDisplaySlideWidgetSet = new HashSet<>();
-            for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
-                MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
-                BeanUtils.copyProperties(memWithSlide, memDisplaySlideWidget);
-                memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
+        for (MemDisplaySlideWidgetWithSlide memWithSlide : memWithSlides) {
+            MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
+            BeanUtils.copyProperties(memWithSlide, memDisplaySlideWidget);
+            memDisplaySlideWidgetSet.add(memDisplaySlideWidget);
+        }
+
+        Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
+        for (DisplaySlide displaySlide : displaySlides) {
+            ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
+            BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
+
+            Set<MemDisplaySlideWidget> relations = new HashSet<>();
+            relations.addAll(memDisplaySlideWidgetSet.stream().filter(mw -> mw.getDisplaySlideId().equals(displaySlide.getId())).collect(Collectors.toSet()));
+            shareDisplaySlide.setRelations(relations);
+            shareDisplaySlideSet.add(shareDisplaySlide);
+        }
+        shareDisplay.setSlides(shareDisplaySlideSet);
+
+        Set<SimpleShareWidget> widgets = widgetMapper.getShareWidgetsByDisplayId(display.getId());
+        Set<SimpleView> simpleViews = CollectionUtils.isEmpty(widgets) ? new HashSet<>() : viewMapper.selectSimpleByWidgetIds(widgets.stream().map(w -> w.getId()).collect(Collectors.toSet()));
+        widgets.forEach(w -> {
+            widgetFactor.freshWidgetDataToken(w, TOKEN_SECRET);
+            Map<String, Object> widgetConfigMap = JSON.parseObject(widgetMapper.getShareWidgetById(w.getId()).getConfig(), Map.class);
+            if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                setControllerViews(simpleViews, (List<Map<String, Object>>) widgetConfigMap.get("controls"));
             }
-        }
-
-        if (!CollectionUtils.isEmpty(displaySlides)) {
-            Set<ShareDisplaySlide> shareDisplaySlideSet = new HashSet<>();
-            for (DisplaySlide displaySlide : displaySlides) {
-                ShareDisplaySlide shareDisplaySlide = new ShareDisplaySlide();
-                BeanUtils.copyProperties(displaySlide, shareDisplaySlide);
-
-                if (!CollectionUtils.isEmpty(memDisplaySlideWidgetSet)) {
-                    Iterator<MemDisplaySlideWidget> memIterator = memDisplaySlideWidgetSet.iterator();
-                    Set<MemDisplaySlideWidget> relations = new HashSet<>();
-                    while (memIterator.hasNext()) {
-                        MemDisplaySlideWidget memDisplaySlideWidget = memIterator.next();
-                        if (memDisplaySlideWidget.getDisplaySlideId().equals(displaySlide.getId())) {
-                            relations.add(memDisplaySlideWidget);
-                        }
-                    }
-                    shareDisplaySlide.setRelations(relations);
-                }
-                shareDisplaySlideSet.add(shareDisplaySlide);
-            }
-            shareDisplay.setSlides(shareDisplaySlideSet);
-        }
-
-        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(display.getId());
-        if (!CollectionUtils.isEmpty(shareWidgets)) {
-            shareWidgets.forEach(shareWidget -> shareFactor.freshShareDataToken(shareWidget, TOKEN_SECRET));
-            shareDisplay.setWidgets(shareWidgets);
-        }
+        });
+        shareDisplay.setWidgets(widgets);
+        shareDisplay.setViews(generateShareViews(simpleViews, viewFactor));
 
         return shareDisplay;
     }
@@ -219,7 +239,13 @@ public class ShareServiceImpl implements ShareService {
     @Override
     @Transactional
     public ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
+
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ShareFactor widgetFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, widgetFactor);
+        ShareFactor viewFactor = new ShareFactor();
+        BeanUtils.copyProperties(shareFactor, viewFactor);
+
         Dashboard dashboard = (Dashboard) shareFactor.getShareEntity();
         ShareDashboard shareDashboard = new ShareDashboard();
         BeanUtils.copyProperties(dashboard, shareDashboard);
@@ -227,79 +253,116 @@ public class ShareServiceImpl implements ShareService {
         List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboard.getId());
         shareDashboard.setRelations(memDashboardWidgets);
 
-        Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboard.getId());
-        if (!CollectionUtils.isEmpty(shareWidgets)) {
-            shareWidgets.forEach(shareWidget -> shareFactor.freshShareDataToken(shareWidget, TOKEN_SECRET));
+        Set<SimpleShareWidget> simpleShareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboard.getId());
+        if (!CollectionUtils.isEmpty(simpleShareWidgets)) {
+            simpleShareWidgets.forEach(shareWidget -> widgetFactor.freshWidgetDataToken(shareWidget, TOKEN_SECRET));
         }
-        shareDashboard.setWidgets(shareWidgets);
+        shareDashboard.setWidgets(simpleShareWidgets);
+
+        Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
+        Set<SimpleView> simpleViews = CollectionUtils.isEmpty(widgetIds) ? new HashSet<>() : viewMapper.selectSimpleByWidgetIds(widgetIds);
+
+        // global controller views
+        Map<String, Object> dashboardConfig = JSON.parseObject(dashboard.getConfig(), Map.class);
+        if (!CollectionUtils.isEmpty(dashboardConfig)) {
+            setControllerViews(simpleViews, (List<Map<String, Object>>) dashboardConfig.get("filters"));
+        }
+
+        // widget controller views
+        memDashboardWidgets.forEach(mw -> {
+            Map<String, Object> widgetConfigMap = JSON.parseObject(widgetMapper.getShareWidgetById(mw.getWidgetId()).getConfig(), Map.class);
+            if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                setControllerViews(simpleViews, (List<Map<String, Object>>)widgetConfigMap.get("controls"));
+            }
+        });
+
+        shareDashboard.setViews(generateShareViews(simpleViews, viewFactor));
+
         return shareDashboard;
     }
 
+    private void setControllerViews(Set<SimpleView> simpleViews, List<Map<String, Object>> list) {
+        if (!CollectionUtils.isEmpty(list)) {
+            list.stream().filter(m -> m.containsKey("valueViewId")).collect(Collectors.toList()).forEach(m -> {
+                simpleViews.add(viewMapper.getSimpleViewById(Long.parseLong(String.valueOf(m.get("valueViewId")))));
+            });
+        }
+    }
+
+    private Set<ShareView> generateShareViews(Set<SimpleView> simpleViews, ShareFactor viewFactor) {
+        Set<ShareView> shareViews = new HashSet<>();
+        simpleViews.forEach(v -> {
+            ShareView view = new ShareView();
+            BeanUtils.copyProperties(v, view);
+            viewFactor.freshViewDataToken(view, TOKEN_SECRET);
+            shareViews.add(view);
+        });
+        return shareViews;
+    }
 
     /**
      * 获取分享数据
      *
      * @param executeParam
-     * @param user
+     * @param currentUser
      * @return
      */
     @Override
-    public Paginate<Map<String, Object>> getShareData(ViewExecuteParam executeParam, User user)
+    public Paginate<Map<String, Object>> getShareData(ViewExecuteParam executeParam, User currentUser)
             throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException {
 
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Widget widget = (Widget) shareFactor.getShareEntity();
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceByWidgetId(widget.getId());
 
-        User tempUser;
+        User user;
         if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-            tempUser = shareFactor.getUser();
+            user = shareFactor.getUser();
         } else {
-            tempUser = user;
+            user = currentUser;
         }
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), tempUser, false);
-        boolean maintainer = projectService.isMaintainer(projectDetail, tempUser);
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), user, false);
+        boolean maintainer = projectService.isMaintainer(projectDetail, user);
 
         Paginate paginate = viewService.getResultDataList(maintainer, viewWithProjectAndSource, executeParam, user);
         return paginate;
     }
 
     /**
-     * 获取分享distinct value
+     * 获取分享控制器数据
      *
-     * @param viewId
      * @param param
-     * @param user
+     * @param currentUser
      * @return
      */
     @Override
-    public List<Map<String, Object>> getDistinctValue(Long viewId, DistinctParam param, User user) {
-        List<Map<String, Object>> list = null;
+    public List<Map<String, Object>> getDistinctValue(DistinctParam param, User currentUser) {
+        List<Map<String, Object>> list =  new ArrayList<>();
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        View view = (View) shareFactor.getShareEntity();
 
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(view.getId());
         if (null == viewWithProjectAndSource) {
-            log.info("view({}) not found", viewId);
-            throw new NotFoundException("view is not found");
+            throw new NotFoundException("View is not found");
         }
 
-        User tempUser;
+        User user;
         if (shareFactor.getPermission() == ShareDataPermission.SHARER) {
-            tempUser = shareFactor.getUser();
+            user = shareFactor.getUser();
         } else {
-            tempUser = user;
+            user = currentUser;
         }
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), tempUser, false);
-        boolean maintainer = projectService.isMaintainer(projectDetail, tempUser);
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), user, false);
+        boolean maintainer = projectService.isMaintainer(projectDetail, user);
 
-        if (!projectService.allowGetData(projectDetail, tempUser)) {
+        if (!projectService.allowGetData(projectDetail, user)) {
             throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
         }
 
         try {
-            list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, tempUser);
+            list = viewService.getDistinctValueData(maintainer, viewWithProjectAndSource, param, user);
         } catch (ServerException e) {
             throw new UnAuthorizedException(e.getMessage());
         }
@@ -368,6 +431,15 @@ public class ShareServiceImpl implements ShareService {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         Map<String, Object> map = new HashMap<>(1);
         map.put("type", shareFactor.getMode().name());
+        switch (shareFactor.getType()) {
+            case WIDGET:
+            case DASHBOARD:
+            case DISPLAY:
+                map.put("vizType", shareFactor.getType().name().toLowerCase());
+                break;
+            default:
+                break;
+        }
         return map;
     }
 
@@ -498,4 +570,3 @@ public class ShareServiceImpl implements ShareService {
         return AESUtils.encrypt(tokenUtils.generateContinuousToken(shareToken), null);
     }
 }
-
