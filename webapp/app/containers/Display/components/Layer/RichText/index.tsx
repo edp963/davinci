@@ -59,7 +59,7 @@ const LabelEditor: React.FC = () => {
   )
 
   useEffect(() => {
-    if (!editing) {
+    if (!editing && typeof editing === 'boolean') {
       dispatch(
         DisplayActions.editSlideLayerParams(
           layerId,

@@ -5,7 +5,6 @@ module.exports = {
   coverageDirectory: './coverage',
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
-    '!app/**/*.test.{ts,tsx}',
     '!app/app.tsx',
     '!app/*/*/Loadable.{ts,tsx}'
   ],
@@ -30,8 +29,8 @@ module.exports = {
       '<rootDir>/test/mocks/image.js',
     '^app/(.*)$': '<rootDir>/app/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
-    'assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js',
-    '^libs/(.*)$': '<rootDir>/libs/$1'
+    '^libs/(.*)$': '<rootDir>/libs/$1',
+    '^assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js'
   },
   setupFilesAfterEnv: [
     // '<rootDir>/test/utils/test-bundler.js',

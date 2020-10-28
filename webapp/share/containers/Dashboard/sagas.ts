@@ -27,16 +27,18 @@ import {
   takeLatest,
   takeEvery
 } from 'redux-saga/effects'
+
+import { IWidgetFormed } from 'app/containers/Widget/types'
 import { ActionTypes } from './constants'
 import { DashboardActions, DashboardActionType } from './actions'
 import {
   makeSelectDashboard,
   makeSelectItemRelatedWidget,
-  makeSelectItemInfo
+  makeSelectItemInfo,
+  makeSelectFormedViews,
+  makeSelectWidgets
 } from './selectors'
-import {
-  makeSelectShareType
-} from 'share/containers/App/selectors'
+import { makeSelectShareType } from 'share/containers/App/selectors'
 import {
   makeSelectGlobalControlPanelFormValues,
   makeSelectLocalControlPanelFormValues
@@ -57,7 +59,7 @@ import {
 } from 'app/containers/Dashboard/util'
 import {
   IShareDashboardDetailRaw,
-  IShareWidgetRaw,
+  IShareWidgetDetailRaw,
   IShareDashboardItemInfo
 } from './types'
 import {
@@ -65,7 +67,7 @@ import {
   IDashboard,
   IQueryConditions
 } from 'app/containers/Dashboard/types'
-import { IWidgetFormed } from 'app/containers/Widget/types'
+import { IShareFormedViews } from 'app/containers/View/types'
 import {
   IGlobalControlConditions,
   IGlobalControlConditionsByItem,
@@ -82,8 +84,7 @@ import api from 'utils/api'
 import { message } from 'antd'
 import { DownloadTypes } from 'app/containers/App/constants'
 import { localStorageCRUD, getPasswordUrl } from '../../util'
-
-
+import { operationWidgetProps } from 'app/components/DataDrill/abstract/widgetOperating'
 export function* getDashboard(action: DashboardActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DASHBOARD) {
     return
@@ -100,18 +101,20 @@ export function* getDashboard(action: DashboardActionType) {
     const result = yield call(request, requestUrl)
     const {
       widgets,
+      views,
       relations,
       config,
       ...rest
     } = result.payload as IShareDashboardDetailRaw
-  
+
     const parsedConfig: IDashboardConfig = JSON.parse(config || '{}')
     const dashboard = {
       ...rest,
       config: dashboardConfigMigrationRecorder(parsedConfig)
     }
+
     const formedWidgets = widgets.map((widget) => {
-      const { model, variable, config, ...rest } = widget
+      const { config, ...rest } = widget
       const parsedConfig: IWidgetConfig = JSON.parse(config)
       return {
         ...rest,
@@ -120,14 +123,20 @@ export function* getDashboard(action: DashboardActionType) {
         })
       }
     })
-    const formedViews = widgets.reduce(
-      (obj, widget) => ({
+    const formedViews = views.reduce(
+      (obj, { id, model, variable, ...rest }) => ({
         ...obj,
-        [widget.viewId]: { model: JSON.parse(widget.model) }
+        [id]: {
+          ...rest,
+          model: JSON.parse(model),
+          variable: JSON.parse(variable)
+        }
       }),
       {}
     )
     yield put(dashboardGetted(dashboard, relations, formedWidgets, formedViews))
+    const getWidgets: IWidgetFormed = yield select(makeSelectWidgets())
+    operationWidgetProps.widgetIntoPool(getWidgets)
   } catch (err) {
     yield put(loadDashboardFail())
     errorHandler(err)
@@ -146,8 +155,8 @@ export function* getWidget(action: DashboardActionType) {
   const requestUrl = getPasswordUrl(shareType, token, baseUrl)
   try {
     const result = yield call(request, requestUrl)
-    const widget: IShareWidgetRaw = result.payload
-    const { model, variable, config, ...rest } = widget
+    const { widget, views } = result.payload as IShareWidgetDetailRaw
+    const { config, ...rest } = widget
     const parsedConfig: IWidgetConfig = JSON.parse(config)
     const formedWidget = {
       ...rest,
@@ -155,13 +164,22 @@ export function* getWidget(action: DashboardActionType) {
         viewId: widget.viewId
       })
     }
-    const formedViews = {
-      [widget.viewId]: { model: JSON.parse(widget.model) }
-    }
+    const formedViews = views.reduce(
+      (obj, { id, model, variable, ...rest }) => ({
+        ...obj,
+        [id]: {
+          ...rest,
+          model: JSON.parse(model),
+          variable: JSON.parse(variable)
+        }
+      }),
+      {}
+    )
     yield put(widgetGetted(formedWidget, formedViews))
-
+    const getWidgets: IWidgetFormed = yield select(makeSelectWidgets())
+    operationWidgetProps.widgetIntoPool(getWidgets)
     if (resolve) {
-      resolve(formedWidget)
+      resolve(formedWidget, formedViews)
     }
   } catch (err) {
     errorHandler(err)
@@ -202,7 +220,7 @@ function* getData(
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.share}/data/${relatedWidget.dataToken}?password=${relatedWidget.password}`,
+      url: `${api.share}/data/${relatedWidget.dataToken}`,
       data: getRequestBody(requestParams)
     })
     result.payload.resultList = result.payload.resultList || []
@@ -231,6 +249,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     return
   }
   const { type, itemId, formValues } = action.payload
+  const formedViews: IShareFormedViews = yield select(makeSelectFormedViews())
 
   if (type === ControlPanelTypes.Global) {
     const currentDashboard: IDashboard = yield select(makeSelectDashboard())
@@ -240,6 +259,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     const globalControlConditionsByItem = getCurrentControlValues(
       type,
       currentDashboard.config.filters,
+      formedViews,
       globalControlFormValues,
       formValues
     )
@@ -264,6 +284,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
     const localControlConditions = getCurrentControlValues(
       type,
       relatedWidget.config.controls,
+      formedViews,
       localControlFormValues,
       formValues
     )
@@ -321,12 +342,14 @@ export function* getSelectOptions(action: DashboardActionType) {
   }
   const { selectOptionsLoaded, loadSelectOptionsFail } = DashboardActions
   try {
-    const { controlKey, dataToken, requestParams, itemId } = action.payload
+    const { controlKey, requestParams, itemId } = action.payload
+    const formedViews: IShareFormedViews = yield select(makeSelectFormedViews())
     const requests = Object.entries(requestParams).map(([viewId, params]) => {
       const { columns, filters, variables, cache, expired } = params
+      const { dataToken } = formedViews[viewId]
       return call(request, {
         method: 'post',
-        url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
+        url: `${api.share}/data/${dataToken}/distinctvalue`,
         data: {
           columns: Object.values(columns).filter((c) => !!c),
           filters,
@@ -357,14 +380,11 @@ export function* getDownloadList(action: DashboardActionType) {
   const { shareClinetId, token } = action.payload
 
   const shareType = yield select(makeSelectShareType())
-  const baseUrl =  `${api.download}/share/page/${shareClinetId}/${token}`
+  const baseUrl = `${api.download}/share/page/${shareClinetId}/${token}`
   const requestUrl = getPasswordUrl(shareType, token, baseUrl)
 
   try {
-    const result = yield call(
-      request,
-      requestUrl
-    )
+    const result = yield call(request, requestUrl)
     yield put(downloadListLoaded(result.payload))
   } catch (err) {
     yield put(loadDownloadListFail(err))
@@ -395,12 +415,14 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const { shareClientId, itemId } = action.payload
   const currentDashboard: IDashboard = yield select(makeSelectDashboard())
   const currentDashboardFilters = currentDashboard?.config.filters || []
+  const formedViews: IShareFormedViews = yield select(makeSelectFormedViews())
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
   )
   const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
     ControlPanelTypes.Global,
     currentDashboardFilters,
+    formedViews,
     globalControlFormValues
   )
   const itemInfo: IShareDashboardItemInfo = yield select((state) =>
@@ -415,6 +437,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const localControlConditions = getCurrentControlValues(
     ControlPanelTypes.Local,
     relatedWidget.config.controls,
+    formedViews,
     localControlFormValues
   )
   const requestParams = getRequestParams(
@@ -427,11 +450,11 @@ export function* initiateDownloadTask(action: DashboardActionType) {
     }
   )
 
-  const { dataToken, password } = relatedWidget
+  const { dataToken } = relatedWidget
   try {
     yield call(request, {
       method: 'POST',
-      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${dataToken}?password=${password}`,
+      url: `${api.download}/share/submit/${DownloadTypes.Widget}/${shareClientId}/${dataToken}`,
       data: [
         {
           id: relatedWidget.id,
@@ -452,7 +475,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   }
 }
 
-export default function* rootDashboardSaga(): IterableIterator<any> {
+export default function* rootDashboardSaga() {
   yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DASHBOARD, getDashboard),
     takeEvery(ActionTypes.LOAD_SHARE_WIDGET, getWidget),

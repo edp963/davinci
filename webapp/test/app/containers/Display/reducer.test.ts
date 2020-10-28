@@ -31,8 +31,8 @@ import {
   mockGraphLayerFormed,
   mockSlideLayersOperationInfo,
   mockWidgetFormed,
-  mockPwdToken,
-  mockPwd,
+  mockPasswordToken,
+  mockPassword,
   mockChangedOperationInfo,
   mockDeltaSize,
   mockFinish,
@@ -45,7 +45,7 @@ import {
   mockShareToken,
   mockAuthShareToken,
   mockDisplayTitle,
-  mockView,
+  mockFormedViews,
   mockCurrentDisplayWidgets,
   mockDefaultSlideLayersOperationGraphInfo,
   mockGraphLayerId,
@@ -94,7 +94,7 @@ describe('displayReducer', () => {
           mockSlideId,
           [mockGraphLayerFormed],
           [mockWidgetFormed],
-          [mockView]
+          mockFormedViews
         )
       )
     ).toEqual(expectedResult)
@@ -127,14 +127,14 @@ describe('displayReducer', () => {
 
   it('should handle the displayPasswordShareLinkLoaded action correctly', () => {
     const expectedResult = produce(state, (draft) => {
-      draft.currentDisplayPasswordShareToken = mockPwdToken
-      draft.currentDisplayPasswordPassword = mockPwd
+      draft.currentDisplayPasswordShareToken = mockPasswordToken
+      draft.currentDisplayPasswordPassword = mockPassword
       draft.loading.shareToken = false
     })
     expect(
       reducer(
         state,
-        actions.displayPasswordShareLinkLoaded(mockPwdToken, mockPwd)
+        actions.displayPasswordShareLinkLoaded(mockPasswordToken, mockPassword)
       )
     ).toEqual(expectedResult)
   })

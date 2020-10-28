@@ -22,7 +22,7 @@ import { IViewModel } from 'containers/View/types'
 
 import { Merge } from 'utils/types'
 
-import { IFilters } from 'app/components/Control/types'
+import { IFilter } from 'app/components/Control/types'
 
 import { IQueryVariableMap } from 'containers/Dashboard/types'
 
@@ -107,7 +107,7 @@ export default class WidgetAbstract {
 export interface IDrillDetail {
   type: DrillType
   groups: string[]
-  filters: IFilters[]
+  filters: IFilter[]
   currentGroup: string // 对应原 name
   [WidgetDimensions.COL]?: IWidgetDimension[]
   [WidgetDimensions.ROW]?: IWidgetDimension[]

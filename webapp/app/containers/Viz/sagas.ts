@@ -546,7 +546,7 @@ export function* deleteSlides(action: VizActionType) {
   }
 }
 
-export default function* rootVizSaga(): IterableIterator<any> {
+export default function* rootVizSaga() {
   yield all([
     takeLatest(ActionTypes.LOAD_PORTALS, getPortals),
     takeEvery(ActionTypes.ADD_PORTAL, addPortal),

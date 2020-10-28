@@ -77,6 +77,7 @@ import {
 
 import { OperationInfo } from './components/Layer/types'
 import { SecondaryGraphTypes } from './components/Setting'
+import { IFormedViews } from '../View/types'
 export function* getSlideDetail (action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SLIDE_DETAIL) {
     return
@@ -115,7 +116,19 @@ export function* getSlideDetail (action: DisplayActionType) {
       })
     })
 
-    yield put(slideDetailLoaded(slideId, items, widgets, views))
+    const formedViews: IFormedViews = views.reduce(
+      (obj, view) => {
+        obj[view.id] = {
+          ...view,
+          model: JSON.parse(view.model || '{}'),
+          variable: JSON.parse(view.variable || '[]')
+        }
+        return obj
+      },
+      {}
+    )
+
+    yield put(slideDetailLoaded(slideId, items, widgets, formedViews))
   } catch (err) {
     yield put(loadSlideDetailFail(err))
   }
@@ -548,7 +561,7 @@ export function* getDisplayShareLink (action: DisplayActionType) {
     return
   }
 
-  const { id, mode, permission, roles, viewerIds } = action.payload.params
+  const { id, mode, expired, permission, roles, viewers } = action.payload.params
   const {
     displayAuthorizedShareLinkLoaded,
     displayShareLinkLoaded,
@@ -560,13 +573,11 @@ export function* getDisplayShareLink (action: DisplayActionType) {
 
   switch (mode) {
     case 'AUTH':
-      requestData = { mode, permission, roles, viewers: viewerIds }
+      requestData = { mode, expired, permission, roles, viewers }
       break
     case 'PASSWORD':
-      requestData = { mode }
-      break
     case 'NORMAL':
-      requestData = { mode }
+      requestData = { mode, expired }
       break
     default:
       break

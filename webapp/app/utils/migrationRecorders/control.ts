@@ -38,8 +38,8 @@ import {
   RelativeDateValueType
 } from 'app/components/RelativeDatePicker/constants'
 
-function beta5(control: IGlobalControl): IGlobalControl
-function beta5(control: ILocalControl): ILocalControl
+function beta5(control: ILegacyGlobalControl): ILegacyGlobalControl
+function beta5(control: ILegacyLocalControl): ILegacyLocalControl
 function beta5(control: IControl): IControl
 function beta5(control) {
   /* IGlobalControl & ILocalControl:
@@ -60,7 +60,10 @@ function beta5(control) {
   return control
 }
 
-function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
+function beta9(
+  control: ILegacyGlobalControl | ILegacyLocalControl | IControl,
+  opts
+) {
   /*
    * IGlobalControl
    *       &          -->    IControl
@@ -90,9 +93,9 @@ function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
    *   19. relatedViews: change type to IControlRelatedView
    * IControlRelatedView:
    *   1. + fieldType
-   *   2. + fields, typeof (IControlRelatedField | IControlRelatedField[])
-   *   3. name -> fields.name / fields[n].name
-   *   4. type -> fields.type / fields[n].type
+   *   2. + fields
+   *   3. name -> fields(element)
+   *   4. - type
    *   5. - optionsFromColumn(move each relatedViews[first-view-id].optionsFromColumn -> autoGetOptionsFromRelatedViews)
    *   6. - column(move each relatedViews[first-view-id].column -> valueField)
    *   7. structure change
@@ -101,7 +104,7 @@ function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
    *     recent
    *       [viewId]: {
    *         fieldType: 'column',
-   *         fields: { name: 'foo', type: 'VARCHAR' }
+   *         fields: ['foo']
    *       }
    *
    *     old
@@ -112,14 +115,11 @@ function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
    *     recent
    *       [viewId]: {
    *         fieldType: 'variable',
-   *         fields: [
-   *           { name: 'foo', type: 'date' },
-   *           { name: 'bar', type: 'date' }
-   *         ]
+   *         fields: ['foo', 'bar']
    *       }
    */
-  if ((control as IGlobalControl | ILocalControl).interactionType) {
-    if ((control as ILocalControl).fields) {
+  if ((control as ILegacyGlobalControl | ILegacyLocalControl).interactionType) {
+    if ((control as ILegacyLocalControl).fields) {
       const {
         interactionType,
         customOptions,
@@ -128,7 +128,7 @@ function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
         defaultValue,
         fields,
         ...rest
-      } = control as ILocalControl
+      } = control as ILegacyLocalControl
       const { relatedView, valueInfo } = beta9FieldsTransform(
         fields,
         rest.type,
@@ -159,7 +159,7 @@ function beta9(control: IGlobalControl | ILocalControl | IControl, opts) {
         dynamicDefaultValue,
         defaultValue,
         ...rest
-      } = control as IGlobalControl
+      } = control as ILegacyGlobalControl
       const migratedRelatedViews = {}
       let valueFieldInfo
 
@@ -216,7 +216,7 @@ function beta9FieldsTransform(
     return {
       relatedView: {
         fieldType: interactionType,
-        fields: fields.map((v) => v)
+        fields: fields.map(({ name }) => name)
       }
     }
   } else {
@@ -252,7 +252,7 @@ function beta9FieldsTransform(
     return {
       relatedView: {
         fieldType: interactionType,
-        fields: { name, type }
+        fields: [name]
       },
       valueInfo
     }
@@ -395,7 +395,7 @@ function beta9DefaultValueTransform(
  * legacy types
  */
 
-interface IControlBase
+interface ILegacyControlBase
   extends Omit<IControl, 'relatedViews' | 'customOptions'> {
   interactionType: ControlFieldTypes
   customOptions?: boolean
@@ -403,13 +403,13 @@ interface IControlBase
   dynamicDefaultValue?: any
 }
 
-interface IGlobalControl extends IControlBase {
+interface ILegacyGlobalControl extends ILegacyControlBase {
   relatedViews: {
     [viewId: string]: ILegacyControlRelatedField | ILegacyControlRelatedField[]
   }
 }
 
-interface ILocalControl extends IControlBase {
+interface ILegacyLocalControl extends ILegacyControlBase {
   fields: ILegacyControlRelatedField | ILegacyControlRelatedField[]
 }
 

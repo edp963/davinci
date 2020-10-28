@@ -22,7 +22,7 @@ import produce from 'immer'
 import { ActionTypes, EmptySchedule, EmptyWeChatWorkSchedule } from './constants'
 import { ScheduleActionType } from './actions'
 
-const initialState = {
+export const initialState = {
   schedules: [],
   editingSchedule: EmptySchedule,
   loading: {

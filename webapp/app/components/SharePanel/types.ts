@@ -2,7 +2,7 @@ import { tuple } from 'utils/util'
 export const shareVizsType = tuple('dashboard', 'display', 'widget')
 export const mode = tuple('NORMAL', 'AUTH', 'PASSWORD', '')
 export const permission = tuple('SHARER', 'VIEWER')
-export const copyType = tuple('link', 'linkPwd')
+export const copyType = tuple('link', 'all')
 
 export type TShareVizsType = typeof shareVizsType[number]
 export type TPermission = typeof permission[number]
@@ -20,17 +20,18 @@ export interface ISharePanel {
   loading: boolean
 }
 
-export interface IGetTokenParams {
-  id: number,
-  itemId?: number,
-  mode?: Tmode,
-  permission?: TPermission,
-  roles?: number[],
-  viewerIds?: number[]
+export interface IShareTokenParams {
+  id: number
+  mode: Tmode
+  expired: string
+  itemId?: number
+  permission?: TPermission
+  roles?: number[]
+  viewers?: number[]
 }
 export interface ICtrl {
   mode: Tmode
-  setSType: TsType
+  onModeChange: TsType
 }
 
 export interface IContent {
@@ -41,7 +42,6 @@ export interface IContent {
   loadToken: () => void
   authorizedShareToken: string
 }
-
 
 export interface IRegularContent extends IContent {
   token: string
@@ -59,11 +59,3 @@ export interface ISignalContent extends IContent {
   authUser: string
   vizType: TShareVizsType
 }
-
-
-
-
-
-
-
-

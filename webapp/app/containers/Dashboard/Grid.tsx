@@ -965,6 +965,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               itemId={id}
               alias={alias}
               widgets={widgets}
+              formedViews={formedViews}
               widget={widget}
               isTrigger={isTrigger}
               datasource={datasource}
@@ -1106,6 +1107,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           <GlobalControlPanel
             currentDashboard={currentDashboard}
             currentItems={currentItems}
+            formedViews={formedViews}
             layoutType={ControlPanelLayoutTypes.Dashboard}
             onGetOptions={this.getControlSelectOptions}
             onSearch={onLoadBatchDataWithControlValues}

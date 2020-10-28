@@ -24,7 +24,7 @@ import { Form, Row, Col, Select, Radio, Empty } from 'antd'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { IViewModelProps } from 'app/containers/View/types'
-import { ControlFieldTypes } from '../../constants'
+import { ControlFieldTypes, ControlTypes, IS_RANGE_TYPE } from '../../constants'
 import { IFlatRelatedView } from './types'
 import { filterSelectOption } from 'app/utils/util'
 import styles from '../../Control.less'
@@ -36,6 +36,7 @@ const RadioGroup = Radio.Group
 interface IGlobalControlRelatedViewFormProps {
   form: WrappedFormUtils
   relatedViews: IFlatRelatedView[]
+  controlType: ControlTypes
   optionWithVariable: boolean
   onFieldTypeChange: (id: number) => (e: RadioChangeEvent) => void
 }
@@ -43,6 +44,7 @@ interface IGlobalControlRelatedViewFormProps {
 const GlobalControlRelatedViewForm: FC<IGlobalControlRelatedViewFormProps> = ({
   form,
   relatedViews,
+  controlType,
   optionWithVariable,
   onFieldTypeChange
 }) => {
@@ -92,85 +94,85 @@ const GlobalControlRelatedViewForm: FC<IGlobalControlRelatedViewFormProps> = ({
       </div>
       <div className={viewsClass}>
         {relatedViews.length ? (
-          relatedViews.map(
-            ({ id, name, fieldType, fields, models, variables }) => {
-              const isMultiple = Array.isArray(fields)
-              const fieldValues =
-                form.getFieldValue(`relatedViews[${id}].fields`) || []
-              return (
-                <div key={id} className={styles.relatedView}>
-                  <div className={styles.name}>
-                    <h4>{name}</h4>
-                    {getFieldDecorator(
-                      `relatedViews[${id}].fieldType`,
-                      {}
-                    )(
-                      <RadioGroup
-                        size="small"
-                        className={styles.fieldType}
-                        disabled={optionWithVariable}
-                        onChange={onFieldTypeChange(id)}
-                      >
-                        <RadioButton value={ControlFieldTypes.Column}>
-                          字段
-                        </RadioButton>
-                        <RadioButton value={ControlFieldTypes.Variable}>
-                          变量
-                        </RadioButton>
-                      </RadioGroup>
-                    )}
-                  </div>
-                  <Row gutter={8}>
-                    <Col span={24}>
-                      <FormItem>
-                        {getFieldDecorator(`relatedViews[${id}].fields`, {
-                          rules: [
-                            {
-                              required: true,
-                              message: `关联${
-                                fieldType === ControlFieldTypes.Column
-                                  ? '字段'
-                                  : '变量'
-                              }不能为空`
-                            },
-                            { validator: columnValidator }
-                          ]
-                        })(
-                          <Select
-                            showSearch
-                            placeholder="请选择"
-                            filterOption={filterSelectOption}
-                            {...(isMultiple && { mode: 'multiple' })}
-                            disabled={optionWithVariable}
-                          >
-                            {fieldType === ControlFieldTypes.Column
-                              ? models.map((m: IViewModelProps) => (
-                                  <Option key={m.name} value={m.name}>
-                                    {m.name}
-                                  </Option>
-                                ))
-                              : variables.map((v) => (
-                                  <Option
-                                    key={v.name}
-                                    value={v.name}
-                                    disabled={
-                                      isMultiple &&
-                                      fieldValues.length === 2 &&
-                                      !fieldValues.includes(v.name)
-                                    }
-                                  >
-                                    {v.name}
-                                  </Option>
-                                ))}
-                          </Select>
-                        )}
-                      </FormItem>
-                    </Col>
-                  </Row>
+          relatedViews.map(({ id, name, fieldType, models, variables }) => {
+            const isMultiple =
+              IS_RANGE_TYPE[controlType] &&
+              fieldType === ControlFieldTypes.Variable
+            const fieldValues =
+              form.getFieldValue(`relatedViews[${id}].fields`) || []
+            return (
+              <div key={id} className={styles.relatedView}>
+                <div className={styles.name}>
+                  <h4>{name}</h4>
+                  {getFieldDecorator(
+                    `relatedViews[${id}].fieldType`,
+                    {}
+                  )(
+                    <RadioGroup
+                      size="small"
+                      className={styles.fieldType}
+                      disabled={optionWithVariable}
+                      onChange={onFieldTypeChange(id)}
+                    >
+                      <RadioButton value={ControlFieldTypes.Column}>
+                        字段
+                      </RadioButton>
+                      <RadioButton value={ControlFieldTypes.Variable}>
+                        变量
+                      </RadioButton>
+                    </RadioGroup>
+                  )}
                 </div>
-              )
-            }
-          )
+                <Row gutter={8}>
+                  <Col span={24}>
+                    <FormItem>
+                      {getFieldDecorator(`relatedViews[${id}].fields`, {
+                        rules: [
+                          {
+                            required: true,
+                            message: `关联${
+                              fieldType === ControlFieldTypes.Column
+                                ? '字段'
+                                : '变量'
+                            }不能为空`
+                          },
+                          { validator: columnValidator }
+                        ]
+                      })(
+                        <Select
+                          showSearch
+                          placeholder="请选择"
+                          filterOption={filterSelectOption}
+                          {...(isMultiple && { mode: 'multiple' })}
+                          disabled={optionWithVariable}
+                        >
+                          {fieldType === ControlFieldTypes.Column
+                            ? models.map((m: IViewModelProps) => (
+                                <Option key={m.name} value={m.name}>
+                                  {m.name}
+                                </Option>
+                              ))
+                            : variables.map((v) => (
+                                <Option
+                                  key={v.name}
+                                  value={v.name}
+                                  disabled={
+                                    isMultiple &&
+                                    fieldValues.length === 2 &&
+                                    !fieldValues.includes(v.name)
+                                  }
+                                >
+                                  {v.name}
+                                </Option>
+                              ))}
+                        </Select>
+                      )}
+                    </FormItem>
+                  </Col>
+                </Row>
+              </div>
+            )
+          })
         ) : (
           <Empty key="empty" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         )}

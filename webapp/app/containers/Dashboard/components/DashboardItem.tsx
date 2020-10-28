@@ -34,7 +34,7 @@ import {
   strategiesOfDrillDownNullDrillHistory
 } from 'components/DataDrill/strategies'
 import { getLastItemValueOfArray } from 'components/DataDrill/util'
-import { IFormedView, IViewModel } from 'containers/View/types'
+import { IFormedView, IFormedViews, IShareFormedViews, IViewModel } from 'containers/View/types'
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from 'containers/Widget/components/Widget'
 import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
@@ -58,6 +58,7 @@ interface IDashboardItemProps {
   alias?: string
   widget: IWidgetFormed
   widgets: IWidgetFormed[]
+  formedViews: IFormedViews | IShareFormedViews
   view?: Partial<IFormedView>
   isTrigger?: boolean
   datasource: any
@@ -240,7 +241,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  private onSyncBizdatas = () => {
+  private syncData = () => {
     const {
       itemId,
       onLoadData,
@@ -470,6 +471,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       alias,
       itemId,
       widget,
+      formedViews,
       datasource,
       loading,
       interacting,
@@ -681,7 +683,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              {!loading && <Icon type="reload" onClick={this.onSyncBizdatas} />}
+              {!loading && <Icon type="reload" onClick={this.syncData} />}
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
@@ -705,6 +707,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </div>
         <div className={classnames({[utilStyles.hide]: !controlPanelVisible})}>
           <LocalControlPanel
+            formedViews={formedViews}
             itemId={itemId}
             widget={widget}
             layoutType={ControlPanelLayoutTypes.DashboardItem}

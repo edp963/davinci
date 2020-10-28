@@ -396,7 +396,7 @@ export function* excludeRole (action: ProjectActionType) {
   }
 }
 
-export default function* rootProjectSaga (): IterableIterator<any> {
+export default function* rootProjectSaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_PROJECTS, getProjects),
     takeLatest(ActionTypes.ADD_PROJECT_ROLE, addProjectRole),

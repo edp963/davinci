@@ -131,8 +131,16 @@ const viewReducer = (
         draft.formedViews = action.payload.viewIds.reduce((acc, id) => {
           if (!acc[id]) {
             acc[id] = {
+              id,
+              name: '',
+              description: '',
+              sql: '',
+              config: '',
+              sourceId: 0,
+              projectId: 0,
               model: {},
-              variable: []
+              variable: [],
+              roles: []
             }
           }
           return acc
@@ -295,20 +303,9 @@ const viewReducer = (
         break
       case DashboardActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
       case DisplayActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
-        const updatedViews: IFormedViews = (action.payload.views || []).reduce(
-          (obj, view) => {
-            obj[view.id] = {
-              ...view,
-              model: JSON.parse(view.model || '{}'),
-              variable: JSON.parse(view.variable || '[]')
-            }
-            return obj
-          },
-          {}
-        )
         draft.formedViews = {
           ...draft.formedViews,
-          ...updatedViews
+          ...action.payload.formedViews
         }
         break
       case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
@@ -328,5 +325,5 @@ const viewReducer = (
     }
   })
 
-export { initialState as viewInitialState}
+export { initialState as viewInitialState }
 export default viewReducer

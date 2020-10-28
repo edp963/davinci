@@ -66,6 +66,12 @@ const makeSelectWidgets = () =>
     (shareState) => shareState.widgets
   )
 
+const makeSelectFormedViews = () =>
+  createSelector(
+    selectShare,
+    (shareState) => shareState.formedViews
+  )
+
 const makeSelectSlideLayerContextValue = () =>
   createSelector(
     selectSlidesLayers,
@@ -99,6 +105,7 @@ export {
   makeSelectSlidesCount,
   makeSelectSlideLayers,
   makeSelectWidgets,
+  makeSelectFormedViews,
   makeSelectSlideLayerContextValue,
   makeSelectSlideLayersLoaded
 }

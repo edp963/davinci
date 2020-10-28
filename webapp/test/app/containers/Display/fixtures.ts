@@ -23,7 +23,7 @@ import {
   ILayerParams
 } from 'app/containers/Display/components/types'
 
-import { IView } from 'app/containers/View/types'
+import { IFormedViews, IView } from 'app/containers/View/types'
 import {
   IDisplayState,
   IDisplaySharePanelState,
@@ -37,6 +37,11 @@ import { displayInitialState } from 'app/containers/Display/reducer'
 import { appInitialState } from 'app/containers/App/reducer'
 import { viewInitialState } from 'app/containers/View/reducer'
 import { IVizState } from 'app/containers/Viz/types'
+import { IShareTokenParams } from 'app/components/SharePanel/types'
+import {
+  ViewModelTypes,
+  ViewModelVisualTypes
+} from 'app/containers/View/constants'
 export const mockDisplayId: number = 72
 
 export const mockSlideId: number = 627
@@ -75,7 +80,7 @@ export const Req =
 export const mockAuthShareToken =
   'eNoVjskRBDEIxFIazoYnBpN_SOv9Syp5RcR-Yo11zerL6o4oxNbFFKxCSAyUPTr57W5Ysto0nSSXM0pfqt4RhWJSM4UT7PjzT8uKV9DnJt_tSEJKfK--eZs0LilMittsZe5UvL7nW3C7x-EF7uMn4nlRxnyMqPV8mmu4B2BzNmQ8alU6dBy0_gM8rDKA'
 
-export const mockPwdToken =
+export const mockPasswordToken =
   'eNoVzrkBAzEIBMCWED8hQmz_JZ0dTD7emQkSm4Br9Syre2RHojcepwomni3LC6adhRz48ZGT8ISk0S3fjEzCUB9G14z5ueEGU9C03eSWcCe-oPjJwpOunaOg'
 
 export const mockHttpError = new Error('Request failed with status code 403')
@@ -95,12 +100,12 @@ export const mockDeltaSize = {
   deltaHeight: 0
 }
 
-export const mockCover =  new Blob([''], {
+export const mockCover = new Blob([''], {
   type: 'image/png'
 })
 export const mockShareToken =
   'eNoNybkBwDAIBLCVAGM4Ssyz_0hJpUKWAJbOLV_TyBpRM0c6Nscbr9jHmlmzrNEjTLtZOOYVI61sTwr0opc0wZO0NEJT_q8QXVylZvP4jbMmRYuRKsgHZMwdFA'
-export const mockPwd = 'RYO92FBC'
+export const mockPassword = 'RYO92FBC'
 export const mockShareTokenReq = {
   password: '',
   token:
@@ -112,12 +117,13 @@ export const defaultSharePanelState: IDisplaySharePanelState = {
   title: '',
   visible: false
 }
-export const mockShareLinkParams = {
+export const mockShareLinkParams: IShareTokenParams = {
   id: 72,
   mode: 'AUTH',
+  expired: '2030-01-01',
   permission: 'SHARER',
   roles: null,
-  viewerIds: null
+  viewers: null
 }
 
 export const mockBaseLines: IBaseline = {
@@ -129,18 +135,30 @@ export const mockBaseLines: IBaseline = {
   adjust: [0, 0]
 }
 
-export const mockView: IView = {
-  roles: [],
-  name: '渠道信息',
-  projectId: 41,
-  sourceId: 53,
-  sql: 'SELECT * from dad',
-  variable: '[]',
-  config: '',
-  description: '',
-  id: 127,
-  model:
-    '{"name_level1":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"总停留时间":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"name_level2":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"总调出次数":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"name_level3":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"platform":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"总访问次数":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"QD_id":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"总页数":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"}}'
+export const mockFormedViews: IFormedViews = {
+  127: {
+    id: 127,
+    roles: [],
+    name: '渠道信息',
+    projectId: 41,
+    sourceId: 53,
+    sql: 'SELECT * from dad',
+    variable: [],
+    config: '',
+    description: '',
+    model: {
+      name_level1: {
+        sqlType: 'VARCHAR',
+        visualType: ViewModelVisualTypes.String,
+        modelType: ViewModelTypes.Category
+      },
+      总停留时间: {
+        sqlType: 'DECIMAL',
+        visualType: ViewModelVisualTypes.Number,
+        modelType: ViewModelTypes.Value
+      }
+    }
+  }
 }
 
 export const mockSlideParams: ISlideParams = {
@@ -389,13 +407,13 @@ export const mockViewItem = {
   config: '',
   description: '演示-人员信息',
   id: 84,
-  model: '',
+  model: '{}',
   name: '人员信息',
   projectId: 41,
   sourceId: 53,
   sql:
     'SELECT * from personinfo where 1=1↵$if(name)$↵	and name = $name$↵$endif$↵$if(nation)$↵	and nation = $nation$↵$endif$↵$if(education)$↵	and education in ($education$)↵$endif$↵$if(city)$↵	and city in ($city$)↵$endif$',
-  variable: '',
+  variable: '[]',
   roles: []
 }
 
@@ -511,5 +529,3 @@ export const mockAppState = appInitialState
 export const mockViewState = {
   view: viewInitialState
 }
-
-

@@ -28,8 +28,6 @@ import {
 } from './constants'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { IQueryConditions } from 'containers/Dashboard/types'
-import { SqlTypes } from 'app/globalConstants'
-import { ViewVariableValueTypes } from 'app/containers/View/constants'
 
 export interface IControlRelatedItem {
   viewId: number
@@ -38,7 +36,7 @@ export interface IControlRelatedItem {
 
 export interface IControlRelatedView {
   fieldType: ControlFieldTypes
-  fields: IControlRelatedField | IControlRelatedField[]
+  fields: string[]
 }
 
 export interface IControlRelatedViewFormValue {
@@ -46,16 +44,11 @@ export interface IControlRelatedViewFormValue {
   fields: string | string[]
 }
 
-export interface IControlRelatedField {
-  name: string
-  type: SqlTypes | ViewVariableValueTypes
-}
-
 export interface IControlOption {
   text: string
   value: string
   variables?: {
-    [viewId: string]: IControlRelatedField
+    [viewId: string]: string
   }
 }
 
@@ -138,11 +131,11 @@ export interface IMapControlOptions {
   [controlKey: string]: object[]
 }
 
-export interface IFilters {
+export interface IFilter {
   name: string
   type: string
   value: string[] | string
   operator: string
   sqlType: string
-  children?: IFilters
+  children?: IFilter
 }

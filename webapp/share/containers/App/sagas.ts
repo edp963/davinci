@@ -23,17 +23,17 @@ import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { AppActions, AppActionType } from './actions'
 
-import request from 'utils/request'
+import request, { IDavinciResponse, setTokenExpired } from 'utils/request'
 import { errorHandler } from 'utils/util'
+import { IServerConfigurations } from 'app/containers/App/types'
 import api from 'utils/api'
 
-
-export function* login (action: AppActionType) {
+export function* login(action: AppActionType) {
   if (action.type !== ActionTypes.LOGIN) {
     return
   }
   const { username, password, shareToken, resolve, reject } = action.payload
-  const { logged, loginFail} = AppActions
+  const { logged, loginFail } = AppActions
   try {
     const userInfo = yield call(request, {
       method: 'post',
@@ -49,7 +49,7 @@ export function* login (action: AppActionType) {
       resolve()
     }
   } catch (err) {
-    if(reject) {
+    if (reject) {
       return reject()
     }
     yield put(loginFail(err))
@@ -57,7 +57,7 @@ export function* login (action: AppActionType) {
   }
 }
 
-export function * interceptor(action: AppActionType) {
+export function* interceptor(action: AppActionType) {
   if (action.type !== ActionTypes.INTERCEPTOR_PREFLIGHT) {
     return
   }
@@ -68,25 +68,26 @@ export function * interceptor(action: AppActionType) {
       method: 'get',
       url: `${api.share}/preflight/${token}`
     })
+    const { type, vizType } = check.payload
 
-    yield put(interceptored(check?.payload?.type))
+    yield put(interceptored(type, vizType))
   } catch (error) {
     yield put(interceptorFail())
     errorHandler(error)
   }
 }
 
-export function * getPermissions(action: AppActionType) {
+export function* getPermissions(action: AppActionType) {
   if (action.type !== ActionTypes.GET_PERMISSIONS) {
     return
   }
-  const { type, token, password, resolve, reject } = action.payload
+  const { token, password, resolve, reject } = action.payload
   const { getPermissionsSuccess, getPermissionsFail } = AppActions
   try {
     const check = yield call(request, {
       method: 'get',
       url: `${api.share}/permissions/${token}`,
-      params: {type, password}
+      params: { password }
     })
     yield put(getPermissionsSuccess(check?.payload?.download))
     if (resolve) {
@@ -94,17 +95,40 @@ export function * getPermissions(action: AppActionType) {
     }
   } catch (error) {
     if (reject) {
-      return  reject()
+      return reject()
     }
     yield put(getPermissionsFail())
     errorHandler(error)
   }
 }
 
-export default function* rootAppSaga () {
+export function* getServerConfigurations(action: AppActionType) {
+  if (action.type !== ActionTypes.GET_SERVER_CONFIGURATIONS) {
+    return
+  }
+  const { serverConfigurationsGetted, getServerConfigurationsFail } = AppActions
+  try {
+    const result: IDavinciResponse<IServerConfigurations> = yield call(
+      request,
+      {
+        method: 'get',
+        url: api.configurations
+      }
+    )
+    const configurations = result.payload
+    setTokenExpired(configurations.jwtToken.timeout)
+    yield put(serverConfigurationsGetted(configurations))
+  } catch (err) {
+    yield put(getServerConfigurationsFail(err))
+    errorHandler(err)
+  }
+}
+
+export default function* rootAppSaga() {
   yield all([
     takeLatest(ActionTypes.LOGIN, login),
     takeEvery(ActionTypes.INTERCEPTOR_PREFLIGHT, interceptor),
-    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions)
+    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions),
+    takeLatest(ActionTypes.GET_SERVER_CONFIGURATIONS, getServerConfigurations)
   ])
 }

@@ -25,7 +25,7 @@ import {
   mockSlideId,
   mockGraphLayerFormed,
   mockWidgetFormed,
-  mockView,
+  mockFormedViews,
   mockHttpError,
   mockCover,
   mockSlide,
@@ -48,8 +48,8 @@ import {
   mockShareLinkParams,
   mockShareToken,
   mockAuthShareToken,
-  mockPwdToken,
-  mockPwd,
+  mockPasswordToken,
+  mockPassword,
   mockDisplayTitle
 } from './fixtures'
 
@@ -77,7 +77,7 @@ describe('Display Actions', () => {
           slideId: mockSlideId,
           layers: [mockGraphLayerFormed],
           widgets: [mockWidgetFormed],
-          views: [mockView]
+          formedViews: mockFormedViews
         }
       }
       expect(
@@ -85,7 +85,7 @@ describe('Display Actions', () => {
           mockSlideId,
           [mockGraphLayerFormed],
           [mockWidgetFormed],
-          [mockView]
+          mockFormedViews
         )
       ).toEqual(expectedResult)
     })
@@ -556,12 +556,12 @@ describe('Display Actions', () => {
       const expectedResult = {
         type: ActionTypes.LOAD_DISPLAY_PASSWORD_SHARE_LINK_SUCCESS,
         payload: {
-          pwdToken: mockPwdToken,
-          pwd: mockPwd
+          passwordShareToken: mockPasswordToken,
+          password: mockPassword
         }
       }
       expect(
-        actions.displayPasswordShareLinkLoaded(mockPwdToken, mockPwd)
+        actions.displayPasswordShareLinkLoaded(mockPasswordToken, mockPassword)
       ).toEqual(expectedResult)
     })
   })

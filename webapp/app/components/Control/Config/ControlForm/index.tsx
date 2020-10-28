@@ -34,7 +34,11 @@ import { IControl, IControlOption } from '../../types'
 import { IViewBase, IFormedViews } from 'app/containers/View/types'
 import { IFlatRelatedItem, IFlatRelatedView } from './types'
 import { parseDefaultValue } from '../../util'
-import { ControlPanelTypes } from '../../constants'
+import {
+  ControlFieldTypes,
+  ControlPanelTypes,
+  IS_RANGE_TYPE
+} from '../../constants'
 import styles from '../../Control.less'
 
 interface IControlFormProps extends FormComponentProps {
@@ -104,9 +108,10 @@ class ControlForm extends PureComponent<IControlFormProps> {
         ...values,
         [`relatedViews[${id}].fieldType`]: fieldType,
         [`relatedViews[${id}].fields`]: fields
-          ? Array.isArray(fields)
-            ? fields.map((f) => f.name)
-            : fields.name
+          ? IS_RANGE_TYPE[controlBase.type] &&
+            fieldType === ControlFieldTypes.Variable
+            ? fields
+            : fields[0]
           : void 0
       }),
       {}
@@ -195,6 +200,7 @@ class ControlForm extends PureComponent<IControlFormProps> {
             <GlobalControlRelatedViewForm
               form={form}
               relatedViews={relatedViewList}
+              controlType={controlBase.type}
               optionWithVariable={controlBase.optionWithVariable}
               onFieldTypeChange={onFieldTypeChange}
             />
@@ -206,6 +212,7 @@ class ControlForm extends PureComponent<IControlFormProps> {
           <LocalControlRelatedInfoForm
             form={form}
             relatedView={relatedViewList[0]}
+            controlType={controlBase.type}
             optionWithVariable={controlBase.optionWithVariable}
             onFieldTypeChange={onFieldTypeChange}
           />
