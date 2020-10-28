@@ -500,9 +500,15 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "share dashboard", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/dashboards/{dashboardId}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDashboard(@PathVariable Long dashboardId,
-                                         @RequestBody ShareEntity shareEntity,
+                                         @Valid @RequestBody ShareEntity shareEntity,
+                                         @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
         if (invalidId(dashboardId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid  id");

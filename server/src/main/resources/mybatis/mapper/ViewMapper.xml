@@ -107,6 +107,21 @@
         );
     </select>
 
+    <select id="selectSimpleByWidgetIds" resultType="edp.davinci.dto.viewDto.SimpleView">
+        select id, name, model, variable from `view` where id in
+        (
+        select view_id from widget where
+        <if test="widgetIds != null and widgetIds.size > 0">
+            id in
+            <foreach collection="widgetIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="widgetIds == null or widgetIds.size == 0">
+            1=0
+        </if>
+        );
+    </select>
 
     <sql id="selectViewWithProjectAndSourceBaseSql">
         SELECT v.*,

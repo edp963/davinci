@@ -71,7 +71,8 @@ import static edp.davinci.core.enums.SqlVariableTypeEnum.QUERYVAR;
 
 @Slf4j
 @Service("viewService")
-public class ViewServiceImpl extends BaseEntityService implements ViewService {
+public class
+ViewServiceImpl extends BaseEntityService implements ViewService {
 
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
@@ -880,7 +881,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             return list;
         }
 
-
         List<SqlVariable> authVars = variables.stream()
                 .filter(v -> AUTHVAR == SqlVariableTypeEnum.typeOf(v.getType())).collect(Collectors.toList());
 
@@ -896,43 +896,47 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                 List<AuthParamValue> authParamValues = JSONObject.parseArray(r.getRowAuth(), AuthParamValue.class);
                 authVarMap.forEach((k, v) -> {
                     SqlVariable sqlVariable = v;
+                    Optional<AuthParamValue> optional = authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst();
+
                     List<Object> defaultValues = sqlVariable.getDefaultValues();
+                    // first time defaultValues will be null
                     if (defaultValues == null) {
+                        // empty list means has all data auth
                         sqlVariable.setDefaultValues(new ArrayList<>());
-                        if (authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().isPresent()) {
-                            AuthParamValue authParamValue = authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().get();
-                            if (authParamValue.isEnable()) {
-                                if (CollectionUtils.isEmpty(authParamValue.getValues())) {
+                        optional.ifPresent(p -> {
+                            if (p.isEnable()) {
+                                if (CollectionUtils.isEmpty(p.getValues())) {
                                     sqlVariable.setDefaultValues(Arrays.asList(new String[]{NO_AUTH_PERMISSION}));
                                 } else {
-                                    sqlVariable.setDefaultValues(authParamValue.getValues());
+                                    sqlVariable.setDefaultValues(p.getValues());
                                 }
                             }
-                        }
+                        });
                         return;
                     }
 
-                    if (authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().isPresent()) {
-                        AuthParamValue authParamValue = authParamValues.stream().filter(p -> k.equals(p.getName())).findFirst().get();
-                        if (authParamValue.isEnable()) {
-                            if (!CollectionUtils.isEmpty(authParamValue.getValues())) {
+                    if (optional.isPresent()) {
+                        AuthParamValue p = optional.get();
+                        if (p.isEnable()) {
+                            if (!CollectionUtils.isEmpty(p.getValues())) {
                                 boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
                                 boolean disable = defaultValues.size() == 0;
                                 if (denied) {
-                                    sqlVariable.setDefaultValues(authParamValue.getValues());
-                                    return;
+                                    sqlVariable.setDefaultValues(p.getValues());
                                 } else if (!disable) {
-                                    defaultValues.addAll(authParamValue.getValues());
-                                    return;
+                                    sqlVariable.getDefaultValues().addAll(p.getValues());
                                 }
                             }
-                            return;
+                        } else {
+                            sqlVariable.setDefaultValues(new ArrayList<>());
                         }
+                        return;
                     }
 
                     sqlVariable.setDefaultValues(new ArrayList<>());
 
                 });
+
                 list.addAll(authVarMap.values());
             } else {
                 list.addAll(dacVars);
@@ -941,7 +945,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
         return list;
     }
-
 
     private void checkAndInsertRoleParam(String sqlVariable, List<RelRoleViewDto> roles, User user, View view) {
         List<SqlVariable> variables = JSONObject.parseArray(sqlVariable, SqlVariable.class);

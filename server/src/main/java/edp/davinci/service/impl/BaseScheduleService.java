@@ -1,7 +1,7 @@
 package edp.davinci.service.impl;
 
-import com.alibaba.druid.util.StringUtils;
 import edp.core.utils.CollectionUtils;
+import edp.core.utils.DateUtils;
 import edp.core.utils.ServerUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.dao.DashboardMapper;
@@ -14,6 +14,11 @@ import edp.davinci.model.DisplaySlide;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.screenshot.ImageContent;
 import edp.davinci.service.screenshot.ScreenshotUtil;
+import edp.davinci.service.share.ShareDataPermission;
+import edp.davinci.service.share.ShareFactor;
+import edp.davinci.service.share.ShareMode;
+import edp.davinci.service.share.ShareType;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +29,9 @@ import java.util.stream.Collectors;
 import static edp.core.consts.Consts.AT_SYMBOL;
 
 public class BaseScheduleService {
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     @Autowired
     protected DashboardMapper dashboardMapper;
@@ -44,9 +52,11 @@ public class BaseScheduleService {
 
     protected static final String PORTAL = "PORTAL";
 
-    protected static final String DISPLAY = "display";
+    protected static final String DISPLAY = "DISPLAY";
 
-    protected static final String DASHBOARD = "dashboard";
+    protected static final String DASHBOARD = "DASHBOARD";
+
+    protected static final String WIDGET = "WIDGET";
 
     /**
      * 根据job配置截取图片
@@ -207,7 +217,7 @@ public class BaseScheduleService {
             return;
         }
         Map<Long, Set<Dashboard>> dashboardsMap = new HashMap<>();
-        List<DashboardTree> rootChilds = new ArrayList<>();
+        List<DashboardTree> rootChildren = new ArrayList<>();
         for (Dashboard dashboard : dashboards) {
             if (dashboard.getParentId() > 0L && !dashboard.getParentId().equals(dashboard.getId())) {
                 Set<Dashboard> set;
@@ -219,68 +229,69 @@ public class BaseScheduleService {
                 set.add(dashboard);
                 dashboardsMap.put(dashboard.getParentId(), set);
             } else {
-                rootChilds.add(new DashboardTree(dashboard.getId(), dashboard.getIndex()));
+                rootChildren.add(new DashboardTree(dashboard.getId(), dashboard.getIndex()));
             }
         }
 
-        rootChilds.sort(Comparator.comparing(DashboardTree::getIndex));
-        root.setChilds(rootChilds);
+        rootChildren.sort(Comparator.comparing(DashboardTree::getIndex));
+        root.setChilds(rootChildren);
 
-        for (DashboardTree child : rootChilds) {
-            child.setChilds(getChilds(dashboardsMap, child));
+        for (DashboardTree child : rootChildren) {
+            child.setChilds(getChildren(dashboardsMap, child));
         }
     }
 
-    private List<DashboardTree> getChilds(Map<Long, Set<Dashboard>> dashboardsMap, DashboardTree node) {
+    private List<DashboardTree> getChildren(Map<Long, Set<Dashboard>> dashboardsMap, DashboardTree node) {
         if (CollectionUtils.isEmpty(dashboardsMap)) {
             return null;
         }
-        Set<Dashboard> childs = dashboardsMap.get(node.getId());
-        if (CollectionUtils.isEmpty(childs)) {
+        Set<Dashboard> children = dashboardsMap.get(node.getId());
+        if (CollectionUtils.isEmpty(children)) {
             return null;
         }
         List<DashboardTree> list = new ArrayList<>();
-        for (Dashboard dashboard : childs) {
+        for (Dashboard dashboard : children) {
             DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
-            treeNode.setChilds(getChilds(dashboardsMap, treeNode));
+            treeNode.setChilds(getChildren(dashboardsMap, treeNode));
             list.add(treeNode);
         }
         list.sort(Comparator.comparing(DashboardTree::getIndex));
         return list;
     }
 
-    private String getContentUrl(Long userId, String contentType, Long contengId, int index) {
-        String shareToken = shareService.generateShareToken(contengId, null, userId);
-        StringBuilder sb = new StringBuilder();
+    private String getContentUrl(Long userId, String contentType, Long contentId, int index) {
 
-        String type = "";
-        String page = "";
-        if ("widget".equalsIgnoreCase(contentType)) {
-            type = "widget";
-        } else if (PORTAL.equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
-            type = "dashboard";
-        } else {
-            type = "";
-            page = "p=" + index;
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withMode(ShareMode.NORMAL)
+                .withEntityId(contentId)
+                .withSharerId(userId)
+                .withExpired(DateUtils.add(DateUtils.currentDate(), Calendar.DATE, 1))
+                .withPermission(ShareDataPermission.SHARER)
+                .build();
+
+        String page = null;
+        switch (contentType.toUpperCase()) {
+            case WIDGET:
+                shareFactor.setType(ShareType.WIDGET);
+                break;
+            case DISPLAY:
+                shareFactor.setType(ShareType.DISPLAY);
+                page = "&p=" + index;
+                break;
+            default:
+                shareFactor.setType(ShareType.DASHBOARD);
+                break;
         }
 
+        String shareToken = shareFactor.toShareResult(TOKEN_SECRET).getToken();
+        StringBuilder sb = new StringBuilder();
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html")
                 .append("?shareToken=")
                 .append(shareToken);
-
-        if (!StringUtils.isEmpty(type)) {
-            sb.append("&type=").append(type);
-        }
-
-        if (!StringUtils.isEmpty(page)) {
-            sb.append("&").append(page);
-        }
-
-        sb.append("#/share/").append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType);
-
+        sb.append(StringUtils.isEmpty(page) ? "" : page);
+        sb.append("#/share/").append(WIDGET.equalsIgnoreCase(contentType) || PORTAL.equalsIgnoreCase(contentType) ? DASHBOARD.toLowerCase() : contentType);
         return sb.toString();
     }
-
-
 }

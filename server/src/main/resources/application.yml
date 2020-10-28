@@ -17,6 +17,7 @@
 davinci:
   version: 0.3-beta.9
 
+
 file:
   userfiles-path: ${DAVINCI3_HOME}/userfiles/
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
@@ -63,6 +64,7 @@ spring:
 logging:
   config: file:${DAVINCI3_HOME}/config/logback.xml
 
+
 springfox:
   documentation:
     swagger:
@@ -77,6 +79,7 @@ pagehelper:
   helperDialect: mysql
   params: count=countSql
 
+
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml
   config-locations: classpath:mybatis/mybatis-config.xml
@@ -85,11 +88,14 @@ mybatis:
     map-underscore-to-camel-case: true
     use-generated-keys: true
 
+
 mapper:
   identity: MYSQL
   not-empty: false
   mappers: edp.davinci.dao
 
+
 sql_template_delimiter: $
+
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml

@@ -2,7 +2,7 @@
  * <<
  *  Davinci
  *  ==
- *  Copyright (C) 2016 - 2019 EDP
+ *  Copyright (C) 2016 - 2020 EDP
  *  ==
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,25 +17,14 @@
  *
  */
 
-package edp.davinci.dto.shareDto;
+package edp.davinci.dto.viewDto;
 
-import edp.davinci.model.MemDashboardWidget;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Set;
-
 @Data
-public class ShareDashboard {
+public class SimpleView {
     private Long id;
-
     private String name;
-
-    private String config;
-
-    private Set<SimpleShareWidget> widgets;
-
-    private List<MemDashboardWidget> relations;
-
-    private Set<ShareView> views;
+    private String model;
+    private String variable;
 }

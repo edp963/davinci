@@ -164,13 +164,13 @@ public class ScreenshotUtil {
             }
 
         } catch (TimeoutException te) {
-            String text= driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
-            scheduleLogger.info("Cronjob({}) do screenshot url={} text=\n{}",text);
-            LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
+            String text = driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
+            scheduleLogger.info("Cronjob({}) do screenshot url={} text=\n{}", text);
+            LogEntries logEntries = driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.info(entry.getLevel() + " " + entry.getMessage());
             }
-        	scheduleLogger.error(te.getMessage(), te);
+            scheduleLogger.error(te.getMessage(), te);
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {

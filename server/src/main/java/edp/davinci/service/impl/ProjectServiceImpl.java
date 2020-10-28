@@ -347,7 +347,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         dashboardService.deleteDashboardAndPortalByProject(project.getId());
         widgetMapper.deleteByProject(project.getId());
         relRoleViewMapper.deleteByProject(project.getId());
-        viewMapper.deleteByPorject(project.getId());
+        viewMapper.deleteByProject(project.getId());
         sourceMapper.deleteByProject(project.getId());
         relRoleProjectMapper.deleteByProjectId(project.getId());
         relProjectAdminMapper.deleteByProjectId(project.getId());
@@ -560,18 +560,18 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     public ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedException {
         ProjectDetail projectDetail = projectMapper.getProjectDetail(id);
         if (null == projectDetail) {
-            log.error("project (:{}) is not found", id);
-            throw new NotFoundException("project is not found");
+            log.error("Project({}) is not found", id);
+            throw new NotFoundException("Project is not found");
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
         RelProjectAdmin relProjectAdmin = relProjectAdminMapper.getByProjectAndUser(id, user.getId());
-        boolean isCreater = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
-        boolean notOwner = !isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
+        boolean isCreator = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
+        boolean notOwner = !isCreator && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
         if (modify) {
             //项目的创建人和当前项目对应组织的owner可以修改
             if (notOwner) {
-                log.error("user(:{}) have not permission to modify project (:{})", user.getId(), id);
+                log.error("User({}) have not permission to modify project({})", user.getId(), id);
                 throw new UnAuthorizedException();
             }
         } else {
@@ -579,7 +579,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             if (notOwner
                     && projectDetail.getOrganization().getMemberPermission() < (short) 1
                     && !projectDetail.getVisibility()) {
-                log.error("user(:{}) have not permission to get project (:{})", user.getId(), id);
+                log.error("User({}) have not permission to get project ({})", user.getId(), id);
                 throw new UnAuthorizedException();
             }
         }
@@ -771,12 +771,12 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             return false;
         }
 
-        //project所在org的creater
+        //project所在org的creator
         if (projectDetail.getOrganization().getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project的creater
+        //当前project的creator
         if (projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer()) {
             return true;
         }

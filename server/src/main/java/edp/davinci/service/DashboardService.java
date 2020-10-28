@@ -61,6 +61,4 @@ public interface DashboardService extends CheckEntityService {
     boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user) throws NotFoundException, UnAuthorizedException, ServerException;
-
-    ;
 }

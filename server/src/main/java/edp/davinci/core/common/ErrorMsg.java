@@ -21,7 +21,7 @@ package edp.davinci.core.common;
 public final class ErrorMsg {
     public static final String ERR_MSG_AUTHENTICATION = "The resource requires authentication, which was not supplied with the request";
 
-    public static final String ERR_MSG_PERMISSION = "ERROR Permission denied";
+    public static final String ERR_MSG_PERMISSION = "Error Permission denied";
 
     public static final String ERR_INVALID_TOKEN = "Invalid share token";
 

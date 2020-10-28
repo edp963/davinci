@@ -29,7 +29,6 @@ import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.User;
-import edp.davinci.service.share.ShareWidget;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -48,7 +47,7 @@ public interface ShareService {
 
     Paginate<Map<String, Object>> getShareData(ViewExecuteParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException;
 
-    List<Map<String, Object>> getDistinctValue(Long viewId, DistinctParam param, User user);
+    List<Map<String, Object>> getDistinctValue(DistinctParam param, User user);
 
     void formatShareParam(Long projectId, ShareEntity entity);
 

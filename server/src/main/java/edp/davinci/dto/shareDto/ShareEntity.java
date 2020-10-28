@@ -22,7 +22,10 @@ import edp.core.utils.CollectionUtils;
 import edp.davinci.service.share.ShareDataPermission;
 import edp.davinci.service.share.ShareMode;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.NotNull;
+import java.util.Date;
 import java.util.Set;
 
 @Data
@@ -62,6 +65,10 @@ public class ShareEntity {
      */
     private Set<Long> roles;
 
+    @NotNull(message = "Expired cannot be empty")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date expired;
+
     public void valid() throws IllegalArgumentException {
         switch (this.getMode()) {
             case NORMAL:
@@ -81,14 +88,14 @@ public class ShareEntity {
                 if (!CollectionUtils.isEmpty(viewers)) {
                     viewers.forEach(id -> {
                         if (id < 1L) {
-                            throw new IllegalArgumentException("Invalid viewer: " + id);
+                            throw new IllegalArgumentException("Invalid viewer:" + id);
                         }
                     });
                 }
                 if (!CollectionUtils.isEmpty(roles)) {
                     roles.forEach(id -> {
                         if (id < 1L) {
-                            throw new IllegalArgumentException("Invalid role: " + id);
+                            throw new IllegalArgumentException("Invalid role:" + id);
                         }
                     });
                 }

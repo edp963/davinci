@@ -14,22 +14,15 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
+ *
  */
 
-package edp.davinci.service.share;
+package edp.davinci.dto.shareDto;
 
+import edp.davinci.dto.viewDto.SimpleView;
 import lombok.Data;
 
 @Data
-public class ShareWidget {
-    private Long id;
-    private String name;
-    private String description;
-    private Long type;
-    private String config;
+public class ShareView extends SimpleView {
     private String dataToken;
-    private String password;
-    private String model;
-    private Long viewId;
-    private String variable;
 }

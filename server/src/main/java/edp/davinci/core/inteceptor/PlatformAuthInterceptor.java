@@ -118,8 +118,8 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
 
         User user = null;
 
-        AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (null != authShareMethoed) {
+        AuthShare authShareMethod = method.getAnnotation(AuthShare.class);
+        if (null != authShareMethod) {
             String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);

@@ -48,7 +48,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -106,7 +105,7 @@ public class LoginController {
         return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(userLoginResult));
     }
 
-    @ApiOperation(value = "get oauth2 clents")
+    @ApiOperation(value = "get oauth2 clients")
     @GetMapping(value = "getOauth2Clients", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @AuthIgnore
     public ResponseEntity getOauth2Clients(HttpServletRequest request) {
