@@ -132,7 +132,7 @@ export function* getData (action: ShareDisplayActionType) {
   }
 }
 
-export default function* rootDisplaySaga (): IterableIterator<any> {
+export default function* rootDisplaySaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
     takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)

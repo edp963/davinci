@@ -21,7 +21,6 @@
 export const GET_EXTERNAL_AUTH_PROVIDERS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS'
 export const GET_EXTERNAL_AUTH_PROVIDERS_SUCESS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS_SUCESS'
 export const TRY_EXTERNAL_AUTH = 'davinci/App/TRY_EXTERNAL_AUTH'
-export const EXTERNAL_AUTH_LOGOUT = 'davinci/App/EXTERNAL_AUTH_LOGOUT'
 export const LOGIN = 'davinci/App/LOGIN'
 export const LOGGED = 'davinci/App/LOGGED'
 export const LOGIN_ERROR = 'davinci/App/LOGIN_ERROR'
@@ -83,9 +82,9 @@ export const UPDATE_TEAM_PROJECT_PERMISSION = 'davinci/permission/UPDATE_TEAM_PR
 export const UPDATE_TEAM = 'davinci/permission/UPDATE_TEAM'
 export const DELETE_TEAM = 'davinci/permission/DELETE_TEAM'
 
-export const GET_VERSION = 'davinci/GET_VERSION'
-export const GET_VERSION_SUCCESS = 'davinci/GET_VERSION_SUCCESS'
-export const GET_VERSION_FAIL = 'davinci/GET_VERSION_FAIL'
+export const GET_SERVER_CONFIGURATIONS = 'davinci/GET_SERVER_CONFIGURATIONS'
+export const GET_SERVER_CONFIGURATIONS_SUCCESS = 'davinci/GET_SERVER_CONFIGURATIONS_SUCCESS'
+export const GET_SERVER_CONFIGURATIONS_FAIL = 'davinci/GET_SERVER_CONFIGURATIONS_FAIL'
 
 export const GET_USER_BY_TOKEN = 'davinci/GET_USER_BY_TOKEN'
 export const GET_USER_BY_TOKEN_SUCCESS = 'davinci/GET_USER_BY_TOKEN_SUCCESS'

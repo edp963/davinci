@@ -79,9 +79,16 @@ const makeSelectVersion = () =>
     (globalState) => globalState.version
   )
 
+const makeSelectOauth2Enabled = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.oauth2Enabled
+  )
+
 export {
   selectGlobal,
   makeSelectVersion,
+  makeSelectOauth2Enabled,
   makeSelectExternalAuthProviders,
   makeSelectLogged,
   makeSelectLoginUser,

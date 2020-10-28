@@ -8,4 +8,14 @@ export interface IDownloadRecord {
   uuid?: string
 }
 
-
+export interface IServerConfigurations {
+  version: string
+  jwtToken: {
+    timeout: number
+  }
+  security: {
+    oauth2: {
+      enable: boolean
+    }
+  }
+}

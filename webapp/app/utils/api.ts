@@ -23,7 +23,6 @@ import { API_HOST } from '../globalConstants'
 export default {
   externalAuthProviders: `${API_HOST}/login/getOauth2Clients`,
   tryExternalAuth: `${API_HOST}/login/externalLogin`,
-  externalLogout: `/login/oauth2/logout`,
   login: `${API_HOST}/login`,
   group: `${API_HOST}/groups`,
   user: `${API_HOST}/users`,
@@ -47,5 +46,5 @@ export default {
   star: `${API_HOST}/star`,
   download: `${API_HOST}/download`,
   buriedPoints: `${API_HOST}/statistic`,
-  version: `${API_HOST}/version`
+  configurations: `${API_HOST}/configurations`
 }

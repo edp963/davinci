@@ -20,6 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
+import { IServerConfigurations } from 'app/containers/App/types'
 
 export const AppActions = {
   login(username, password, shareToken, resolve, reject?) {
@@ -59,7 +60,7 @@ export const AppActions = {
     }
   },
 
-  interceptor (token: string) {
+  interceptor(token: string) {
     return {
       type: ActionTypes.INTERCEPTOR_PREFLIGHT,
       payload: {
@@ -84,7 +85,12 @@ export const AppActions = {
     }
   },
 
-  getPermissions(token: string, password?: string, resolve?: () => void, reject?: () => void) {
+  getPermissions(
+    token: string,
+    password?: string,
+    resolve?: () => void,
+    reject?: () => void
+  ) {
     return {
       type: ActionTypes.GET_PERMISSIONS,
       payload: {
@@ -107,8 +113,28 @@ export const AppActions = {
     return {
       type: ActionTypes.GET_PERMISSIONS_FAIL
     }
+  },
+  getServerConfigurations() {
+    return {
+      type: ActionTypes.GET_SERVER_CONFIGURATIONS
+    }
+  },
+  serverConfigurationsGetted(configurations: IServerConfigurations) {
+    return {
+      type: ActionTypes.GET_SERVER_CONFIGURATIONS_SUCCESS,
+      payload: {
+        configurations
+      }
+    }
+  },
+  getServerConfigurationsFail(error) {
+    return {
+      type: ActionTypes.GET_SERVER_CONFIGURATIONS_FAIL,
+      payload: {
+        error
+      }
+    }
   }
-
 }
 
 const mockAction = returnType(AppActions)

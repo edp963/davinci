@@ -6,7 +6,7 @@ import { errorHandler } from 'utils/util'
 
 import { call, put, all, takeLatest } from 'redux-saga/effects'
 
-export function* signup (action): IterableIterator<any> {
+export function* signup (action) {
   const {username, email, password, resolve} = action.payload
   try {
     const asyncData = yield call(request, {
@@ -26,7 +26,7 @@ export function* signup (action): IterableIterator<any> {
     errorHandler(err)
   }
 }
-export function* sendMailAgain (action): IterableIterator<any> {
+export function* sendMailAgain (action) {
   const {email, resolve} = action.payload
   try {
     const asyncData = yield call(request, {
@@ -47,7 +47,7 @@ export function* sendMailAgain (action): IterableIterator<any> {
 
 
 
-export default function* rootGroupSaga (): IterableIterator<any> {
+export default function* rootGroupSaga () {
   yield all([
     takeLatest(SIGNUP, signup as any),
     takeLatest(SEND_MAIL_AGAIN, sendMailAgain as any)
