@@ -24,7 +24,7 @@ Davinci 用户手册文档在 docs/ 目录下，我们使用了 [jekyll](https:/
 ### 分支结构
 Davinci 源码可能会产生一些临时分支，但真正有明确意义的只有以下三个分支：
 
-- dev-0.3: 默认分支，主要开发分支；
+- dev-0.3: 默认分支，主要开发分支，**需要注意，dev-0.3分支代码不保证可用性，请谨慎使用到生产**；
 - master: 最近一次稳定 release 的源码，偶尔会多几次 hotfix 提交；
 - dev-0.2: 0.2 版本源码，目前 0.2 版本已经停止更新，如有 0.2 版本使用者或是需要进行二次开发的用户可以参考此分支。
 
@@ -97,7 +97,6 @@ npm run build
   ├── davinci.sql           # 完整系统数据库脚本（包含所有补丁）
   ├── initdb.bat            # 针对 Windows 环境的初始化数据库批处理脚本
   ├── initdb.sh             # 针对 Linux、Mac 环境的初始化数据库 Shell 脚本
-  ├── phantom.js            # 截图脚本（未来版本将不再使用）
   ├── restart-server.sh     # 针对 Linux、Mac 环境的重启服务脚本
   ├── run.bat               # 针对	Windows 环境的服务启停核心脚本						
   ├── start.bat             # 针对 Windows 环境的服务启动脚本
