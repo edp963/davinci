@@ -18,7 +18,7 @@
  * >>
  */
 
-export const CLIENT_VERSION = '0.3-beta.9'
+export const CLIENT_VERSION = '0.3-rc'
 export const API_HOST = '/api/v3'
 export const SHARE_HOST = `${location.origin}/share.html`
 export const EXTERNAL_LOG_OUT_URL = '/login/oauth2/logout'
