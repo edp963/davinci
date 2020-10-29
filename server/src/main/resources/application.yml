@@ -21,7 +21,6 @@ davinci:
 file:
   userfiles-path: ${DAVINCI3_HOME}/userfiles/
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
-  phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
   base-path: ${DAVINCI3_HOME}/lib/
 
 

@@ -244,7 +244,7 @@ export function getCustomOptionVariableParams(
   return params
 }
 
-// 全局过滤器 与 本地控制器 filter 操作
+// 全局过滤器 与 组件控制器 filter 操作
 export function getFilterParams(
   control: IControl,
   fields: string[],

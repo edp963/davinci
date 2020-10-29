@@ -108,7 +108,7 @@ const FullScreenControl: React.FC<IControlProps> = memo(
               全局控制器
             </div>
             <div className={ctrlLocalStyle} onClick={checkCtrlStyle('local')}>
-              本地控制器
+              组件控制器
             </div>
           </div>
         </div>
