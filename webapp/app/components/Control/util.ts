@@ -155,7 +155,7 @@ export function getVariableParams(
     case ControlTypes.NumberRange:
     case ControlTypes.Slider:
       params = value.reduce((arr, val, index) => {
-        if (val !== '' && !isNaN(val)) {
+        if (fieldsVariables[index] && val !== '' && !isNaN(val)) {
           const { name, valueType } = fieldsVariables[index]
           return arr.concat({
             name,
@@ -183,13 +183,16 @@ export function getVariableParams(
       break
     case ControlTypes.DateRange:
       if (value.length) {
-        params = value.map((v, index) => {
-          const { name } = fieldsVariables[index]
-          return {
-            name,
-            value: `'${moment(v).format(dateFormat)}'`
-          }
-        })
+        params = value
+          .map((v, index) => {
+            return fieldsVariables[index]
+              ? {
+                  name: fieldsVariables[index].name,
+                  value: `'${moment(v).format(dateFormat)}'`
+                }
+              : null
+          })
+          .filter((p) => p)
       }
       break
     default:
