@@ -966,7 +966,9 @@ export class ControlConfig extends PureComponent<
     return (
       <Modal
         wrapClassName="ant-modal-xlarge"
-        title="全局控制器配置"
+        title={`${
+          type === ControlPanelTypes.Global ? '全局' : '组件'
+        }控制器配置`}
         maskClosable={false}
         visible={visible}
         footer={modalFooter}
