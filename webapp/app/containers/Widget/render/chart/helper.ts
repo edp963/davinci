@@ -1,87 +1,218 @@
 import { round } from 'node_modules/echarts/lib/util/number'
-class DoubleY {
-  private initExtent = [0, 0]
-  private originalExtent = []
-  private splitNumber = 5
-  constructor(extent, number) {
-    this.originalExtent = extent
-    this.splitNumber = number
-  }
+import { decodeMetricName } from 'containers/Widget/components/util'
 
-  private formatInterval (val: number) {
-    if (val === 0) {
-      return 0
-    }
-    let exponent = Math.floor(Math.log(val) / Math.LN10)
-    if (val / Math.pow(10, exponent) >= 10) {
-      exponent++
-    }
-    const exp10 = Math.pow(10, exponent)
-    const f = val / exp10
-    val = f * exp10
-    return exponent >= -20 ? +this.formatDecimal(val, 2) : val
-  }
+type numType = number | string
+let _boundaryCheckingState = true
 
-  private formatDecimal (num, decimal) {
-    num = num.toString()
-    const index = num.indexOf('.')
-    if (index !== -1) {
-      num = num.substring(0, decimal + index + 1)
+export function getMetricsMinAndMax(metrics, data, stack) {
+  const metricsSource = metrics.map((metrics) =>
+    ['min', 'max'].map((item) => {
+      return { fn: item, data: metrics }
+    })
+  )
+  return metricsSource.flat().map((item) => {
+    if (stack) {
+      return item.data.reduce(
+        (num, m) =>
+          num +
+          Math[item.fn](
+            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
+          ),
+        0
+      )
     } else {
-      num = num.substring(0)
+      return Math[item.fn](
+        ...item.data.map((m) =>
+          Math[item.fn](
+            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
+          )
+        )
+      )
     }
-    return parseFloat(num).toFixed(decimal)
-  }
+  })
+}
 
-  private calculateInterval () {
-    const extent = this.initExtent
-    const [minExtent, maxExtent] = extent
-    let differ = maxExtent - minExtent
-    if (!isFinite(differ)) {
-      return
-    }
-    if (differ < 0) {
-      differ = -differ
-      extent.reverse()
-    }
-    differ = extent[1] - extent[0]
-    return this.formatInterval(differ / this.splitNumber)
-  }
+export function getDoubleYExtendInterval(initExtent, splitNumber) {
+  let [minExtent, maxExtent] = initExtent
 
-  public computeExtendInterval () {
-    let [min, max] = this.originalExtent
-    if (min > 0 && max > 0) {
-      min = 0
-    }
-    if (min < 0 && max < 0) {
-      max = 0
-    }
-    this.initExtent = [min, max]
-    let [minExtent, maxExtent] = this.initExtent
-    if (minExtent === maxExtent) {
-      if (minExtent !== 0) {
-        const expandSize = minExtent
-        maxExtent += expandSize / 2
-        minExtent -= expandSize / 2
-      } else {
-        maxExtent = 1
-      }
-    }
-    const span = maxExtent - minExtent
-    if (!isFinite(span)) {
-      minExtent = 0
+  if (minExtent > 0 && maxExtent > 0) {
+    minExtent = 0
+  }
+  if (minExtent < 0 && maxExtent < 0) {
+    maxExtent = 0
+  }
+  if (minExtent === maxExtent) {
+    if (minExtent !== 0) {
+      const expandSize = minExtent
+      maxExtent += expandSize / 2
+      minExtent -= expandSize / 2
+    } else {
       maxExtent = 1
     }
-    const interval = this.calculateInterval()
-    minExtent = round((Math.floor(minExtent / interval)) * interval)
-    const maxNumber = Number.isInteger(maxExtent / interval) ? (maxExtent / interval) + 1 : (maxExtent / interval)
-    maxExtent = round((Math.ceil((maxNumber))) * interval)
-    const extent = [minExtent, maxExtent]
-    return {
-      extent,
-      interval
+  }
+  let differ = maxExtent - minExtent
+  if (!isFinite(differ)) {
+    minExtent = 0
+    maxExtent = 1
+    differ = maxExtent - minExtent
+  }
+
+  if (!isFinite(differ)) {
+    return
+  }
+  let interval = differ / splitNumber
+  if (interval === 0) {
+    return 0
+  }
+  let exponent = Math.floor(Math.log(interval) / Math.LN10)
+  if (interval / Math.pow(10, exponent) >= 10) {
+    exponent++
+  }
+  interval = exponent >= -20 ? +formatDecimal(interval, 2) : interval
+
+  minExtent = round(Math.floor(minExtent / interval) * interval)
+  const maxNumber = Number.isInteger(maxExtent / interval)
+    ? maxExtent / interval + 1
+    : maxExtent / interval
+  maxExtent = round(Math.ceil(maxNumber) * interval)
+
+  return { minExtent, maxExtent, interval }
+}
+
+export function formatDecimal(num, decimal) {
+  num = num.toString()
+  const index = num.indexOf('.')
+  if (index !== -1) {
+    num = num.substring(0, decimal + index + 1)
+  } else {
+    num = num.substring(0)
+  }
+  return parseFloat(num).toFixed(decimal)
+}
+
+export function strip(num: numType, precision = 3): number {
+  return +parseFloat(Number(num).toPrecision(precision))
+}
+
+export function digitLength(num: numType): number {
+  const eSplit = num.toString().split(/[eE]/)
+  const len = (eSplit[0].split('.')[1] || '').length - +(eSplit[1] || 0)
+  return len > 0 ? len : 0
+}
+
+export function float2Fixed(num: numType): number {
+  if (num.toString().indexOf('e') === -1) {
+    return Number(num.toString().replace('.', ''))
+  }
+  const dLen = digitLength(num)
+  return dLen > 0 ? strip(Number(num) * Math.pow(10, dLen)) : Number(num)
+}
+
+export function checkBoundary(num: number) {
+  if (_boundaryCheckingState) {
+    if (num > Number.MAX_SAFE_INTEGER || num < Number.MIN_SAFE_INTEGER) {
+      console.warn(
+        `${num} is beyond boundary when transfer to integer, the results may not be accurate`
+      )
     }
   }
 }
 
-export default DoubleY
+export function times(
+  num1: numType,
+  num2: numType,
+  ...others: numType[]
+): number {
+  if (others.length > 0) {
+    return times(times(num1, num2), others[0], ...others.slice(1))
+  }
+
+  const num1Changed = float2Fixed(num1)
+  const num2Changed = float2Fixed(num2)
+  const baseNum = digitLength(num1) + digitLength(num2)
+  const leftValue = num1Changed * num2Changed
+  checkBoundary(leftValue)
+  return leftValue / Math.pow(10, baseNum)
+}
+
+export function divide(
+  num1: numType,
+  num2: numType,
+  ...others: numType[]
+): number {
+  if (others.length > 0) {
+    return divide(divide(num1, num2), others[0], ...others.slice(1))
+  }
+  const num1Changed = float2Fixed(num1)
+  const num2Changed = float2Fixed(num2)
+  checkBoundary(num1Changed)
+  checkBoundary(num2Changed)
+  return times(
+    strip(num1Changed / num2Changed),
+    strip(Math.pow(10, digitLength(num2) - digitLength(num1)))
+  )
+}
+
+export function getMetricsExtendMinAndMax(
+  metrics,
+  secondaryMetrics,
+  data,
+  stack,
+  splitNumber
+) {
+  const [leftMin, leftMax, rightMin, rightMax] = getMetricsMinAndMax(
+    [metrics, secondaryMetrics],
+    data,
+    stack
+  )
+  let [leftExtentMin, leftExtentMax, leftInterval] = Object.values(
+    getDoubleYExtendInterval([leftMin, leftMax], splitNumber)
+  )
+  let [rightExtentMin, rightExtentMax, rightInterval] = Object.values(
+    getDoubleYExtendInterval([rightMin, rightMax], splitNumber)
+  )
+  const leftExtent = leftExtentMax - leftExtentMin
+  const rightExtent = rightExtentMax - rightExtentMin
+  if (rightInterval < leftInterval) {
+    leftInterval = leftExtent / (rightExtent / rightInterval)
+  } else {
+    rightInterval = rightExtent / (leftExtent / leftInterval)
+  }
+
+  let maxCount
+  let minCount
+
+  const [
+    leftMaxPartCount,
+    rightMaxPartCount,
+    leftMinPartCount,
+    rightMinPartCount
+  ] = [
+    divide(leftExtentMax, leftInterval),
+    divide(rightExtentMax, rightInterval),
+    divide(leftExtentMin, leftInterval),
+    divide(rightExtentMin, rightInterval)
+  ]
+  if (leftExtentMin > 0 && rightExtentMin > 0) {
+    maxCount = Math.max(leftMaxPartCount, rightMaxPartCount)
+    minCount = Math.max(leftMinPartCount, rightMinPartCount)
+  } else if (leftExtentMax < 0 && rightExtentMax < 0) {
+    maxCount = Math.min(leftMaxPartCount, rightMaxPartCount)
+    minCount = Math.min(leftMinPartCount, rightMinPartCount)
+  } else {
+    maxCount = Math.max(leftMaxPartCount, rightMaxPartCount)
+    minCount = Math.min(leftMinPartCount, rightMinPartCount)
+  }
+  return {
+    leftY: [
+      times(minCount, leftInterval),
+      times(maxCount, leftInterval),
+      leftInterval
+    ],
+    rightY: [
+      times(minCount, rightInterval),
+      times(maxCount, rightInterval),
+      rightInterval
+    ]
+  }
+}
