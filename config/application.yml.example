@@ -173,9 +173,8 @@ spring:
 #              avatar: "attributes.Avatar"
 
 screenshot:
-  default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
+  default_browser: CHROME
   timeout_second: 600
-  phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
   remote_webdriver_url: $your_remote_webdriver_url$
 
