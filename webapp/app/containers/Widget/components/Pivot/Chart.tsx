@@ -649,10 +649,6 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
               xSum = 0
             }
           })
-          // console.log(grid)
-          // console.log(xAxis)
-          // console.log(yAxis)
-          // console.log(series)
           const { isDrilling, whichDataDrillBrushed, getDataDrillDetail } = this.props
           const brushedOptions = isDrilling === true ? {
             // brush: {
