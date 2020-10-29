@@ -41,8 +41,8 @@ import {
   traverseConfig,
   computeCellWidth,
   getDataColumnWidth,
-  getMergedCellSpan,
-  getTableCellValueRange
+  getTableCellValueRange,
+  getCellSpanMap
 } from './util'
 import { MapAntSortOrder } from './constants'
 import { FieldSortTypes } from '../../Config/Sort'
@@ -705,10 +705,12 @@ function getTableColumns(props: IChartProps) {
   const tableColumns: Array<ColumnProps<any>> = []
   const mapTableHeaderConfig: IMapTableHeaderConfig = {}
   const fixedColumnInfo: { [key: string]: number } = {}
+  const dimensions = cols.concat(rows)
+  const cellSpanMap = getCellSpanMap(data, dimensions)
   let calculatedTotalWidth = 0
   let fixedTotalWidth = 0
 
-  cols.concat(rows).forEach((dimension) => {
+  dimensions.forEach((dimension) => {
     const { name, field, format } = dimension
     const headerText = getFieldAlias(field, queryVariables || {}) || name
     const column: ColumnProps<any> = {
@@ -729,7 +731,7 @@ function getTableColumns(props: IChartProps) {
     if (autoMergeCell) {
       column.render = (text, _, idx) => {
         // dimension cells needs merge
-        const rowSpan = getMergedCellSpan(data, name, idx)
+        const rowSpan = cellSpanMap[name][idx]
         return rowSpan === 1 ? text : { children: text, props: { rowSpan } }
       }
     }

@@ -64,7 +64,7 @@ type SettingComponent =
 export type SettingItem = {
   name: string
   title: string
-  default: string | number
+  default: string | number | boolean
   relatedItems: Array<{
     name: string,
     values: string[] | number[] | boolean[]

@@ -30,5 +30,6 @@ public class ShareDisplay {
     private String description;
     private String config;
     private Set<ShareDisplaySlide> slides;
-    private Set<ShareWidget> widgets;
+    private Set<SimpleShareWidget> widgets;
+    private Set<ShareView> views;
 }

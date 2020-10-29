@@ -30,9 +30,10 @@ import {
   ILayerOperationInfo
 } from './components/types'
 import { IWidgetFormed } from 'containers/Widget/types'
-import { IView } from 'containers/View/types'
+import { IFormedViews } from 'containers/View/types'
 import { ISlideFormed, ISlideParams } from 'containers/Viz/types'
 import { LayerOperations, LayerAlignmentTypes } from './components/constants'
+import { IShareTokenParams } from 'app/components/SharePanel/types'
 
 export const DisplayActions = {
   loadSlideDetail (displayId: number, slideId: number) {
@@ -48,7 +49,7 @@ export const DisplayActions = {
     slideId: number,
     layers: ILayerFormed[],
     widgets: IWidgetFormed[],
-    views: IView[]
+    formedViews: IFormedViews
   ) {
     return {
       type: ActionTypes.LOAD_SLIDE_DETAIL_SUCCESS,
@@ -56,7 +57,7 @@ export const DisplayActions = {
         slideId,
         layers,
         widgets,
-        views
+        formedViews
       }
     }
   },
@@ -384,7 +385,7 @@ export const DisplayActions = {
     }
   },
 
-  loadDisplayShareLink (params) {
+  loadDisplayShareLink (params: IShareTokenParams) {
     return {
       type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
       payload: {
@@ -411,12 +412,12 @@ export const DisplayActions = {
     }
   },
 
-  displayPasswordShareLinkLoaded (pwdToken, pwd) {
+  displayPasswordShareLinkLoaded (passwordShareToken, password) {
     return {
       type: ActionTypes.LOAD_DISPLAY_PASSWORD_SHARE_LINK_SUCCESS,
       payload: {
-        pwdToken,
-        pwd
+        passwordShareToken,
+        password
       }
     }
   },

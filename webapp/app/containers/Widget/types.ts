@@ -37,7 +37,6 @@ export interface IWidgetRaw extends IWidgetBase {
 export interface IWidgetFormed extends IWidgetBase {
   config: IWidgetConfig
   dataToken?: string
-  password?: string
 }
 
 export interface IWidgetState {

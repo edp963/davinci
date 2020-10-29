@@ -23,16 +23,16 @@ import {
   IControl,
   OnGetControlOptions,
   IMapControlOptions,
-  IRenderTreeItem,
-  IControlRelatedField
+  IRenderTreeItem
 } from '../types'
+import { IFormedViews, IShareFormedViews } from 'app/containers/View/types'
 import {
-  getVariableValue,
-  getModelValue,
+  getVariableParams,
+  getFilterParams,
   getAllChildren,
   getParents,
   getPanelRenderState,
-  getCustomOptionVariableValues,
+  getCustomOptionVariableParams,
   cleanInvisibleConditionalControlValues
 } from '../util'
 import {
@@ -50,6 +50,7 @@ import FullScreenControlPanelLayout from './Layouts/FullScreen'
 
 interface IControlPanelProps {
   controls: IControl[]
+  formedViews: IFormedViews | IShareFormedViews
   items: string
   type: ControlPanelTypes
   layoutType: ControlPanelLayoutTypes
@@ -147,7 +148,7 @@ class ControlPanel extends PureComponent<
     flatTree: { [key: string]: IRenderTreeItem },
     controlValues: { [key: string]: any }
   ) => {
-    const { type, items, onGetOptions } = this.props
+    const { formedViews, type, items, onGetOptions } = this.props
     const {
       key,
       parent,
@@ -173,9 +174,10 @@ class ControlPanel extends PureComponent<
       const parents = getParents(parent, flatTree)
       const requestParams = {}
 
+      // get cascading conditions
       Object.entries(relatedViews).forEach(([viewId, relatedView]) => {
         let filters = []
-        let variables = []
+        const variables = []
 
         parents.forEach((parentControl) => {
           const parentValue = controlValues[parentControl.key]
@@ -183,40 +185,42 @@ class ControlPanel extends PureComponent<
           Object.entries(parentControl.relatedViews).forEach(
             ([parentViewId, parentRelatedView]) => {
               if (viewId === parentViewId) {
-                if (
-                  optionType === ControlOptionTypes.Auto ||
-                  (optionType === ControlOptionTypes.Manual &&
-                    valueViewId === Number(parentViewId))
-                ) {
-                  if (parentControl.optionWithVariable) {
-                    variables = variables.concat(
-                      getCustomOptionVariableValues(
-                        parentControl,
-                        Number(parentViewId),
-                        parentValue
-                      )
-                    )
-                  } else {
-                    if (
-                      parentRelatedView.fieldType === ControlFieldTypes.Column
+                let cascadeRelatedViewId: string | number
+                let cascadeRelatedFields: string[]
+
+                switch (optionType) {
+                  case ControlOptionTypes.Auto:
+                    cascadeRelatedViewId = viewId
+                    cascadeRelatedFields = parentRelatedView.fields
+                    break
+                  case ControlOptionTypes.Manual:
+                    if (valueViewId === Number(parentViewId)) {
+                      cascadeRelatedViewId = parentViewId
+                      cascadeRelatedFields = parentRelatedView.fields
+                    } else if (
+                      parentControl.optionType === ControlOptionTypes.Manual &&
+                      valueViewId === parentControl.valueViewId
                     ) {
-                      filters = filters.concat(
-                        getModelValue(
-                          parentControl,
-                          parentRelatedView.fields as IControlRelatedField,
-                          parentValue
-                        )
-                      )
-                    } else {
-                      variables = variables.concat(
-                        getVariableValue(
-                          parentControl,
-                          parentRelatedView.fields,
-                          parentValue
-                        )
-                      )
+                      cascadeRelatedViewId = parentControl.valueViewId
+                      cascadeRelatedFields = [parentControl.valueField]
                     }
-                  }
+                    break
+                }
+
+                if (
+                  cascadeRelatedViewId &&
+                  cascadeRelatedFields &&
+                  formedViews[cascadeRelatedViewId]
+                ) {
+                  const { model } = formedViews[cascadeRelatedViewId]
+                  filters = filters.concat(
+                    getFilterParams(
+                      parentControl,
+                      cascadeRelatedFields,
+                      parentValue,
+                      model
+                    )
+                  )
                 }
               }
             }
@@ -227,7 +231,7 @@ class ControlPanel extends PureComponent<
           case ControlOptionTypes.Auto:
             if (relatedView.fieldType === ControlFieldTypes.Column) {
               requestParams[viewId] = {
-                columns: [(relatedView.fields as IControlRelatedField).name],
+                columns: relatedView.fields,
                 filters,
                 variables,
                 cache,

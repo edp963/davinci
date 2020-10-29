@@ -5,7 +5,7 @@
     "indent": [ true, "spaces" ],
     "quotemark": [ true, "single", "jsx-double" ],
     "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ],
-    "space-before-function-paren": [true, "always"],
+    "space-before-function-paren": [true, "never"],
     "no-submodule-imports": false,
     "only-arrow-functions": false,
     "prefer-for-of": false,

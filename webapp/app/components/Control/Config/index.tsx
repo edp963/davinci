@@ -21,10 +21,10 @@
 import React, { PureComponent, GetDerivedStateFromProps } from 'react'
 import {
   IControl,
-  IControlRelatedField,
   IDistinctValueReqeustParams,
   IControlRelatedViewFormValue,
-  IControlOption
+  IControlOption,
+  IControlRelatedView
 } from '../types'
 import {
   getDefaultGlobalControl,
@@ -242,10 +242,17 @@ export class ControlConfig extends PureComponent<
       formedViews
     } = this.props
     const { controls, editingControlBase } = this.state
-    const control =
-      type === ControlPanelTypes.Global
-        ? getDefaultGlobalControl()
-        : getDefaultLocalControl(formedViews[relatedViewId])
+
+    let control
+    if (type === ControlPanelTypes.Global) {
+      control = getDefaultGlobalControl()
+    } else {
+      if (relatedViewId && formedViews[relatedViewId]) {
+        control = getDefaultLocalControl(formedViews[relatedViewId])
+      } else {
+        return
+      }
+    }
 
     if (editingControlBase) {
       this.mergeEditingControl((mergedControls) => {
@@ -474,18 +481,14 @@ export class ControlConfig extends PureComponent<
         ? {
             ...relatedView,
             fieldType,
-            fields: this.getValidFields(type, fieldType, relatedView.fields)
+            fields: relatedView.fields
           }
         : relatedView
     })
     this.setState({
       editingRelatedViewList: changedRelatedViewList,
       controlFormWillChangeValues: {
-        [`relatedViews[${viewId}].fields`]: this.getValidFields(
-          type,
-          fieldType,
-          void 0
-        )
+        [`relatedViews[${viewId}].fields`]: []
       }
     })
   }
@@ -545,7 +548,7 @@ export class ControlConfig extends PureComponent<
           ...rest,
           models: getRelatedViewModels(formedViews[rest.id], value),
           fieldType,
-          fields: this.getValidFields(value, fieldType, fields)
+          fields
         })
       ),
       controlFormWillChangeValues: changedFields
@@ -692,19 +695,15 @@ export class ControlConfig extends PureComponent<
         if (SHOULD_LOAD_OPTIONS[type] && !defaultValueLoading) {
           switch (optionType) {
             case ControlOptionTypes.Auto:
-              const relatedViewValues = values.relatedViews || {}
+              const relatedViewValues = this.convertFieldFormValues({
+                ...values.relatedViews
+              })
               const relatedViewMap = Object.entries(relatedViewValues)
               if (relatedViewMap.length) {
                 const paramsByViewId = relatedViewMap.reduce(
-                  (
-                    obj,
-                    [viewId, { fieldType, fields }]: [
-                      string,
-                      IControlRelatedViewFormValue
-                    ]
-                  ) => {
+                  (obj, [viewId, { fieldType, fields }]) => {
                     if (fieldType === ControlFieldTypes.Column) {
-                      obj[viewId] = { columns: [fields] }
+                      obj[viewId] = { columns: fields }
                     }
                     return obj
                   },
@@ -718,7 +717,11 @@ export class ControlConfig extends PureComponent<
                     if (options) {
                       this.setState({
                         defaultValueOptions: transformOptions(
-                          { ...editingControlBase, ...values },
+                          {
+                            ...editingControlBase,
+                            ...values,
+                            relatedViews: relatedViewValues
+                          },
                           options
                         )
                       })
@@ -743,7 +746,11 @@ export class ControlConfig extends PureComponent<
                 if (options) {
                   this.setState({
                     defaultValueOptions: transformOptions(
-                      { ...editingControlBase, ...values },
+                      {
+                        ...editingControlBase,
+                        ...values,
+                        relatedViews: relatedViewValues
+                      },
                       options
                     )
                   })
@@ -788,26 +795,7 @@ export class ControlConfig extends PureComponent<
             ...(type === ControlPanelTypes.Global && {
               relatedItems: { ...relatedItems }
             }),
-            relatedViews: Object.entries({ ...relatedViews }).reduce(
-              (
-                obj,
-                [viewId, { fieldType, fields }]: [
-                  string,
-                  IControlRelatedViewFormValue
-                ]
-              ) => {
-                obj[viewId] = {
-                  fieldType,
-                  fields: Array.isArray(fields)
-                    ? fields.map((field) =>
-                        this.convertFieldFormValues(viewId, fieldType, field)
-                      )
-                    : this.convertFieldFormValues(viewId, fieldType, fields)
-                }
-                return obj
-              },
-              {}
-            )
+            relatedViews: this.convertFieldFormValues({ ...relatedViews })
           }
         } else {
           return control
@@ -817,22 +805,19 @@ export class ControlConfig extends PureComponent<
     })
   }
 
-  private convertFieldFormValues = (
-    viewId: string,
-    fieldType: ControlFieldTypes,
-    fields: string
-  ): IControlRelatedField => {
-    const { editingRelatedViewList } = this.state
-    const { models, variables } = editingRelatedViewList.find(
-      (rv) => rv.id === Number(viewId)
+  private convertFieldFormValues = (relatedViewFormValues: {
+    [viewId: string]: IControlRelatedViewFormValue
+  }): { [viewId: string]: IControlRelatedView } => {
+    return Object.entries(relatedViewFormValues).reduce(
+      (obj, [viewId, { fieldType, fields }]) => {
+        obj[viewId] = {
+          fieldType,
+          fields: [].concat(fields)
+        }
+        return obj
+      },
+      {}
     )
-    return {
-      name: fields,
-      type:
-        fieldType === ControlFieldTypes.Column
-          ? models.find((m) => m.name === fields).sqlType
-          : variables.find((v) => v.name === fields).valueType
-    }
   }
 
   private save = () => {
@@ -851,26 +836,6 @@ export class ControlConfig extends PureComponent<
     this.setState({
       ...getEditingControlFormValues(null)
     })
-  }
-
-  private getValidFields = (
-    type: ControlTypes,
-    fieldType: ControlFieldTypes,
-    fields: IControlRelatedField | IControlRelatedField[]
-  ): IControlRelatedField | IControlRelatedField[] => {
-    const shouldBeArrayFields =
-      IS_RANGE_TYPE[type] && fieldType === ControlFieldTypes.Variable
-    return fields
-      ? shouldBeArrayFields
-        ? Array.isArray(fields)
-          ? fields
-          : [fields]
-        : Array.isArray(fields)
-        ? fields[0]
-        : fields
-      : shouldBeArrayFields
-      ? []
-      : void 0
   }
 
   private openOptionModal = (index?) => {
@@ -907,16 +872,13 @@ export class ControlConfig extends PureComponent<
       } = this.state
 
       let customOptions = editingControlBase.customOptions || []
-      const editingOption = {
+      const editingOption: IControlOption = {
         value: values.value,
         text: values.text || values.value,
         ...(editingControlBase.optionWithVariable && {
-          variables: editingRelatedViewList.reduce((obj, { id, variables }) => {
+          variables: editingRelatedViewList.reduce((obj, { id }) => {
             if (values[id]) {
-              const { name, valueType } = variables.find(
-                (v) => v.name === values[id]
-              )
-              obj[id] = { name, type: valueType }
+              obj[id] = values[id]
             }
             return obj
           }, {})

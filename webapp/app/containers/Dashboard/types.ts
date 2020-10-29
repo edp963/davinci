@@ -40,7 +40,7 @@ export interface IDashboardConfig {
 }
 
 export interface IDashboardDetailRaw extends IDashboardRaw {
-  widgets: IDashboardItem[]
+  relations: IDashboardItem[]
   views: IView[]
 }
 
@@ -63,8 +63,8 @@ export interface IDashboardItemInfo {
   loading: boolean
   queryConditions: IQueryConditions
   shareToken: string
-  pwdToken?: string
-  pwd?: string
+  passwordShareToken?: string
+  password?: string
   authorizedShareToken: string
   shareLoading: boolean
   downloadCsvLoading: boolean

@@ -21,6 +21,7 @@
 import { ITableCellStyle, ITableColumnConfig, DefaultTableCellStyle } from 'containers/Widget/components/Config/Table'
 import { getTextWidth } from 'utils/util'
 import { IFieldFormatConfig, getFormattedValue } from 'containers/Widget/components/Config/Format'
+import { IWidgetDimension } from '../../Widget'
 
 export function traverseConfig<T> (config: T[], childrenName: keyof T, callback: (currentConfig: T, idx: number, siblings: T[]) => any) {
   if (!Array.isArray(config)) { return }
@@ -69,22 +70,61 @@ export function textAlignAdapter (justifyContent: ITableCellStyle['justifyConten
   }
 }
 
-export function getMergedCellSpan (data: any[], propName: string, idx: number) {
-  const currentRecord = data[idx]
-  const prevRecord = data[idx - 1]
-  if (prevRecord && prevRecord[propName] === currentRecord[propName]) {
-    return 0
-  }
-  let span = 1
-  while (true) {
-    const nextRecord = data[idx + span]
-    if (nextRecord && nextRecord[propName] === currentRecord[propName]) {
-      span++
-    } else {
-      break
-    }
-  }
-  return span
+export function getCellSpanMap(
+  data: any[],
+  dimensions: IWidgetDimension[]
+): { [columnName: string]: number[] } {
+  const map = {}
+  const columnsSpanEndIndexRecorder = {}
+
+  dimensions.forEach(({ name }) => {
+    map[name] = []
+    columnsSpanEndIndexRecorder[name] = -1
+  })
+
+  data.forEach((record, index) => {
+    const prevRecord = data[index - 1]
+
+    dimensions.forEach(({ name }, dIndex) => {
+      const prevColumnName = dimensions[dIndex - 1]?.name
+
+      if (
+        columnsSpanEndIndexRecorder[name] !== index - 1 &&
+        prevRecord &&
+        prevRecord[name] === record[name]
+      ) {
+        map[name][index] = 0
+        return
+      }
+
+      if (columnsSpanEndIndexRecorder[prevColumnName] === index) {
+        map[name][index] = 1
+        columnsSpanEndIndexRecorder[name] = index
+        return
+      }
+
+      let span = 1
+      while (true) {
+        const nextRecord = data[index + span]
+        const currentDataIndex = index + span - 1
+        if (
+          nextRecord &&
+          nextRecord[name] === record[name] &&
+          !(
+            prevColumnName &&
+            currentDataIndex >= columnsSpanEndIndexRecorder[prevColumnName]
+          )
+        ) {
+          span += 1
+        } else {
+          map[name][index] = span
+          columnsSpanEndIndexRecorder[name] = currentDataIndex
+          break
+        }
+      }
+    })
+  })
+  return map
 }
 
 export function computeCellWidth (style: ITableCellStyle, cellValue: string | number) {

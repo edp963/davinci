@@ -72,8 +72,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
 
-        AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (null != authShareMethoed) {
+        AuthShare authShareMethod = method.getAnnotation(AuthShare.class);
+        if (null != authShareMethod) {
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);
                 User user = userService.getByUsername(username);

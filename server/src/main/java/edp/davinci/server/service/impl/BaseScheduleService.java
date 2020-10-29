@@ -48,6 +48,9 @@ import static edp.davinci.commons.Constants.AT_SIGN;
 public class BaseScheduleService {
 
     @Autowired
+    private String TOKEN_SECRET;
+
+    @Autowired
     private CronJobExtendMapper cronJobExtendMapper;
 
     @Autowired
@@ -69,9 +72,11 @@ public class BaseScheduleService {
 
     protected static final String PORTAL = "PORTAL";
 
-    protected static final String DISPLAY = "display";
+    protected static final String DISPLAY = "DISPLAY";
 
-    protected static final String DASHBOARD = "dashboard";
+    protected static final String DASHBOARD = "DASHBOARD";
+
+    protected static final String WIDGET = "WIDGET";
 
     protected CronJob preExecute(long jobId) {
         CronJob cronJob = cronJobExtendMapper.selectByPrimaryKey(jobId);
@@ -257,7 +262,7 @@ public class BaseScheduleService {
             return;
         }
         Map<Long, Set<Dashboard>> dashboardsMap = new HashMap<>();
-        List<DashboardTree> rootChilds = new ArrayList<>();
+        List<DashboardTree> rootChildren = new ArrayList<>();
         for (Dashboard dashboard : dashboards) {
             if (dashboard.getParentId() > 0L && !dashboard.getParentId().equals(dashboard.getId())) {
                 Set<Dashboard> set;
@@ -269,14 +274,14 @@ public class BaseScheduleService {
                 set.add(dashboard);
                 dashboardsMap.put(dashboard.getParentId(), set);
             } else {
-                rootChilds.add(new DashboardTree(dashboard.getId(), dashboard.getIndex()));
+                rootChildren.add(new DashboardTree(dashboard.getId(), dashboard.getIndex()));
             }
         }
 
-        rootChilds.sort(Comparator.comparing(DashboardTree::getIndex));
-        root.setChilds(rootChilds);
+        rootChildren.sort(Comparator.comparing(DashboardTree::getIndex));
+        root.setChilds(rootChildren);
 
-        for (DashboardTree child : rootChilds) {
+        for (DashboardTree child : rootChildren) {
             child.setChilds(getChildren(dashboardsMap, child));
         }
     }
@@ -285,12 +290,12 @@ public class BaseScheduleService {
         if (CollectionUtils.isEmpty(dashboardsMap)) {
             return null;
         }
-        Set<Dashboard> childs = dashboardsMap.get(node.getId());
-        if (CollectionUtils.isEmpty(childs)) {
+        Set<Dashboard> children = dashboardsMap.get(node.getId());
+        if (CollectionUtils.isEmpty(children)) {
             return null;
         }
         List<DashboardTree> list = new ArrayList<>();
-        for (Dashboard dashboard : childs) {
+        for (Dashboard dashboard : children) {
             DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
             treeNode.setChilds(getChildren(dashboardsMap, treeNode));
             list.add(treeNode);
@@ -300,35 +305,38 @@ public class BaseScheduleService {
     }
 
     private String getContentUrl(Long userId, String contentType, Long contentId, int index) {
-        String shareToken = shareService.generateShareToken(contentId, null, userId);
-        StringBuilder sb = new StringBuilder();
 
-        String type = "";
-        String page = "";
-        if ("widget".equalsIgnoreCase(contentType)) {
-            type = "widget";
-        } else if (PORTAL.equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
-            type = "dashboard";
-        } else {
-            type = "";
-            page = "p=" + index;
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withMode(ShareMode.NORMAL)
+                .withEntityId(contentId)
+                .withSharerId(userId)
+                .withExpired(DateUtils.add(DateUtils.currentDate(), Calendar.DATE, 1))
+                .withPermission(ShareDataPermission.SHARER)
+                .build();
+
+        String page = null;
+        switch (contentType.toUpperCase()) {
+            case WIDGET:
+                shareFactor.setType(ShareType.WIDGET);
+                break;
+            case DISPLAY:
+                shareFactor.setType(ShareType.DISPLAY);
+                page = "&p=" + index;
+                break;
+            default:
+                shareFactor.setType(ShareType.DASHBOARD);
+                break;
         }
 
+        String shareToken = shareFactor.toShareResult(TOKEN_SECRET).getToken();
+        StringBuilder sb = new StringBuilder();
         sb.append(serverUtils.getLocalHost())
                 .append("/share.html")
                 .append("?shareToken=")
                 .append(shareToken);
-
-        if (!StringUtils.isEmpty(type)) {
-            sb.append("&type=").append(type);
-        }
-
-        if (!StringUtils.isEmpty(page)) {
-            sb.append("&").append(page);
-        }
-
-        sb.append("#/share/").append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase(PORTAL) ? "dashboard" : contentType);
-
+        sb.append(StringUtils.isEmpty(page) ? "" : page);
+        sb.append("#/share/").append(WIDGET.equalsIgnoreCase(contentType) || PORTAL.equalsIgnoreCase(contentType) ? DASHBOARD.toLowerCase() : contentType);
         return sb.toString();
     }
 }

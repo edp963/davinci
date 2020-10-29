@@ -23,8 +23,7 @@ import {
   IControl,
   IControlRelatedView,
   IRenderTreeItem,
-  IFilters,
-  IControlRelatedField,
+  IFilter,
   IControlOption,
   IControlCondition
 } from './types'
@@ -47,7 +46,8 @@ import {
   IFormedView,
   IViewModelProps,
   IViewVariable,
-  IFormedViews
+  IFormedViews,
+  IViewModel
 } from 'app/containers/View/types'
 import {
   ViewVariableValueTypes,
@@ -98,64 +98,65 @@ export function getDefaultLocalControl(view: IFormedView): IControl {
     relatedViews: {
       [view.id]: {
         fieldType: ControlFieldTypes.Column,
-        fields: defaultFields && {
-          name: defaultFields[0],
-          type: defaultFields[1].sqlType
-        }
+        fields: defaultFields && [defaultFields[0]]
       }
     }
   }
   return control
 }
 
-export function getVariableValue(
+export function getVariableParams(
   control: IControl,
-  fields: IControlRelatedField | IControlRelatedField[],
-  value
+  fields: string[],
+  value,
+  variables: IViewVariable[]
 ) {
   const { type, dateFormat, multiple } = control
-  let name
-  let valueType
-  let variable = []
+  const fieldsVariables = fields
+    .map((name) => variables.find((v) => v.name === name))
+    .filter((f) => !!f)
+  let params = []
 
   if (
     value === void 0 ||
     value === null ||
-    (typeof value === 'string' && !value.trim())
+    (typeof value === 'string' && !value.trim()) ||
+    !fieldsVariables.length
   ) {
-    return variable
-  }
-
-  if (!Array.isArray(fields)) {
-    name = fields.name
-    valueType = fields.type
+    return params
   }
 
   switch (type) {
     case ControlTypes.InputText:
     case ControlTypes.Radio:
-      variable.push({ name, value: getValidVariableValue(value, valueType) })
+      params = fieldsVariables.map(({ name, valueType }) => ({
+        name,
+        value: getValidVariableValue(value, valueType)
+      }))
       break
     case ControlTypes.Select:
     case ControlTypes.TreeSelect:
       if (multiple) {
         if (value.length && value.length > 0) {
-          variable.push({
+          params = fieldsVariables.map(({ name, valueType }) => ({
             name,
             value: value
               .map((val) => getValidVariableValue(val, valueType))
               .join(',')
-          })
+          }))
         }
       } else {
-        variable.push({ name, value: getValidVariableValue(value, valueType) })
+        params = fieldsVariables.map(({ name, valueType }) => ({
+          name,
+          value: getValidVariableValue(value, valueType)
+        }))
       }
       break
     case ControlTypes.NumberRange:
     case ControlTypes.Slider:
-      variable = value.reduce((arr, val, index) => {
+      params = value.reduce((arr, val, index) => {
         if (val !== '' && !isNaN(val)) {
-          const { name, type: valueType } = fields[index]
+          const { name, valueType } = fieldsVariables[index]
           return arr.concat({
             name,
             value: getValidVariableValue(val, valueType)
@@ -166,96 +167,104 @@ export function getVariableValue(
       break
     case ControlTypes.Date:
       if (multiple) {
-        variable.push({
+        params = fieldsVariables.map(({ name }) => ({
           name,
           value: value
             .split(',')
             .map((v) => `'${v}'`)
             .join(',')
-        })
+        }))
       } else {
-        variable.push({ name, value: `'${moment(value).format(dateFormat)}'` })
+        params = fieldsVariables.map(({ name }) => ({
+          name,
+          value: `'${moment(value).format(dateFormat)}'`
+        }))
       }
       break
     case ControlTypes.DateRange:
       if (value.length) {
-        variable = value.map((v, index) => {
-          const { name } = fields[index]
-          return { name, value: `'${moment(v).format(dateFormat)}'` }
+        params = value.map((v, index) => {
+          const { name } = fieldsVariables[index]
+          return {
+            name,
+            value: `'${moment(v).format(dateFormat)}'`
+          }
         })
       }
       break
     default:
       const val = value.target.value.trim()
       if (val) {
-        variable.push({ name, value: getValidVariableValue(val, valueType) })
+        params = fieldsVariables.map(({ name, valueType }) => ({
+          name,
+          value: getValidVariableValue(val, valueType)
+        }))
       }
       break
   }
-  return variable
+  return params
 }
 
-export function getCustomOptionVariableValues(
+export function getCustomOptionVariableParams(
   control: IControl,
   viewId: number,
-  value
+  value,
+  variables: IViewVariable[]
 ): QueryVariable {
   const { customOptions } = control
-  let variables = []
+  let params = []
 
   if (
     value === void 0 ||
     value === null ||
     (typeof value === 'string' && !value.trim())
   ) {
-    return variables
+    return params
   }
 
-  if (Array.isArray(value)) {
-    value.forEach((val) => {
+  Array.from([])
+    .concat(value)
+    .forEach((val) => {
       const selectedOption = customOptions.find((o) => o.value === val)
       if (selectedOption && selectedOption.variables[viewId]) {
-        variables = variables.concat(
-          getVariableValue(
+        params = params.concat(
+          getVariableParams(
             { ...control, multiple: false },
-            selectedOption.variables[viewId],
-            val
+            [selectedOption.variables[viewId]],
+            val,
+            variables
           )
         )
       }
     })
-  } else {
-    const selectedOption = customOptions.find((o) => o.value === value)
-    if (selectedOption && selectedOption.variables[viewId]) {
-      variables = variables.concat(
-        getVariableValue(control, selectedOption.variables[viewId], value)
-      )
-    }
-  }
 
-  return variables
+  return params
 }
 
 // 全局过滤器 与 本地控制器 filter 操作
-export function getModelValue(
+export function getFilterParams(
   control: IControl,
-  field: IControlRelatedField,
-  value
+  fields: string[],
+  value,
+  models: IViewModel
 ) {
   const { type, dateFormat, multiple, operator } = control // select  ''  true in
-  const { name, type: sqlType } = field
+  // filter is related with only one field
+  const filterFieldName = fields[0]
   const filters = []
 
   if (
     value === void 0 ||
     value === null ||
-    (typeof value === 'string' && !value.trim())
+    (typeof value === 'string' && !value.trim()) ||
+    !models[filterFieldName]
   ) {
     return filters
   }
 
-  const commanFilterJson: IFilters = {
-    name,
+  const { sqlType } = models[filterFieldName]
+  const filterBase: IFilter = {
+    name: filterFieldName,
     type: 'filter',
     value: getValidColumnValue(value, sqlType),
     sqlType,
@@ -264,88 +273,59 @@ export function getModelValue(
   switch (type) {
     case ControlTypes.InputText:
     case ControlTypes.Radio:
-      filters.push(commanFilterJson)
+      filters.push(filterBase)
       break
     case ControlTypes.Select:
     case ControlTypes.TreeSelect:
       if (multiple) {
         if (Array.isArray(value) && value.length > 0) {
-          const filterJson = {
-            ...commanFilterJson,
+          filters.push({
+            ...filterBase,
             value: value.map((val) => getValidColumnValue(val, sqlType))
-          }
-          filters.push(filterJson)
+          })
         }
       } else {
-        filters.push(commanFilterJson)
+        filters.push(filterBase)
       }
       break
     case ControlTypes.NumberRange:
     case ControlTypes.Slider:
-      if (value[0] !== '' && !isNaN(value[0])) {
-        const filterJson = {
-          ...commanFilterJson,
-          operator: '>=',
-          value: getValidColumnValue(value[0], sqlType)
+      value.forEach((val, index) => {
+        if (val !== '' && !isNaN(val)) {
+          filters.push({
+            ...filterBase,
+            operator: !index ? '>=' : '<=',
+            value: getValidColumnValue(val, sqlType)
+          })
         }
-        filters.push(filterJson)
-      }
-      if (value[1] !== '' && !isNaN(value[1])) {
-        const filterJson = {
-          ...commanFilterJson,
-          operator: '<=',
-          value: getValidColumnValue(value[1], sqlType)
-        }
-        filters.push(filterJson)
-      }
+      })
       break
     case ControlTypes.Date:
-      if (multiple) {
-        const filterJson = {
-          ...commanFilterJson,
-          value: value
-            .split(',')
-            .map((val) => getValidColumnValue(val, sqlType))
-        }
-        filters.push(filterJson)
-      } else {
-        const filterJson = {
-          ...commanFilterJson,
-          value: getValidColumnValue(moment(value).format(dateFormat), sqlType)
-        }
-        filters.push(filterJson)
-      }
+      filters.push({
+        ...filterBase,
+        value: multiple
+          ? value.split(',').map((val) => getValidColumnValue(val, sqlType))
+          : getValidColumnValue(moment(value).format(dateFormat), sqlType)
+      })
       break
     case ControlTypes.DateRange:
       if (value.length) {
-        const filterJson1 = {
-          ...commanFilterJson,
-          operator: '>=',
-          value: getValidColumnValue(
-            moment(value[0]).format(dateFormat),
-            sqlType
-          )
-        }
-        const filterJson2 = {
-          ...commanFilterJson,
-          operator: '<=',
-          value: getValidColumnValue(
-            moment(value[1]).format(dateFormat),
-            sqlType
-          )
-        }
-        filters.push(filterJson1)
-        filters.push(filterJson2)
+        value.forEach((val, index) => {
+          filters.push({
+            ...filterBase,
+            operator: !index ? '>=' : '<=',
+            value: getValidColumnValue(moment(val).format(dateFormat), sqlType)
+          })
+        })
       }
       break
     default:
       const inputValue = value.target.value.trim()
-      const filterJson = {
-        ...commanFilterJson,
-        value: getValidColumnValue(inputValue, sqlType)
-      }
       if (inputValue) {
-        filters.push(filterJson)
+        filters.push({
+          ...filterBase,
+          value: getValidColumnValue(inputValue, sqlType)
+        })
       }
       break
   }
@@ -476,11 +456,7 @@ export function transformOptions(
           return Object.values(
             options.reduce((obj, o) => {
               Object.values(control.relatedViews).forEach(({ fields }) => {
-                const fieldName =
-                  typeof fields === 'string'
-                    ? (fields as string)
-                    : (fields as IControlRelatedField).name
-                const value = o[fieldName]
+                const value = o[fields[0]]
                 if (value !== void 0 && !obj[value]) {
                   obj[value] = { value, text: value }
                 }
@@ -630,32 +606,6 @@ export function getParents(
       .concat(getParents(rest.parent, flatTree))
   }
   return parents
-}
-
-export function getDefaultFields(
-  type: ControlTypes,
-  fieldType: ControlFieldTypes,
-  models: IViewModelProps[],
-  variables: IViewVariable[]
-) {
-  if (fieldType === ControlFieldTypes.Column) {
-    return models.length
-      ? {
-          name: models[0].name,
-          type: models[0].sqlType
-        }
-      : void 0
-  } else {
-    if (variables.length) {
-      const field = {
-        name: variables[0].name,
-        type: variables[0].valueType
-      }
-      return IS_RANGE_TYPE[type] ? [field] : field
-    } else {
-      return IS_RANGE_TYPE[type] ? [] : void 0
-    }
-  }
 }
 
 export function getRelatedViewModels(

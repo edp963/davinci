@@ -234,8 +234,8 @@ const displayReducer = (
         break
 
       case ActionTypes.LOAD_DISPLAY_PASSWORD_SHARE_LINK_SUCCESS:
-        draft.currentDisplayPasswordShareToken = action.payload.pwdToken
-        draft.currentDisplayPasswordPassword = action.payload.pwd
+        draft.currentDisplayPasswordShareToken = action.payload.passwordShareToken
+        draft.currentDisplayPasswordPassword = action.payload.password
         draft.loading.shareToken = false
         break
       case ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS:
@@ -489,5 +489,5 @@ const displayReducer = (
         break
     }
   })
-
+export { initialState as displayInitialState}
 export default displayReducer

@@ -18,21 +18,20 @@
  * >>
  */
 
-export const envName = {
-  production: 'production',
-  dev: 'dev'
-}
-
-export const env = envName.production
-export const clientVersion = '0.3-beta.9'
-export default {
-  dev: {
-    host: '/api/v3',
-    shareHost: '/share.html'
-  },
-  production: {
-    //  host: '/api/v1',
-    host: '/api/v3',
-    shareHost: '/share.html'
+export function sliceLength<T, U>(length: number, arr1: T[], arr2: U[]) {
+  let loop = true
+  return () => {
+    return new Array(length)
+      .fill(0)
+      .map(() => {
+        if (loop) {
+          loop = false
+          return arr1.length ? arr1.shift() : arr2.shift()
+        } else {
+          loop = true
+          return arr2.length ? arr2.shift() : arr1.shift()
+        }
+      })
+      .filter((unEmpty) => unEmpty)
   }
 }

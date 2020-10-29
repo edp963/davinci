@@ -19,6 +19,9 @@
  */
 
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosPromise } from 'axios'
+import { DEFAULT_JWT_TOKEN_EXPIRED } from 'app/globalConstants'
+
+let tokenExpired = DEFAULT_JWT_TOKEN_EXPIRED
 
 axios.defaults.validateStatus = function (status) {
   return status < 400
@@ -48,7 +51,7 @@ export default function request (url: string | AxiosRequestConfig, options?: Axi
 
 export function setToken (token: string) {
   localStorage.setItem('TOKEN', token)
-  localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
+  localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + tokenExpired}`)
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
@@ -71,6 +74,10 @@ export function removeToken () {
 
 export function getToken () {
   return axios.defaults.headers.common['Authorization']
+}
+
+export function setTokenExpired(expired) {
+  tokenExpired = Number(expired)
 }
 
 window.addEventListener('storage', syncToken)

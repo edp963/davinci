@@ -89,7 +89,6 @@ const LayerBox: React.FC = (props: ILayerBoxProps) => {
 
     const style: React.CSSProperties = {
       transform: `translate(${positionX}px, ${positionY}px)`,
-      willChange: 'transform',
       width: `${width}px`,
       height: `${height}px`,
       zIndex: index,

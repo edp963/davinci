@@ -241,5 +241,6 @@ export {
   makeSelectDisplayLoading,
   makeSelectEditorBaselines,
   makeSelectCurrentDisplayPasswordShareToken,
-  makeSelectCurrentDisplayPasswordSharePassword
+  makeSelectCurrentDisplayPasswordSharePassword,
+  selectCurrentLayers
 }

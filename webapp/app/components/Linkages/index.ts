@@ -1,7 +1,7 @@
 import { QueryVariable } from 'containers/Dashboard/types'
 import { DEFAULT_SPLITER, SQL_NUMBER_TYPES } from 'app/globalConstants'
 import OperatorType from 'utils/operatorTypes'
-import { IFilters } from 'app/components/Control/types'
+import { IFilter } from 'app/components/Control/types'
 import {getValidColumnValue} from 'app/components/Control/util'
 export type LinkageType = 'column' | 'variable'
 
@@ -61,7 +61,7 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
   Object.keys(mappingLinkage).forEach((linkagerItemId) => {
     const linkage = mappingLinkage[+linkagerItemId]
 
-    const linkageFilters: IFilters[] = []
+    const linkageFilters: IFilter[] = []
     const linkageVariables: QueryVariable = []
     linkage.forEach((l) => {
       const { triggerKey, triggerSqlType, triggerType, linkagerKey, linkagerSqlType, linkagerType, relation } = l
@@ -75,7 +75,7 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
           ? linkagerKey.replace(/\w+\((\w+)\)/, '$1')
           : linkagerKey
 
-        const filterJson: IFilters = {
+        const filterJson: IFilter = {
           name : validLinkagerKey,
           type: 'filter',
           value: interactValue,

@@ -29,10 +29,11 @@ import {
   IDataDownloadStatistic
 } from './types'
 import { IWidgetFormed } from '../Widget/types'
-import { IView, IViewQueryResponse } from '../View/types'
+import { IFormedViews, IViewQueryResponse } from '../View/types'
 import { RenderType } from '../Widget/components/Widget'
 import { ControlPanelTypes } from 'app/components/Control/constants'
 import { DownloadTypes } from '../App/constants'
+import { IShareTokenParams } from 'app/components/SharePanel/types'
 const CancelToken = axios.CancelToken
 
 export const DashboardActions = {
@@ -181,7 +182,7 @@ export const DashboardActions = {
     dashboard: IDashboard,
     items: IDashboardItem[],
     widgets: IWidgetFormed[],
-    views: IView[]
+    formedViews: IFormedViews
   ) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS,
@@ -189,7 +190,7 @@ export const DashboardActions = {
         dashboard,
         items,
         widgets,
-        views
+        formedViews
       }
     }
   },
@@ -200,12 +201,17 @@ export const DashboardActions = {
     }
   },
 
-  dashboardItemsAdded(items: IDashboardItem[], widgets: IWidgetFormed[]) {
+  dashboardItemsAdded(
+    items: IDashboardItem[],
+    widgets: IWidgetFormed[],
+    formedViews: IFormedViews
+  ) {
     return {
       type: ActionTypes.ADD_DASHBOARD_ITEMS_SUCCESS,
       payload: {
         items,
-        widgets
+        widgets,
+        formedViews
       }
     }
   },
@@ -282,7 +288,7 @@ export const DashboardActions = {
     }
   },
 
-  loadDashboardShareLink(params) {
+  loadDashboardShareLink(params: IShareTokenParams) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
       payload: {
@@ -309,12 +315,12 @@ export const DashboardActions = {
     }
   },
 
-  dashboardPasswordShareLinkLoaded(pwdToken, pwd) {
+  dashboardPasswordShareLinkLoaded(passwordShareToken, password) {
     return {
       type: ActionTypes.LOAD_DASHBOARD_PASSWORD_SHARE_LINK_SUCCESS,
       payload: {
-        pwdToken,
-        pwd
+        passwordShareToken,
+        password
       }
     }
   },
@@ -325,7 +331,7 @@ export const DashboardActions = {
     }
   },
 
-  loadWidgetShareLink(params) {
+  loadWidgetShareLink(params: IShareTokenParams) {
     return {
       type: ActionTypes.LOAD_WIDGET_SHARE_LINK,
       payload: {
@@ -354,12 +360,12 @@ export const DashboardActions = {
     }
   },
 
-  widgetPasswordShareLinkLoaded(pwdToken, pwd, itemId) {
+  widgetPasswordShareLinkLoaded(passwordShareToken, password, itemId) {
     return {
       type: ActionTypes.LOAD_WIDGET_PASSWORD_SHARE_LINK_SUCCESS,
       payload: {
-        pwdToken,
-        pwd,
+        passwordShareToken,
+        password,
         itemId
       }
     }
