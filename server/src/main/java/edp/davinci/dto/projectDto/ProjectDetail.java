@@ -26,10 +26,10 @@ import lombok.Data;
 
 @Data
 public class ProjectDetail extends Project {
+
     private Organization organization;
 
     private UserBaseInfo createBy;
-
 
     @Override
     public String toString() {

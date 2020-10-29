@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import static edp.core.consts.Consts.*;
 
@@ -81,7 +83,14 @@ public class ServerUtils {
     }
 
     public String getLocalHost() {
-        return protocol + PROTOCOL_SEPARATOR + "localhost:" + port;
+        String hostName="localhost";
+        try {
+            InetAddress ia = InetAddress.getLocalHost();
+            hostName=ia.getHostName();
+        }catch (UnknownHostException ex){
+            hostName="localhost";
+        }
+        return protocol + PROTOCOL_SEPARATOR + hostName+":" + port;
     }
 
     public String getBasePath() {

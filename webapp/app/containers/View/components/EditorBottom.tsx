@@ -20,7 +20,7 @@
 
 import React from 'react'
 
-import { Row, Col, Button, InputNumber, Tooltip } from 'antd'
+import { Row, Col, Button, InputNumber, Tooltip, Popover, Tag } from 'antd'
 
 import Styles from '../View.less'
 
@@ -28,6 +28,8 @@ export interface IEditorBottomProps {
   sqlLimit: number
   loading: boolean
   nextDisabled: boolean
+  isLastExecuteWholeSql: boolean
+  sqlFragment: string
   onSetSqlLimit: (limit: number) => void
   onExecuteSql: () => void
   onStepChange: (stepChange: number) => void
@@ -38,8 +40,22 @@ const stepChange = (onStepChange: IEditorBottomProps['onStepChange'], step: numb
 }
 
 export const EditorBottom = (props: IEditorBottomProps) => {
-  const { sqlLimit, loading, nextDisabled, onSetSqlLimit, onExecuteSql, onStepChange } = props
-
+  const { sqlLimit, loading, nextDisabled, isLastExecuteWholeSql, sqlFragment, onSetSqlLimit, onExecuteSql, onStepChange } = props
+  const STATUS_BTN_TEXT = !loading ? '执行' : '中止'
+  const SELECT_CONTENT_BTN_TEXT = sqlFragment ? '选中内容' : ''
+  const NEXT_DISABLED_AS_EXECUTE_FRAGMENT_TEXT = !isLastExecuteWholeSql ? '执行完整sql后可用' : ''
+  const NEXT_DISABLED_AS_SQL_CHANGED_TEXT = nextDisabled ? '执行后下一步可用' : NEXT_DISABLED_AS_EXECUTE_FRAGMENT_TEXT
+  const shortcutsContent = (
+    <Row>
+      <Col span={8}>执行 / 中止：</Col>
+      <Col span={16}>
+        <Tag color="orange">Ctrl + Enter</Tag>(Windows)
+      </Col>
+      <Col offset={8} span={16}>
+        <Tag color="orange">Cmd + Enter</Tag>(Mac OS)
+      </Col>
+    </Row>
+  )
   return (
     <Row className={Styles.bottom} type="flex" align="middle" justify="start">
     <Col span={12} className={Styles.previewInput}>
@@ -48,18 +64,23 @@ export const EditorBottom = (props: IEditorBottomProps) => {
       <span>条数据</span>
     </Col>
     <Col span={12} className={Styles.toolBtns}>
+      <Popover
+        title="快捷键"
+        content={shortcutsContent}
+        overlayClassName={Styles.shortcuts}
+      >
+        <i className="iconfont icon-shortcuts_icon" />
+      </Popover>
       <Button onClick={stepChange(onStepChange, -1)}>取消</Button>
       <Button
         type="primary"
-        disabled={loading}
-        loading={loading}
-        icon="caret-right"
+        icon={!loading ? 'caret-right' : 'pause-circle'}
         onClick={onExecuteSql}
       >
-        执行
+        {STATUS_BTN_TEXT + SELECT_CONTENT_BTN_TEXT}
       </Button>
-      <Tooltip title={nextDisabled ? '执行后下一步可用' : ''}>
-        <Button onClick={stepChange(onStepChange, 1)} disabled={nextDisabled}>
+      <Tooltip title={NEXT_DISABLED_AS_SQL_CHANGED_TEXT}>
+        <Button onClick={stepChange(onStepChange, 1)} disabled={nextDisabled || !isLastExecuteWholeSql}>
           下一步
         </Button>
       </Tooltip>
@@ -68,4 +89,4 @@ export const EditorBottom = (props: IEditorBottomProps) => {
   )
 }
 
-export default EditorBottom
+export default React.memo(EditorBottom)

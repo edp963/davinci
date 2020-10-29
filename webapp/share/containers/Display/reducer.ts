@@ -23,14 +23,15 @@ import { ActionTypes } from './constants'
 
 import { GraphTypes } from 'containers/Display/constants'
 import { fieldGroupedSort } from 'containers/Widget/components/Config/Sort'
-import { DashboardItemStatus } from '../Dashboard'
+import { DashboardItemStatus } from '../Dashboard/constants'
 
 export const initialState = {
   title: '',
   display: null,
   slidesLayers: [],
   slideLayersInfo: {},
-  widgets: {}
+  widgets: {},
+  formedViews: {}
 }
 
 const displayReducer = (state = initialState, action) =>
@@ -44,17 +45,18 @@ const displayReducer = (state = initialState, action) =>
           obj[w.id] = w
           return obj
         }, {})
+        draft.formedViews = action.payload.formedViews
         draft.slideLayersInfo = action.payload.slides.reduce(
           (obj, slide, idx) => {
             obj[idx + 1] = slide.relations.reduce((info, layer) => {
               info[layer.id] =
                 layer.type === GraphTypes.Chart
                   ? {
-                      status: DashboardItemStatus.Initial,
+                      status: DashboardItemStatus.Pending,
                       datasource: { resultList: [] },
                       loading: false,
                       queryConditions: {
-                        tempFilters: [],
+                        tempFilters: [],  // @TODO combine widget static filters with local filters
                         linkageFilters: [],
                         globalFilters: [],
                         variables: [],

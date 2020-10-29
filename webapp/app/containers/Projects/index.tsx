@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, memo } from 'react'
 import { matchPath, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useInjectReducer } from 'utils/injectReducer'
@@ -26,14 +26,20 @@ import { useInjectSaga } from 'utils/injectSaga'
 
 import reducer from './reducer'
 import saga from './sagas'
+import organizationSaga from 'containers/Organizations/sagas'
+import organizationReducer from 'containers/Organizations/reducer'
 import { ProjectActions } from './actions'
 import { makeSelectCurrentProject } from './selectors'
-
+import { OrganizationActions } from 'containers/Organizations/actions'
+const { loadProjectRoles, loadOrganizationMembers } = OrganizationActions
 import { IRouteParams } from 'utils/types'
 
 const Project: React.FC<any> = (props) => {
   useInjectReducer({ key: 'project', reducer })
   useInjectSaga({ key: 'project', saga })
+
+  useInjectReducer({key: 'organization', reducer: organizationReducer})
+  useInjectSaga({key: 'organization', saga: organizationSaga})
 
   const { pathname } = useLocation()
   const dispatch = useDispatch()
@@ -49,10 +55,20 @@ const Project: React.FC<any> = (props) => {
     })
 
     const projectId = +match.params.projectId
+    if (projectId) {
+      dispatch(loadProjectRoles(projectId))
+    }
     if (projectId && (!currentProject || +currentProject.id !== projectId)) {
       dispatch(ProjectActions.loadProjectDetail(projectId))
     }
   }, [pathname, currentProject])
+
+  useEffect(() =>{
+    if (currentProject) {
+      const { orgId} = currentProject
+      dispatch(loadOrganizationMembers(orgId))
+    }
+  }, [currentProject])
 
   useEffect(() => {
     // clear currentProject for not in router /project/:projectId when this project index component unmounted
@@ -64,4 +80,4 @@ const Project: React.FC<any> = (props) => {
   return <>{currentProject && props.children}</>
 }
 
-export default Project
+export default memo(Project)

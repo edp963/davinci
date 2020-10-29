@@ -356,7 +356,7 @@ export class ConditionalFilterPanel extends PureComponent<IConditionalFilterPane
   // private changeFilterKey = (filter) => (val) => {
   //   const keyAndType = val.split(':')
   //   filter.filterKey = keyAndType[0]
-  //   filter.filterType = keyAndType[1]
+  //   filter.controlType = keyAndType[1]
   //   filter.filterValue = ''
   //   filter.inputUuid = uuid(8, 16)
   // }

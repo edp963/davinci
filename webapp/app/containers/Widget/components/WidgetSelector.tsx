@@ -1,8 +1,8 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { iconMapping } from './util'
 
-import { IWidgetRaw } from '../types'
+import { IWidgetFormed } from '../types'
 
 import { Icon, Row, Col, Checkbox, Pagination, Input } from 'antd'
 const Search = Input.Search
@@ -10,10 +10,10 @@ const styles = require('../Widget.less')
 
 export interface IWidgetSelectorProps {
   className?: string
-  widgets: IWidgetRaw[]
+  widgets: IWidgetFormed[]
   multiple: boolean
-  widgetsSelected: IWidgetRaw[]
-  onWidgetsSelect: (widgets: IWidgetRaw[]) => void
+  widgetsSelected: IWidgetFormed[]
+  onWidgetsSelect: (widgets: IWidgetFormed[]) => void
 }
 
 interface IWidgetSelectorStates {

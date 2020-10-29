@@ -21,9 +21,11 @@
 import { IWidgetFormed } from 'containers/Widget/types'
 import { IViewModel } from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
-import { IQueryConditions } from 'app/containers/Dashboard/Grid'
+import { IQueryConditions } from 'app/containers/Dashboard/types'
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
 import { ILayerFormed } from '../types'
 import { ILayerInfo } from '../../types'
+import { DragTriggerTypes } from '../../constants'
 
 export type DeltaPosition = { deltaX: number, deltaY: number }
 export type DeltaSize = { deltaWidth: number, deltaHeight: number }
@@ -31,8 +33,9 @@ export type DeltaSize = { deltaWidth: number, deltaHeight: number }
 export type DragInfo = { dragging: boolean }
 export type ResizeInfo = { resizing: boolean }
 export type SelectionInfo = { selected: boolean }
+export type EditorInfo = { editing: boolean }
 
-export type OperationInfo = DragInfo & ResizeInfo & SelectionInfo
+export type OperationInfo = DragInfo & ResizeInfo & SelectionInfo & EditorInfo
 export type LayersOperationInfo = { [layerId: number]: OperationInfo }
 
 export type DraggableChildrenProps = {
@@ -66,6 +69,7 @@ export type LayerListContextValue = {
   onDrag?: (
     layerId: number,
     deltaPosition: DeltaPosition,
+    eventTrigger: DragTriggerTypes,
     finish?: boolean
   ) => void
   onResize?: (layerId: number, deltaSize: DeltaSize, finish?: boolean) => void
@@ -73,6 +77,10 @@ export type LayerListContextValue = {
     layerId: number,
     selected: boolean,
     exclusive: boolean
+  ) => void
+  onEditLabelChange?: (
+    layerId: number,
+    changedInfo: Partial<ILayerOperationInfo>
   ) => void
 }
 

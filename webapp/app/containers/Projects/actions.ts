@@ -110,12 +110,13 @@ export const ProjectActions = {
     }
   },
 
-  transferProject (id, orgId) {
+  transferProject (id, orgId, resolve?) {
     return {
       type: ActionTypes.TRANSFER_PROJECT,
       payload: {
         id,
-        orgId
+        orgId,
+        resolve
       }
     }
   },
@@ -270,12 +271,12 @@ export const ProjectActions = {
     }
   },
 
-  clickCollectProjects (formType, project, resolve) {
+  clickCollectProjects (isFavorite, proId, resolve) {
     return {
       type: ActionTypes.CLICK_COLLECT_PROJECT,
       payload: {
-        formType,
-        project,
+        isFavorite,
+        proId,
         resolve
       }
     }

@@ -39,7 +39,12 @@ import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 import { GRID_ITEM_MARGIN } from 'app/globalConstants'
 import { uuid } from 'utils/util'
 import { IWidgetRaw, IWidgetFormed } from 'containers/Widget/types'
-import { GraphTypes, SecondaryGraphTypes, LayerOperations } from '../components/constants'
+import {
+  GraphTypes,
+  SecondaryGraphTypes,
+  LayerOperations,
+  slideSettings
+} from '../components/constants'
 import { getDefaultLayerSetting } from '../components/util'
 import { PollingSetting } from 'containers/Viz/components/PollingConfig'
 
@@ -52,20 +57,14 @@ import Toolbar, {
   Share
 } from '../components/Toolbar'
 import { DisplaySettingModal } from '../components/Setting'
+import SharePanel from './SharePanel'
 import WidgetSelectModal from 'containers/Viz/components/WidgetSelectModal'
 
 import useProjectPermission from 'containers/Projects/hooks/projectPermission'
-import {
-  makeSelectCurrentLayersMaxIndex,
-  makeSelectDisplayLoading,
-  makeSelectCurrentDisplayShareInfo,
-  makeSelectCurrentDisplaySecretInfo
-} from '../selectors'
+import { makeSelectCurrentLayersMaxIndex } from '../selectors'
 import { ILayerFormed } from '../components/types'
-import { slideSettings } from '../components/constants'
 import DisplayActions from '../actions'
 import { LocationDescriptorObject } from 'history'
-import SharePanel from 'components/SharePanel'
 
 const Header: React.FC = () => {
   const dispatch = useDispatch()
@@ -75,6 +74,7 @@ const Header: React.FC = () => {
   const currentDisplay = useSelector(makeSelectCurrentDisplay())
   const {
     id: currentDisplayId,
+    name,
     config: { displayParams }
   } = currentDisplay
   const {
@@ -100,15 +100,18 @@ const Header: React.FC = () => {
   )
   const saveDisplayParams = useCallback((params) => {
     dispatch(
-      VizActions.editDisplay({
-        ...currentDisplay,
-        config: {
-          ...currentDisplay.config,
-          displayParams: params
+      VizActions.editDisplay(
+        {
+          ...currentDisplay,
+          config: {
+            ...currentDisplay.config,
+            displayParams: params
+          }
+        },
+        () => {
+          setDisplaySettingModalVisible(false)
         }
-      }, () => {
-        setDisplaySettingModalVisible(false)
-      })
+      )
     )
   }, [])
   const openDisplaySettingModal = useCallback(() => {
@@ -122,13 +125,13 @@ const Header: React.FC = () => {
     AuthorizedSlide,
     AuthorizedSetting,
     AuthorizedChart,
-    AuthorizedPreview
-  ] = useProjectPermission([Slide, Setting, Chart, Preview], 'vizPermission')
-  const AuthorizedOperationBar = useProjectPermission(
-    OperationBar,
+    AuthorizedOperationBar
+  ] = useProjectPermission(
+    [Slide, Setting, Chart, OperationBar],
     'vizPermission',
-    true
+    2
   )
+  const AuthorizedPreview = useProjectPermission(Preview, 'vizPermission')
   const AuthorizedShare = useProjectPermission(Share, 'sharePermission')
 
   const addGraph = useCallback(
@@ -165,7 +168,7 @@ const Header: React.FC = () => {
   )
 
   const addWidgetGraph = (
-    selectedWidgets: IWidgetRaw[],
+    selectedWidgets: IWidgetFormed[],
     pollingSetting: PollingSetting
   ) => {
     const { polling, frequency } = pollingSetting
@@ -187,23 +190,19 @@ const Header: React.FC = () => {
         }
       })
     )
-    const widgets = selectedWidgets.map<IWidgetFormed>((w) => ({
-      ...w,
-      config: JSON.parse(w.config)
-    }))
     dispatch(
       DisplayActions.addSlideLayers(
         currentDisplayId,
         slideId,
         newLayers,
-        widgets
+        selectedWidgets
       )
     )
     setWidgetSelectModalVisible(false)
   }
 
   const operateLayers = useCallback((operation: LayerOperations) => {
-    switch(operation) {
+    switch (operation) {
       case LayerOperations.Copy:
         dispatch(DisplayActions.copySlideLayers())
         break
@@ -225,17 +224,8 @@ const Header: React.FC = () => {
     link.click()
   }, [projectId, currentDisplayId, slideId])
 
-  const shareInfo = useSelector(makeSelectCurrentDisplayShareInfo())
-  const secretInfo = useSelector(makeSelectCurrentDisplaySecretInfo())
-  const { shareInfo: shareInfoLoading } = useSelector(
-    makeSelectDisplayLoading()
-  )
-  const [hasAuthorized, setHasAuthorized] = useState(false)
-  const afterAuthorization = useCallback(() => {
-    setHasAuthorized(true)
-  }, [])
-  const loadDisplayShareLink = useCallback((id: number, authName: string) => {
-    dispatch(DisplayActions.loadDisplayShareLink(id, authName))
+  const openSharePanel = useCallback(() => {
+    dispatch(DisplayActions.openSharePanel(currentDisplayId, name))
   }, [])
 
   return (
@@ -246,20 +236,7 @@ const Header: React.FC = () => {
         <AuthorizedChart onAdd={addGraph} />
         <AuthorizedOperationBar onOperate={operateLayers} />
         <AuthorizedPreview onPreview={preview} />
-        <AuthorizedShare
-          panel={
-            <SharePanel
-              id={currentDisplayId}
-              type="display"
-              shareInfo={shareInfo}
-              secretInfo={secretInfo}
-              shareInfoLoading={shareInfoLoading}
-              authorized={hasAuthorized}
-              afterAuthorization={afterAuthorization}
-              onLoadDisplayShareLink={loadDisplayShareLink}
-            />
-          }
-        />
+        <AuthorizedShare onShare={openSharePanel} />
       </Toolbar>
       <DisplaySettingModal
         visible={displaySettingModalVisible}
@@ -275,6 +252,7 @@ const Header: React.FC = () => {
         onOk={addWidgetGraph}
         onCancel={closeWidgetSelectModal}
       />
+      <SharePanel />
     </>
   )
 }

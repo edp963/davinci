@@ -21,6 +21,7 @@
 import React from 'react'
 
 import { Form, Row, Col, Input, Radio, Tabs, Tree, Checkbox } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const TreeNode = Tree.TreeNode
 const FormItem = Form.Item
 const TextArea = Input.TextArea
@@ -34,14 +35,13 @@ import { IExludeRoles} from './PortalList'
 interface IProtalListProps {
   projectId: number
   type: string
-  form: any
   params?: any
   exludeRoles?: IExludeRoles[]
   onChangePermission: (scope: object, e: any) => any
   onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
+export class PortalForm extends React.PureComponent<IProtalListProps & FormComponentProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName, type, form, projectId } = this.props
     const { id } = form.getFieldsValue()
@@ -64,6 +64,7 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
 
   public render () {
     const {
+      type,
       exludeRoles
     } = this.props
     const { getFieldDecorator } = this.props.form
@@ -82,13 +83,13 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
       <Form>
         <Row gutter={8}>
           <Col span={24}>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('id', {
-                hidden: this.props.type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
+            {type !== 'add' && (
+              <FormItem className={utilStyles.hide}>
+                {getFieldDecorator('id', {})(
+                  <Input />
+                )}
+              </FormItem>
+            )}
             <FormItem className={utilStyles.hide}>
               {getFieldDecorator('avatar', {})(
                 <Input />
@@ -148,4 +149,4 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
   }
 }
 
-export default Form.create()(PortalForm)
+export default Form.create<IProtalListProps & FormComponentProps>()(PortalForm)

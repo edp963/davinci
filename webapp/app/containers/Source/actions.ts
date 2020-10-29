@@ -32,7 +32,7 @@ import {
 } from './types'
 
 export const SourceActions = {
-  loadSources (projectId: number) {
+  loadSources(projectId: number) {
     return {
       type: ActionTypes.LOAD_SOURCES,
       payload: {
@@ -40,7 +40,7 @@ export const SourceActions = {
       }
     }
   },
-  sourcesLoaded (sources: ISourceBase[]) {
+  sourcesLoaded(sources: ISourceBase[]) {
     return {
       type: ActionTypes.LOAD_SOURCES_SUCCESS,
       payload: {
@@ -48,14 +48,13 @@ export const SourceActions = {
       }
     }
   },
-  loadSourcesFail () {
+  loadSourcesFail() {
     return {
-      type: ActionTypes.LOAD_SOURCES_FAILURE,
-      payload: {}
+      type: ActionTypes.LOAD_SOURCES_FAILURE
     }
   },
 
-  loadSourceDetail (sourceId: number, resolve?: (source: ISource) => void) {
+  loadSourceDetail(sourceId: number, resolve?: (source: ISource) => void) {
     return {
       type: ActionTypes.LOAD_SOURCE_DETAIL,
       payload: {
@@ -64,7 +63,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceDetailLoaded (source: ISource) {
+  sourceDetailLoaded(source: ISource) {
     return {
       type: ActionTypes.LOAD_SOURCE_DETAIL_SUCCESS,
       payload: {
@@ -72,14 +71,14 @@ export const SourceActions = {
       }
     }
   },
-  loadSourceDetailFail () {
+  loadSourceDetailFail() {
     return {
       type: ActionTypes.LOAD_SOURCE_DETAIL_FAIL,
       payload: {}
     }
   },
 
-  addSource (source: ISource, resolve: () => void) {
+  addSource(source: ISource, resolve: () => void) {
     return {
       type: ActionTypes.ADD_SOURCE,
       payload: {
@@ -88,7 +87,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceAdded (result: ISourceBase) {
+  sourceAdded(result: ISourceBase) {
     return {
       type: ActionTypes.ADD_SOURCE_SUCCESS,
       payload: {
@@ -96,13 +95,13 @@ export const SourceActions = {
       }
     }
   },
-  addSourceFail () {
+  addSourceFail() {
     return {
       type: ActionTypes.ADD_SOURCE_FAILURE,
       payload: {}
     }
   },
-  deleteSource (id: number) {
+  deleteSource(id: number) {
     return {
       type: ActionTypes.DELETE_SOURCE,
       payload: {
@@ -110,7 +109,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceDeleted (id: number) {
+  sourceDeleted(id: number) {
     return {
       type: ActionTypes.DELETE_SOURCE_SUCCESS,
       payload: {
@@ -118,13 +117,13 @@ export const SourceActions = {
       }
     }
   },
-  deleteSourceFail () {
+  deleteSourceFail() {
     return {
       type: ActionTypes.DELETE_SOURCE_FAILURE,
       payload: {}
     }
   },
-  editSource (source: ISource, resolve: () => void) {
+  editSource(source: ISource, resolve: () => void) {
     return {
       type: ActionTypes.EDIT_SOURCE,
       payload: {
@@ -133,7 +132,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceEdited (result: ISourceBase) {
+  sourceEdited(result: ISourceBase) {
     return {
       type: ActionTypes.EDIT_SOURCE_SUCCESS,
       payload: {
@@ -141,13 +140,13 @@ export const SourceActions = {
       }
     }
   },
-  editSourceFail () {
+  editSourceFail() {
     return {
       type: ActionTypes.EDIT_SOURCE_FAILURE,
       payload: {}
     }
   },
-  testSourceConnection (testSource) {
+  testSourceConnection(testSource) {
     return {
       type: ActionTypes.TEST_SOURCE_CONNECTION,
       payload: {
@@ -155,20 +154,23 @@ export const SourceActions = {
       }
     }
   },
-  sourceConnected () {
+  sourceConnected() {
     return {
       type: ActionTypes.TEST_SOURCE_CONNECTION_SUCCESS,
       payload: {}
     }
   },
-  testSourceConnectionFail () {
+  testSourceConnectionFail() {
     return {
       type: ActionTypes.TEST_SOURCE_CONNECTION_FAILURE,
       payload: {}
     }
   },
 
-  resetSourceConnection (properties: SourceResetConnectionProperties, resolve: () => void) {
+  resetSourceConnection(
+    properties: SourceResetConnectionProperties,
+    resolve: () => void
+  ) {
     return {
       type: ActionTypes.RESET_SOURCE_CONNECTION,
       payload: {
@@ -177,44 +179,44 @@ export const SourceActions = {
       }
     }
   },
-  sourceReset () {
+  sourceReset() {
     return {
       type: ActionTypes.RESET_SOURCE_CONNECTION_SUCCESS,
       payload: {}
     }
   },
-  resetSourceConnectionFail () {
+  resetSourceConnectionFail() {
     return {
       type: ActionTypes.RESET_SOURCE_CONNECTION_FAILURE,
       payload: {}
     }
   },
 
-  getCsvMetaId (csvMeta: ICSVMetaInfo, resolve: () => void) {
+  validateCsvTableName(
+    csvMeta: Pick<ICSVMetaInfo, 'sourceId' | 'tableName' | 'mode'>,
+    callback: (errMsg?: string) => void
+  ) {
     return {
-      type: ActionTypes.GET_CSV_META_ID,
+      type: ActionTypes.VALIDATE_CSV_TABLE_NAME,
       payload: {
         csvMeta,
-        resolve
-      }
-    }
-  },
-  csvMetaIdGeted () {
-    return {
-      type: ActionTypes.GET_CSV_META_ID_SUCCESS,
-      payload: {}
-    }
-  },
-  getCsvMetaIdFail (error) {
-    return {
-      type: ActionTypes.GET_CSV_META_ID_FAILURE,
-      payload: {
-        error
+        callback
       }
     }
   },
 
-  loadSourceDatabases (sourceId: number) {
+  uploadCsvFile(csvMeta: ICSVMetaInfo, resolve: () => void, reject: () => void) {
+    return {
+      type: ActionTypes.UPLOAD_CSV_FILE,
+      payload: {
+        csvMeta,
+        resolve,
+        reject
+      }
+    }
+  },
+
+  loadSourceDatabases(sourceId: number) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASES,
       payload: {
@@ -222,7 +224,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceDatabasesLoaded (sourceDatabases: ISourceDatabases) {
+  sourceDatabasesLoaded(sourceDatabases: ISourceDatabases) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASES_SUCCESS,
       payload: {
@@ -230,7 +232,7 @@ export const SourceActions = {
       }
     }
   },
-  loadSourceDatabasesFail (err) {
+  loadSourceDatabasesFail(err) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASES_FAILURE,
       payload: {
@@ -239,7 +241,7 @@ export const SourceActions = {
     }
   },
 
-  loadDatabaseTables (sourceId: number, databaseName: string, resolve?) {
+  loadDatabaseTables(sourceId: number, databaseName: string, resolve?) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES,
       payload: {
@@ -249,7 +251,7 @@ export const SourceActions = {
       }
     }
   },
-  databaseTablesLoaded (databaseTables: IDatabaseTables) {
+  databaseTablesLoaded(databaseTables: IDatabaseTables) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_SUCCESS,
       payload: {
@@ -257,7 +259,7 @@ export const SourceActions = {
       }
     }
   },
-  loadDatabaseTablesFail (err) {
+  loadDatabaseTablesFail(err) {
     return {
       type: ActionTypes.LOAD_SOURCE_DATABASE_TABLES_FAILURE,
       payload: {
@@ -265,7 +267,7 @@ export const SourceActions = {
       }
     }
   },
-  loadTableColumns (
+  loadTableColumns(
     sourceId: number,
     databaseName: string,
     tableName: string,
@@ -281,7 +283,7 @@ export const SourceActions = {
       }
     }
   },
-  tableColumnsLoaded (databaseName: string, tableColumns: ITableColumns) {
+  tableColumnsLoaded(databaseName: string, tableColumns: ITableColumns) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_SUCCESS,
       payload: {
@@ -290,7 +292,7 @@ export const SourceActions = {
       }
     }
   },
-  loadTableColumnsFail (err) {
+  loadTableColumnsFail(err) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS_FAILURE,
       payload: {
@@ -298,12 +300,12 @@ export const SourceActions = {
       }
     }
   },
-  loadDatasourcesInfo () {
+  loadDatasourcesInfo() {
     return {
       type: ActionTypes.LOAD_DATASOURCES_INFO
     }
   },
-  datasourcesInfoLoaded (info: IDatasourceInfo[]) {
+  datasourcesInfoLoaded(info: IDatasourceInfo[]) {
     return {
       type: ActionTypes.LOAD_DATASOURCES_INFO_SUCCESS,
       payload: {
@@ -311,7 +313,7 @@ export const SourceActions = {
       }
     }
   },
-  loadDatasourcesInfoFail (err) {
+  loadDatasourcesInfoFail(err) {
     return {
       type: ActionTypes.LOAD_DATASOURCES_INFO_FAILURE,
       payload: {

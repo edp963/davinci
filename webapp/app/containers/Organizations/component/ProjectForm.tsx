@@ -18,9 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { Form, Row, Col, Input, Tag, Button, Select } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
@@ -29,18 +30,16 @@ import Avatar from 'components/Avatar'
 const utilStyles = require('assets/less/util.less')
 
 interface IProjectsFormProps {
-  type: string
-  form: any
-  onCheckName: (id, name, type, resolve, reject) => void
+  type?: string
   organizations?: any
-  onTransfer: () => any
-  onModalOk: () => any
+  onTransfer?: () => any
+  onModalOk?: () => any
   modalLoading: boolean
-  onWidgetTypeChange: () => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onWidgetTypeChange?: () => any
+  onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps & FormComponentProps, {}> {
   constructor (props) {
     super(props)
   }
@@ -126,63 +125,66 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('id', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('orgId_hc', {
-                    hidden: this.props.type !== 'transfer'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
-                  {getFieldDecorator('orgId', {
-                    hidden: this.props.type === 'organizationProject',
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }]
-                  })(
-                    <Select
-                      placeholder="Please select a organization"
-                      onChange={onWidgetTypeChange}
-                    >
-                      {organizationOptions}
-                    </Select>
-                  )}
-                </FormItem>
-                <FormItem label="名称" {...commonFormItemStyle} className={isShowDesc}>
-                  {getFieldDecorator('name', {
-                    hidden: this.props.type === 'transfer',
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }, {
-                      validator: onCheckUniqueName
-                    }],
-                    validateFirst: true
-                  })(
-                    <Input placeholder="Name" />
-                  )}
-                </FormItem>
+                {type !== 'add' && (
+                  <FormItem className={utilStyles.hide}>
+                    {getFieldDecorator('id', {})(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
+                {type === 'transfer' && (
+                  <FormItem className={utilStyles.hide}>
+                    {getFieldDecorator('orgId_hc', {})(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
+                {type !== 'organizationProject' && (
+                  <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
+                    {getFieldDecorator('orgId', {
+                      rules: [{
+                        required: true,
+                        message: 'Name 不能为空'
+                      }]
+                    })(
+                      <Select
+                        placeholder="Please select a organization"
+                        onChange={onWidgetTypeChange}
+                      >
+                        {organizationOptions}
+                      </Select>
+                    )}
+                  </FormItem>
+                )}
+                {type !== 'transfer' && (
+                  <FormItem label="名称" {...commonFormItemStyle} className={isShowDesc}>
+                    {getFieldDecorator('name', {
+                      rules: [{
+                        required: true,
+                        message: 'Name 不能为空'
+                      }, {
+                        validator: onCheckUniqueName
+                      }],
+                      validateFirst: true
+                    })(
+                      <Input placeholder="Name" />
+                    )}
+                  </FormItem>
+                )}
               </Col>
               <Col span={24}>
-                <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
-                  {getFieldDecorator('description', {
-                    hidden: this.props.type === 'transfer',
-                    initialValue: ''
-                  })(
-                    <TextArea
-                      placeholder="Description"
-                      autosize={{minRows: 2, maxRows: 6}}
-                    />
-                  )}
-                </FormItem>
+                {type !== 'transfer' && (
+                  <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
+                    {getFieldDecorator('description', {
+                      initialValue: ''
+                    })(
+                      <TextArea
+                        placeholder="Description"
+                        autosize={{minRows: 2, maxRows: 6}}
+                      />
+                    )}
+                  </FormItem>
+                )}
               </Col>
               <Col span={24}>
                 <FormItem label="可见" {...commonFormItemStyle}>
@@ -202,13 +204,13 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('pic', {
-                    hidden: (this.props.type === 'add') || (this.props.type === 'transfer')
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
+                {type !== 'add' && type !== 'transfer' && (
+                  <FormItem className={utilStyles.hide}>
+                    {getFieldDecorator('pic', {})(
+                      <Input />
+                    )}
+                  </FormItem>
+                )}
               </Col>
             </Row>
           </Form>
@@ -221,7 +223,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   }
 }
 
-export default Form.create()(ProjectsForm)
+export default Form.create<IProjectsFormProps & FormComponentProps>()(ProjectsForm)
 
 
 

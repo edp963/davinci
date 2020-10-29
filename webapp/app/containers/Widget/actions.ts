@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { IWidgetRaw, IWidgetBase } from './types'
+import { IWidgetRaw, IWidgetBase, IWidgetFormed } from './types'
 
 export const WidgetActions = {
   loadWidgets(projectId: number) {
@@ -31,7 +31,7 @@ export const WidgetActions = {
       }
     }
   },
-  widgetsLoaded(widgets: IWidgetRaw[]) {
+  widgetsLoaded(widgets: IWidgetFormed[]) {
     return {
       type: ActionTypes.LOAD_WIDGETS_SUCCESS,
       payload: {
@@ -46,7 +46,7 @@ export const WidgetActions = {
     }
   },
 
-  addWidget(widget: IWidgetRaw, resolve) {
+  addWidget(widget: Omit<IWidgetRaw, 'id'>, resolve) {
     return {
       type: ActionTypes.ADD_WIDGET,
       payload: {
@@ -55,7 +55,7 @@ export const WidgetActions = {
       }
     }
   },
-  widgetAdded(result) {
+  widgetAdded(result: IWidgetFormed) {
     return {
       type: ActionTypes.ADD_WIDGET_SUCCESS,
       payload: {
@@ -127,7 +127,7 @@ export const WidgetActions = {
       }
     }
   },
-  widgetCopied(fromWidgetId: number, result: IWidgetRaw) {
+  widgetCopied(fromWidgetId: number, result: IWidgetFormed) {
     return {
       type: ActionTypes.COPY_WIDGET_SUCCESS,
       payload: {

@@ -35,6 +35,6 @@ public class UploadMeta {
     private String tableName;
 
     @Min(value = (short) 0, message = "Invalid mode")
-    @Max(value = (short) 2, message = "Invalid mode")
+    @Max(value = (short) 3, message = "Invalid mode")
     private short mode = UploadModeEnum.NEW.getMode();
 }

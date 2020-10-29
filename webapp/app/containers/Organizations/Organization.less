@@ -22,7 +22,7 @@
     .name {
       display: flex;
       flex-direction: column;
-      // margin-left: 16px;
+      margin-left: 8px;
       .title {
         font-weight: 400;
         font-size: 16px;
@@ -40,24 +40,6 @@
         color: @light-text-color;
       }
     }
-    //.avatar {
-    //  display: flex;
-    //  align-items: center;
-    //  img {
-    //    vertical-align: top;
-    //  }
-    //  .title {
-    //    margin-left: 16px;
-    //    font-weight: 400;
-    //    font-size: 18px;
-    //  }
-    //}
-    //.name {
-    //  .desc {
-    //    font-size: 12px;
-    //    color: @light-text-color;
-    //  }
-    //}
   }
   .setting {
     align-self: center;
@@ -127,6 +109,7 @@
     width: 260px;
     height: 120px;
     margin-right: 20px;
+    flex-shrink: 0;
     background-color: @body-background;
     background-repeat: no-repeat;
     background-size: 100%;
@@ -143,16 +126,22 @@
     display: flex;
     flex-direction: column;
     .title {
+      max-width: 460px;
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 16px;
       color: @blue;
       cursor: pointer;
+      padding: 0px 58px 0 0;
+      .ellipsis;
     }
     .desc {
       font-size: 12px;
+      max-width: 400px;
       color: @light-text-color;
       margin-bottom: 8px;
+
+      .ellipsis;
     }
     .tag {
       margin-bottom: 8px;
@@ -201,6 +190,10 @@
       font-size: 24px;
       color:@rich-text;
       font-weight: 600;
+      .orgName {
+        font-size: 20px;
+        color: @blue;
+      }
     }
     .desc{
       margin-top: 4px;
@@ -285,6 +278,7 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 30px;
+  margin-left: 8px;
 }
 
 .radioStyle {

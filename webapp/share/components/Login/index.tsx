@@ -1,19 +1,23 @@
-import React from 'react'
+import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
-import Helmet from 'react-helmet'
-import LoginForm from 'containers/Login/LoginForm'
-import styles from 'containers/Background/Background.less'
-import loginStyles from 'containers/Login/Login.less'
-
-import { login } from 'share/containers/App/actions'
-
-import { Icon } from 'antd'
-
+import LoginForm from 'app/containers/Login/LoginForm'
+import Background from 'share/components/Background'
+import { AppActions } from 'share/containers/App/actions'
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { message } from 'antd'
 interface ILoginProps {
-  loginLoading?: boolean
-  shareInfo: any,
-  legitimateUser: () => void
-  onLogin?: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
+  loading: boolean
+  shareToken: any
+  loginCallback?: () => void
+  onLogin?: (
+    username: string,
+    password: string,
+    shareToken: any,
+    resolve: (res) => void,
+    reject?: () => void
+  ) => void
+  logged?: (user) => void
 }
 
 interface ILoginStates {
@@ -22,7 +26,7 @@ interface ILoginStates {
 }
 
 class Login extends React.PureComponent<ILoginProps, ILoginStates> {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       username: '',
@@ -30,64 +34,85 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     }
   }
 
-  private changeUsername = (e) => {
+  public componentWillMount() {
+    this.checkNormalLogin()
+  }
+
+  private checkNormalLogin = () => {
+    const { loginCallback } = this.props
+    if (checkLogin()) {
+      const token = localStorage.getItem('TOKEN')
+      const loginUser = localStorage.getItem('loginUser')
+      setToken(token)
+      this.props.logged(JSON.parse(loginUser))
+      if (loginCallback) {
+        loginCallback()
+      }
+    }
+  }
+
+  private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  private changePassword = (e) => {
+  private changePassword = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password: e.target.value
     })
   }
 
-  private doLogin = () => {
-    const { onLogin, shareInfo, legitimateUser } = this.props
+  private doLogin = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const { onLogin, shareToken, loginCallback } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareInfo, () => {
-        legitimateUser()
-      })
+      onLogin(
+        username,
+        password,
+        shareToken,
+        () => {
+          if (loginCallback) {
+            loginCallback()
+          }
+        },
+        () => {
+          message.error('该用户无权限')
+        }
+      )
     }
   }
 
-  public render () {
-    const { loginLoading } = this.props
+  public render() {
+    const { loading } = this.props
     const { username, password } = this.state
     return (
-      <div className={`${styles.container} ${styles.share}`}>
-        <Helmet title="Login" />
-        <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
-        <div className={`${styles.window} ${loginStyles.window}`}>
-          <LoginForm
-            username={username}
-            password={password}
-            onChangeUsername={this.changeUsername}
-            onChangePassword={this.changePassword}
-            onLogin={this.doLogin}
-          />
-          <button
-            disabled={loginLoading}
-            onClick={this.doLogin}
-          >
-            {
-              loginLoading
-                ? <Icon type="loading" />
-                : ''
-            }
-            登 录
-          </button>
-        </div>
-      </div>
+      <Background>
+        <LoginForm
+          username={username}
+          password={password}
+          loading={loading}
+          onChangeUsername={this.changeUsername}
+          onChangePassword={this.changePassword}
+          onLogin={this.doLogin}
+        />
+      </Background>
     )
   }
 }
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
-    onLogin: (username: string, password: string, shareInfo: any, resolve: () => void) => dispatch(login(username, password, shareInfo, resolve))
+    onLogin: (
+      username: string,
+      password: string,
+      shareToken: any,
+      resolve: () => void,
+      reject?: () => void
+    ) => dispatch(AppActions.login(username, password, shareToken, resolve, reject)),
+    logged: (user) => dispatch(AppActions.logged(user))
   }
 }
 

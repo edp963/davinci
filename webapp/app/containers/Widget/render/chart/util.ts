@@ -18,6 +18,7 @@
  * >>
  */
 
+import mean from 'lodash/mean'
 import { IAxisConfig } from '../../components/Workbench/ConfigSections/AxisSection'
 import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSection'
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
@@ -32,6 +33,17 @@ import {
   getAggregatorLocale
 } from '../../components/util'
 import { FieldSortTypes } from '../../components/Config/Sort'
+import { getFieldAlias } from '../../components/Config/Field'
+import {
+  IReference,
+  IReferenceLineData,
+  IReferenceBandData
+} from '../../components/Workbench/Reference/types'
+import {
+  ReferenceType,
+  ReferenceValueType
+} from '../../components/Workbench/Reference/constants'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -40,7 +52,7 @@ interface ISplitLineConfig {
   lineColor: string
 }
 
-export function getDimetionAxisOption (
+export function getDimetionAxisOption(
   dimetionAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   data: string[]
@@ -63,16 +75,9 @@ export function getDimetionAxisOption (
     xAxisRotate
   } = dimetionAxisConfig
 
-  const {
-    showLine,
-    lineStyle,
-    lineSize,
-    lineColor
-  } = splitLineConfig
+  const { showLine, lineStyle, lineSize, lineColor } = splitLineConfig
 
-  const intervalOption = showInterval
-    ? { interval: xAxisInterval }
-    : null
+  const intervalOption = showInterval ? { interval: xAxisInterval } : null
 
   return {
     data,
@@ -113,7 +118,7 @@ export function getDimetionAxisOption (
   }
 }
 
-export function getMetricAxisOption (
+export function getMetricAxisOption(
   metricAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   title: string,
@@ -141,12 +146,7 @@ export function getMetricAxisOption (
     max
   } = metricAxisConfig
 
-  const {
-    showLine,
-    lineStyle,
-    lineSize,
-    lineColor
-  } = splitLineConfig
+  const { showLine, lineStyle, lineSize, lineColor } = splitLineConfig
 
   return {
     type: 'value',
@@ -194,7 +194,13 @@ export function getMetricAxisOption (
   }
 }
 
-export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics, emphasis?: boolean, options?: object) {
+export function getLabelOption(
+  type: string,
+  labelConfig: ILabelConfig,
+  metrics,
+  emphasis?: boolean,
+  options?: object
+) {
   const {
     showLabel,
     labelPosition,
@@ -224,7 +230,10 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
     case 'line':
       formatter = (params) => {
         const { value, seriesId } = params
-        const m = metrics.find((m) => m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0])
+        const m = metrics.find(
+          (m) =>
+            m.name === seriesId.split(`${DEFAULT_SPLITER}${DEFAULT_SPLITER}`)[0]
+        )
         const formattedValue = getFormattedValue(value, m.format)
         return formattedValue
       }
@@ -247,15 +256,19 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
     case 'funnel':
       formatter = (params) => {
         const { name, value, percent, dataIndex, data } = params
-        const formattedValue = getFormattedValue(value, metrics[metrics.length > 1 ? dataIndex : 0].format)
+        const formattedValue = getFormattedValue(
+          value,
+          metrics[metrics.length > 1 ? dataIndex : 0].format
+        )
         const { labelParts } = labelConfig
         if (!labelParts) {
           return `${name}\n${formattedValue}（${percent}%）`
         }
         const labels: string[] = []
-        const multiRate = labelParts
-          .filter((label) => ['percentage', 'conversion', 'arrival'].includes(label))
-          .length > 1
+        const multiRate =
+          labelParts.filter((label) =>
+            ['percentage', 'conversion', 'arrival'].includes(label)
+          ).length > 1
         if (labelParts.includes('dimensionValue')) {
           labels.push(name)
         }
@@ -276,15 +289,23 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
       break
     case 'radar':
       formatter = (params) => {
-        const { name, value, dataIndex } = params
-        const formattedValue = getFormattedValue(value, metrics[dataIndex].format)
+        const { name, value, dataIndex, data } = params
+        const metricIdx = data.name ? dataIndex : data.value.indexOf(value)
+        const formattedValue = getFormattedValue(
+          value,
+          metrics[metricIdx].format
+        )
+        const labelName =
+          name ||
+          getFieldAlias(metrics[metricIdx].field, {}) ||
+          decodeMetricName(metrics[metricIdx].name)
         const { labelParts } = labelConfig
         if (!labelParts) {
-          return `${name}\n${formattedValue}`
+          return `${labelName}\n${formattedValue}`
         }
         const labels: string[] = []
         if (labelParts.includes('indicatorName')) {
-          labels.push(name)
+          labels.push(labelName)
         }
         if (labelParts.includes('indicatorValue')) {
           labels.push(formattedValue)
@@ -314,7 +335,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
       formatter,
       ...options
     },
-    ...emphasis && {
+    ...(emphasis && {
       emphasis: {
         show: showLabel,
         position,
@@ -325,13 +346,16 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, metrics
         formatter,
         ...options
       }
-    }
+    })
   }
 
   return labelOption
 }
 
-export function getLegendOption (legendConfig: ILegendConfig, seriesNames: string[]) {
+export function getLegendOption(
+  legendConfig: ILegendConfig,
+  seriesNames: string[]
+) {
   const {
     showLegend,
     legendPosition,
@@ -364,10 +388,13 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 
   const selected = {
-    selected: seriesNames.reduce((obj, name) => ({
-      ...obj,
-      [name]: selectAll
-    }), {})
+    selected: seriesNames.reduce(
+      (obj, name) => ({
+        ...obj,
+        [name]: selectAll
+      }),
+      {}
+    )
   }
 
   return {
@@ -385,7 +412,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (
+export function getGridPositions(
   legendConfig: Partial<ILegendConfig>,
   seriesNames,
   chartName?: string,
@@ -397,51 +424,85 @@ export function getGridPositions (
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val, chartName, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
+    grid[val] = getGridBase(
+      val,
+      chartName,
+      dimetionAxisConfig,
+      xAxisData,
+      isHorizontalBar,
+      yAxisConfig
+    )
     if (showLegend && seriesNames.length > 1) {
-      grid[val] += legendPosition === val
-        ? ['top', 'bottom'].includes(val)
-          ? 64
-          : 64 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
-        : 0
+      grid[val] +=
+        legendPosition === val
+          ? ['top', 'bottom'].includes(val)
+            ? 64
+            : 64 +
+              Math.max(
+                ...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`))
+              )
+          : 0
     }
     return grid
   }, {})
 }
 
-function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
-  const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
+function getGridBase(
+  pos,
+  chartName,
+  dimetionAxisConfig?: IAxisConfig,
+  xAxisData?: string[],
+  isHorizontalBar?: boolean,
+  yAxisConfig?: IAxisConfig
+) {
+  const labelFontSize = dimetionAxisConfig
+    ? dimetionAxisConfig.labelFontSize
+    : 12
   const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
-  const maxWidth = xAxisData && xAxisData.length
-    ? Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
-    : 0
+  const maxWidth =
+    xAxisData && xAxisData.length
+      ? Math.max(
+          ...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`))
+        )
+      : 0
 
-  const bottomDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? isHorizontalBar
-      ? 50
-      : xAxisRotate
-        ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth
+  const bottomDistance =
+    dimetionAxisConfig && dimetionAxisConfig.showLabel
+      ? isHorizontalBar
+        ? 50
+        : xAxisRotate
+        ? 50 + Math.sin((xAxisRotate * Math.PI) / 180) * maxWidth
         : 50
-    : 50
+      : 50
 
-  const yAxisConfigLeft = yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit ? 24 : 64
-  const leftDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? isHorizontalBar
-      ? xAxisRotate === void 0
-        ? 64
-        : 24 + Math.cos(xAxisRotate * Math.PI / 180) * maxWidth
+  const yAxisConfigLeft =
+    yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit
+      ? 24
+      : 64
+  const leftDistance =
+    dimetionAxisConfig && dimetionAxisConfig.showLabel
+      ? isHorizontalBar
+        ? xAxisRotate === void 0
+          ? 64
+          : 24 + Math.cos((xAxisRotate * Math.PI) / 180) * maxWidth
+        : yAxisConfigLeft
+      : isHorizontalBar
+      ? 24
       : yAxisConfigLeft
-    : isHorizontalBar ? 24 : yAxisConfigLeft
 
   switch (pos) {
-    case 'top': return 24
-    case 'left': return leftDistance
-    case 'right': return chartName === 'doubleYAxis' ? 64 : 24
-    case 'bottom': return bottomDistance
+    case 'top':
+      return 24
+    case 'left':
+      return leftDistance
+    case 'right':
+      return chartName === 'doubleYAxis' ? 64 : 24
+    case 'bottom':
+      return bottomDistance
   }
 }
 
-export function makeGrouped (
+export function makeGrouped(
   data: object[],
   groupColumns: string[],
   xAxisColumn: string,
@@ -468,15 +529,21 @@ export function makeGrouped (
 
     grouped[groupingKey] = xAxisData.length
       ? xAxisData.map((xd) => {
-        if (currentGroupValues[xd]) {
-          return currentGroupValues[xd][0]
-        } else {
-          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {
-            [xAxisColumn]: xd
-            // []: groupingKey
-          })
-        }
-      })
+          if (currentGroupValues[xd]) {
+            return currentGroupValues[xd][0]
+          } else {
+            return metrics.reduce(
+              (obj, m) => ({
+                ...obj,
+                [`${m.agg}(${decodeMetricName(m.name)})`]: 0
+              }),
+              {
+                [xAxisColumn]: xd
+                // []: groupingKey
+              }
+            )
+          }
+        })
       : [currentGroupValues['default'][0]]
   })
 
@@ -484,10 +551,11 @@ export function makeGrouped (
 }
 
 // TODO: function explanation
-export function getGroupedXaxis (data, xAxisColumn, metrics) {
+export function getGroupedXaxis(data, xAxisColumn, metrics) {
   if (xAxisColumn) {
-    const metricsInSorting = metrics
-      .filter(({ sort }) => sort && sort.sortType !== FieldSortTypes.Default)
+    const metricsInSorting = metrics.filter(
+      ({ sort }) => sort && sort.sortType !== FieldSortTypes.Default
+    )
     const appliedMetric = metricsInSorting.length ? metricsInSorting[0] : void 0
 
     const dataGroupByXaxis = data.reduce((grouped, d) => {
@@ -508,8 +576,8 @@ export function getGroupedXaxis (data, xAxisColumn, metrics) {
           return appliedMetric.sort.sortType === FieldSortTypes.Asc
             ? p1[1] - p2[1]
             : appliedMetric.sort.sortType === FieldSortTypes.Desc
-              ? p2[1] - p1[1]
-              : 0
+            ? p2[1] - p1[1]
+            : 0
         })
         .map(([key, value]) => key)
     } else {
@@ -519,25 +587,199 @@ export function getGroupedXaxis (data, xAxisColumn, metrics) {
   return []
 }
 
-export function getSymbolSize (sizeRate, size) {
+export function getSymbolSize(sizeRate, size) {
   return sizeRate ? Math.ceil(size / sizeRate) : size
 }
 
-export function getCartesianChartMetrics (metrics: IWidgetMetric[]) {
+export function getCartesianChartMetrics(metrics: IWidgetMetric[]) {
   return metrics.map((metric) => {
     const { name, agg } = metric
     const decodedMetricName = decodeMetricName(name)
-    const duplicates = metrics
-      .filter((m) => decodeMetricName(m.name) === decodedMetricName && m.agg === agg)
+    const duplicates = metrics.filter(
+      (m) => decodeMetricName(m.name) === decodedMetricName && m.agg === agg
+    )
     const prefix = agg !== 'sum' ? `[${getAggregatorLocale(agg)}] ` : ''
-    const suffix = duplicates.length > 1
-      ? duplicates.indexOf(metric)
-        ? duplicates.indexOf(metric) + 1
+    const suffix =
+      duplicates.length > 1
+        ? duplicates.indexOf(metric)
+          ? duplicates.indexOf(metric) + 1
+          : ''
         : ''
-      : ''
     return {
       ...metric,
       displayName: `${prefix}${decodedMetricName}${suffix}`
     }
   })
+}
+
+export function getCartesianChartReferenceOptions(
+  references: IReference[],
+  chartType: ChartTypes,
+  metrics: IWidgetMetric[],
+  sourcedata: any[],
+  barChart?: boolean
+) {
+  if (references) {
+    const markLines = []
+    const markAreas = []
+
+    references.forEach((ref) => {
+      const { name, type, data } = ref
+
+      if (type === ReferenceType.Line) {
+        const {
+          metric,
+          type: valueType,
+          value,
+          label,
+          line
+        } = data as IReferenceLineData
+
+        const axis = getReferenceDataMetricAxis(chartType, {
+          barChart,
+          metrics,
+          metric
+        })
+
+        if (axis) {
+          const metricData = sourcedata.map((d) => {
+            const metricObject = metrics.find((m) => m.name === metric)
+            return (
+              metricObject &&
+              d[`${metricObject.agg}(${decodeMetricName(metric)})`]
+            )
+          })
+          markLines.push({
+            ...getReferenceDataOptions(metricData, valueType, value, axis),
+            name,
+            label: {
+              show: label.visible,
+              position: label.position,
+              color: label.font.color,
+              fontSize: label.font.size,
+              fontFamily: label.font.family
+            },
+            lineStyle: {
+              color: line.color,
+              width: line.width,
+              type: line.type
+            }
+          })
+        }
+      } else {
+        const areaData = (data as [IReferenceBandData, IReferenceBandData]).map(
+          (d, index) => {
+            const { metric, type: valueType, value, label, band } = d
+
+            const axis = getReferenceDataMetricAxis(chartType, {
+              barChart,
+              metrics,
+              metric
+            })
+
+            if (axis) {
+              const metricData = sourcedata.map((d) => {
+                const metricObject = metrics.find((m) => m.name === metric)
+                return (
+                  metricObject &&
+                  d[`${metricObject.agg}(${decodeMetricName(metric)})`]
+                )
+              })
+              const dataOptions = getReferenceDataOptions(
+                metricData,
+                valueType,
+                value,
+                axis
+              )
+              return !index
+                ? dataOptions
+                : {
+                    ...dataOptions,
+                    name,
+                    label: {
+                      show: label.visible,
+                      position: label.position,
+                      color: label.font.color,
+                      fontSize: label.font.size,
+                      fontFamily: label.font.family
+                    },
+                    emphasis: {
+                      label: {
+                        position: label.position
+                      }
+                    },
+                    itemStyle: {
+                      color: band.color,
+                      borderColor: band.border.color,
+                      borderWidth: band.border.width,
+                      borderType: band.border.type
+                    }
+                  }
+            } else {
+              return void 0
+            }
+          }
+        )
+        if (areaData.every((d) => !!d)) {
+          markAreas.push(areaData)
+        }
+      }
+    })
+
+    return {
+      ...(markLines.length && { markLine: { data: markLines } }),
+      ...(markAreas.length && { markArea: { data: markAreas } })
+    }
+  }
+}
+
+function getReferenceDataOptions(
+  metricData: number[],
+  valueType: ReferenceValueType,
+  value: any,
+  axis: string
+) {
+  const option: any = {}
+  if (valueType === ReferenceValueType.Constant) {
+    option[axis] = value
+  } else {
+    option[axis] = calcAggregateReferenceData(valueType, metricData)
+  }
+  return option
+}
+
+function getReferenceDataMetricAxis(
+  chartType: ChartTypes,
+  options?: {
+    barChart?: boolean
+    metrics?: IWidgetMetric[]
+    metric?: string
+  }
+) {
+  switch (chartType) {
+    case ChartTypes.Bar:
+      return options.barChart ? 'xAxis' : 'yAxis'
+    case ChartTypes.Scatter:
+      const axisIndexMapping = ['xAxis', 'yAxis']
+      const metricIndex = options.metrics.findIndex(
+        (m) => m.name === options.metric
+      )
+      return axisIndexMapping[metricIndex]
+    default:
+      return 'yAxis'
+  }
+}
+
+function calcAggregateReferenceData(
+  valueType: ReferenceValueType,
+  metricData: number[]
+) {
+  switch (valueType) {
+    case ReferenceValueType.Max:
+      return Math.max(...metricData)
+    case ReferenceValueType.Min:
+      return Math.min(...metricData)
+    case ReferenceValueType.Average:
+      return mean(metricData)
+  }
 }

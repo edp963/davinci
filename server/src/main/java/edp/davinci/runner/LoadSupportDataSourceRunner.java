@@ -46,24 +46,24 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Map<String, List<String>> dataSourceVersoins = CustomDataSourceUtils.getDataSourceVersoin();
+        Map<String, List<String>> dataSourceVersions = CustomDataSourceUtils.getDataSourceVersoin();
 
         for (DataTypeEnum dataTypeEnum : DataTypeEnum.values()) {
-            if (dataSourceVersoins.containsKey(dataTypeEnum.getFeature())) {
-                List<String> versions = dataSourceVersoins.get(dataTypeEnum.getFeature());
+            if (dataSourceVersions.containsKey(dataTypeEnum.getFeature())) {
+                List<String> versions = dataSourceVersions.get(dataTypeEnum.getFeature());
                 if (!versions.isEmpty() && !versions.contains(JDBC_DATASOURCE_DEFAULT_VERSION)) {
                     versions.add(0, JDBC_DATASOURCE_DEFAULT_VERSION);
                 }
             } else {
-                dataSourceVersoins.put(dataTypeEnum.getFeature(), null);
+                dataSourceVersions.put(dataTypeEnum.getFeature(), null);
             }
         }
 
-        dataSourceVersoins.forEach((name, versions) -> supportDatasourceList.add(new DatasourceType(name, versions)));
+        dataSourceVersions.forEach((name, versions) -> supportDatasourceList.add(new DatasourceType(name, versions)));
 
         supportDatasourceList.forEach(s -> supportDatasourceMap.put(
                 s.getName(),
-                s.getName().equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATER, s.getName())
+                s.getName().equalsIgnoreCase(DataTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_PREFIX : String.format(Consts.JDBC_PREFIX_FORMATTER, s.getName())
         ));
 
         supportDatasourceList.sort(Comparator.comparing(DatasourceType::getName));

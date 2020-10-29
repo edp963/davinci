@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { IChartProps } from './'
 import { IWidgetMetric } from 'containers/Widget/components/Widget'
 import { decodeMetricName, getTextWidth } from 'containers/Widget/components/util'

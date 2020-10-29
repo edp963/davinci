@@ -18,6 +18,11 @@
  * >>
  */
 
+export const CLIENT_VERSION = '0.3-rc'
+export const API_HOST = '/api/v3'
+export const SHARE_HOST = `${location.origin}/share.html`
+export const EXTERNAL_LOG_OUT_URL = '/login/oauth2/logout'
+
 const defaultEchartsTheme = require('assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
@@ -202,5 +207,6 @@ export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSyst
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
-export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000
-export const DEFAULT_CACHE_EXPIRED = 300
+export const DEFAULT_JWT_TOKEN_EXPIRED = 60 * 60 * 1000 // ms
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000  // ms
+export const DEFAULT_CACHE_EXPIRED = 300  // sec

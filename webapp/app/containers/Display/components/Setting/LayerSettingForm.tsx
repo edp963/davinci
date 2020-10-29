@@ -66,4 +66,4 @@ const LayerSettingForm: React.FC<ILayerSettingFormProps> = (props) => {
   )
 }
 
-export default LayerSettingForm
+export default React.memo(LayerSettingForm)

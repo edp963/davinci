@@ -290,7 +290,9 @@ export function getChartPieces (total, lines) {
 }
 
 export function metricAxisLabelFormatter (value) {
-  if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
+  if (value >= Math.pow(10, 12)) {
+    return `${precision(value / Math.pow(10, 12))}T`
+  } else if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
     return `${precision(value / Math.pow(10, 9))}B`
   } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
     return `${precision(value / Math.pow(10, 6))}M`
@@ -596,47 +598,57 @@ export function getChartTooltipLabel (type, seriesData, options) {
   }, [])
 
   return function (params) {
-    const { seriesIndex, dataIndex, color } = params
-    const record = (type === 'funnel' || type === 'map')
-      ? seriesData[dataIndex]
-      : seriesData[seriesIndex][dataIndex]
-    let tooltipLabels = []
+    const { componentType } = params
+    if (componentType === 'markLine') {
+      const { name, value } = params
+      return `参考线<br/>${name}: ${value}`
+    } else if (componentType === 'markArea') {
+      const { name, data: { coord } } = params
+      const valueIndex = coord[0].findIndex((c) => c !== Infinity && c !== -Infinity)
+      return `参考区间<br/>${name}: ${coord[0][valueIndex]} - ${coord[1][valueIndex]}`
+    } else {
+      const { seriesIndex, dataIndex, color } = params
+      const record = (type === 'funnel' || type === 'map')
+        ? seriesData[dataIndex]
+        : seriesData[seriesIndex][dataIndex]
+      let tooltipLabels = []
 
-    tooltipLabels = tooltipLabels.concat(
-      dimentionColumns.map((dc) => {
-        let value = record
-          ? Array.isArray(record)
-            ? record[0][dc.name]
-            : record[dc.name]
-          : ''
-        value = getFormattedValue(value, dc.format)
-        return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
-      })
-    )
+      tooltipLabels = tooltipLabels.concat(
+        dimentionColumns.map((dc) => {
+          let value = record
+            ? Array.isArray(record)
+              ? record[0][dc.name]
+              : record[dc.name]
+            : ''
+          value = getFormattedValue(value, dc.format)
+          return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
+        })
+      )
 
-    tooltipLabels = tooltipLabels.concat(
-      metricColumns.map((mc) => {
-        const decodedName = decodeMetricName(mc.name)
-        let value = record
-          ? Array.isArray(record)
-            ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
-            : record[`${mc.agg}(${decodedName})`]
-          : 0
-        value = getFormattedValue(value, mc.format)
-        return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
-      })
-    )
+      tooltipLabels = tooltipLabels.concat(
+        metricColumns.map((mc) => {
+          const decodedName = decodeMetricName(mc.name)
+          let value = record
+            ? Array.isArray(record)
+              ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
+              : record[`${mc.agg}(${decodedName})`]
+            : 0
+          value = getFormattedValue(value, mc.format)
+          return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
+        })
+      )
 
-    if (color) {
-      const circle = `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
-      if (!dimentionColumns.length) {
-        tooltipLabels.unshift(circle)
-      } else {
-        tooltipLabels[0] = circle + tooltipLabels[0]
+      if (color) {
+        const circle = `<span class="widget-tooltip-circle" style="background: ${color}"></span>`
+        if (!dimentionColumns.length) {
+          tooltipLabels.unshift(circle)
+        } else {
+          tooltipLabels[0] = circle + tooltipLabels[0]
+        }
       }
-    }
 
-    return tooltipLabels.join('<br/>')
+      return tooltipLabels.join('<br/>')
+    }
   }
 }
 

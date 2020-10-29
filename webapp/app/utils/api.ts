@@ -18,34 +18,33 @@
  * >>
  */
 
-import config, { env } from '../globalConfig'
-
-const host = config[env].host
+import { API_HOST } from '../globalConstants'
 
 export default {
-  login: `${host}/login`,
-  group: `${host}/groups`,
-  user: `${host}/users`,
-  changepwd: `${host}/changepwd`,
-  source: `${host}/sources`,
-  bizlogic: `${host}/views`,
-  view: `${host}/views`,
-  // bizdata: `${host}/bizdatas`,
-  widget: `${host}/widgets`,
-  display: `${host}/displays`,
-  share: `${host}/share`,
-  checkName: `${host}/check`,
-  projectsCheckName: `${host}/check/`,
-  uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`,
-  signup: `${host}/users`,
-  organizations: `${host}/organizations`,
-  checkNameUnique: `${host}/check`,
-  projects: `${host}/projects`,
-  teams: `${host}/teams`,
-  roles: `${host}/roles`,
-  portal: `${host}/dashboardPortals`,
-  star: `${host}/star`,
-  download: `${host}/download`,
-  buriedPoints: `${host}/statistic`
+  externalAuthProviders: `${API_HOST}/login/getOauth2Clients`,
+  tryExternalAuth: `${API_HOST}/login/externalLogin`,
+  login: `${API_HOST}/login`,
+  group: `${API_HOST}/groups`,
+  user: `${API_HOST}/users`,
+  changepwd: `${API_HOST}/changepwd`,
+  source: `${API_HOST}/sources`,
+  view: `${API_HOST}/views`,
+  widget: `${API_HOST}/widgets`,
+  display: `${API_HOST}/displays`,
+  share: `${API_HOST}/share`,
+  checkName: `${API_HOST}/check`,
+  projectsCheckName: `${API_HOST}/check/`,
+  uploads: `${API_HOST}/uploads`,
+  schedule: `${API_HOST}/cronjobs`,
+  signup: `${API_HOST}/users`,
+  organizations: `${API_HOST}/organizations`,
+  checkNameUnique: `${API_HOST}/check`,
+  projects: `${API_HOST}/projects`,
+  teams: `${API_HOST}/teams`,
+  roles: `${API_HOST}/roles`,
+  portal: `${API_HOST}/dashboardPortals`,
+  star: `${API_HOST}/star`,
+  download: `${API_HOST}/download`,
+  buriedPoints: `${API_HOST}/statistic`,
+  configurations: `${API_HOST}/configurations`
 }

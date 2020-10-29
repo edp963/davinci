@@ -19,10 +19,10 @@
  */
 
 import produce from 'immer'
-import { ActionTypes, EmptySchedule } from './constants'
+import { ActionTypes, EmptySchedule, EmptyWeChatWorkSchedule } from './constants'
 import { ScheduleActionType } from './actions'
 
-const initialState = {
+export const initialState = {
   schedules: [],
   editingSchedule: EmptySchedule,
   loading: {
@@ -84,7 +84,6 @@ const scheduleReducer = (state = initialState, action: ScheduleActionType) =>
           1,
           action.payload.result
         )
-        draft.editingSchedule = EmptySchedule
         draft.loading.edit = false
         break
       case ActionTypes.ADD_SCHEDULE_FAILURE:
@@ -103,6 +102,9 @@ const scheduleReducer = (state = initialState, action: ScheduleActionType) =>
           action.payload.schedule
         )
         break
+      case ActionTypes.CHANGE_SCHEDULE_JOB_TYPE:
+          draft.editingSchedule = action.payload.jobType === 'email' ?　EmptySchedule : EmptyWeChatWorkSchedule
+          break
       case ActionTypes.LOAD_SUGGEST_MAILS_SUCCESS:
         draft.suggestMails = action.payload.mails
         break

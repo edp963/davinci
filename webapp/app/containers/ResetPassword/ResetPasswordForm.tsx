@@ -1,18 +1,17 @@
-import * as React from 'react'
+import React from 'react'
 import { Col, Row, Input, Button, Form } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const FormItem = Form.Item
 const styles = require('../Profile/profile.less')
 
 
 
 interface IResetPasswordProps {
-  form: any
-  type: string
   submit: () => any
 }
 
 
-export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps> {
+export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps & FormComponentProps, {}> {
   public componentDidMount () {
     this.props.form.validateFields()
   }
@@ -124,7 +123,7 @@ export class ResetPasswordForm extends React.PureComponent<IResetPasswordProps> 
   }
 }
 
-export default Form.create()(ResetPasswordForm)
+export default Form.create<IResetPasswordProps & FormComponentProps>()(ResetPasswordForm)
 
 
 

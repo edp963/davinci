@@ -18,16 +18,15 @@
  * >>
  */
 
-import { IDashboard, IDashboardNode } from './types'
+import { IDashboardRaw, IDashboardNode } from './types'
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
-import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
-import { IQueryConditions } from '../Dashboard/Grid'
+import { IQueryConditions } from '../Dashboard/types'
 import { decodeMetricName } from '../Widget/components/util'
 
 type MapDashboardNodes = { [parentId: number]: IDashboardNode[] }
 
-export function getDashboardNodes(dashboards: IDashboard[]): IDashboardNode[] {
+export function getDashboardNodes(dashboards: IDashboardRaw[]): IDashboardNode[] {
   if (!Array.isArray(dashboards)) {
     return []
   }
@@ -72,21 +71,20 @@ export function getRequestParamsByWidgetConfig(
     xAxis,
     tip,
     orders,
+    limit,
     cache,
     expired
   } = widgetConfig
-  const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
-  const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
 
-  const customOrders = updatedCols
-    .concat(updatedRows)
+  const customOrders = cols
+    .concat(rows)
     .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
     .map(({ name, sort }) => ({
       name,
       list: sort[FieldSortTypes.Custom].sortList
     }))
 
-  let tempFilters
+  let tempFilters // @TODO combine widget static filters with local filters
   let linkageFilters
   let globalFilters
   let tempOrders
@@ -206,6 +204,7 @@ export function getRequestParamsByWidgetConfig(
     linkageVariables,
     globalVariables,
     orders,
+    limit,
     cache,
     expired,
     flush: renderType === 'flush',

@@ -19,10 +19,7 @@
 
 package edp.davinci.dao;
 
-import edp.davinci.dto.viewDto.ViewBaseInfo;
-import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
-import edp.davinci.dto.viewDto.ViewWithSource;
-import edp.davinci.dto.viewDto.ViewWithSourceBaseInfo;
+import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.View;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -41,12 +38,9 @@ public interface ViewMapper {
     @Select({"select id from `view` where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-
     ViewWithProjectAndSource getViewWithProjectAndSourceById(@Param("id") Long id);
 
     ViewWithProjectAndSource getViewWithProjectAndSourceByWidgetId(@Param("widgetId") Long widgetId);
-
-
 
     @Delete({"delete from `view` where id = #{id}"})
     int deleteById(Long id);
@@ -54,6 +48,8 @@ public interface ViewMapper {
     @Select({"select * from `view` where id = #{id}"})
     View getById(Long id);
 
+    @Select({"select id, name, model, variable from `view` where id = #{id}"})
+    SimpleView getSimpleViewById(Long id);
 
     @Update({
             "update `view`",
@@ -82,7 +78,6 @@ public interface ViewMapper {
     })
     ViewWithSourceBaseInfo getViewWithSourceBaseInfo(@Param("id") Long id);
 
-
     @Select({
             "select v.id, v.`name`, v.`description`, s.name as 'sourceName'",
             "from `view` v ",
@@ -91,11 +86,10 @@ public interface ViewMapper {
     })
     List<ViewBaseInfo> getViewBaseInfoByProject(@Param("projectId") Long projectId);
 
-
     int insertBatch(@Param("list") List<View> sourceList);
 
     @Delete({"delete from `view` where project_id = #{projectId}"})
-    int deleteByPorject(@Param("projectId") Long projectId);
+    int deleteByProject(@Param("projectId") Long projectId);
 
     @Select({
             "SELECT ",
@@ -109,10 +103,11 @@ public interface ViewMapper {
             "FROM `view` v",
             "	LEFT JOIN project p on p.id = v.project_id",
             "	LEFT JOIN source s on s.id = v.source_id",
-            "WHERE v.id = #{id}",
+            "WHERE v.id = #{id}"
     })
     ViewWithSource getViewWithSource(Long id);
 
     Set<View> selectByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
 
+    Set<SimpleView> selectSimpleByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
 }

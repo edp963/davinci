@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { Icon, Row, Col, Modal, Breadcrumb } from 'antd'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import FormType from 'antd/lib/form/Form'
 import { Link } from 'react-router-dom'
 import Box from 'components/Box'
 import { compose } from 'redux'
@@ -44,7 +44,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
   }
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName } = this.props
-    const { getFieldsValue } = this.OrganizationForm
+    const { getFieldsValue } = this.OrganizationForm.props.form
     const id = getFieldsValue()['id']
     const data = {
       name: value,
@@ -60,7 +60,10 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
   private toOrganization = (organization) => () => {
     this.props.history.push(`/account/organization/${organization.id}`)
   }
-  private OrganizationForm: WrappedFormUtils
+  private OrganizationForm: FormType
+  private refHandles = {
+    OrganizationForm: (ref) => this.OrganizationForm = ref
+  }
   private showOrganizationForm = () => (e) => {
     e.stopPropagation()
     this.setState({
@@ -72,7 +75,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
     onLoadOrganizations()
   }
   private onModalOk = () => {
-    this.OrganizationForm.validateFieldsAndScroll((err, values) => {
+    this.OrganizationForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         this.props.onAddOrganization({
@@ -90,7 +93,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
   }
 
   private afterOrganizationFormClose = () => {
-    this.OrganizationForm.resetFields()
+    this.OrganizationForm.props.form.resetFields()
   }
 
   public render () {
@@ -100,7 +103,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
         <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
-              <Avatar path={org.avatar} enlarge={false} size="small"/>
+              <Avatar path={org.avatar} enlarge={false} border size="small"/>
               <div className={styles.name}>
                 <div className={styles.title}>
                   {org.name}
@@ -145,10 +148,10 @@ export class Organizations extends React.PureComponent<IOrganizationsProps & Rou
           afterClose={this.afterOrganizationFormClose}
         >
           <OrganizationForm
-            ref={(f) => { this.OrganizationForm = f }}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
             onCheckUniqueName={this.checkNameUnique}
+            wrappedComponentRef={this.refHandles.OrganizationForm}
           />
         </Modal>
       </Box>
@@ -172,17 +175,7 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-// const withReducer = injectReducer({ key: 'organization', reducer })
-// const withSaga = injectSaga({ key: 'organization', saga })
-
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-
 export default compose(
-  // withReducer,
-  // withAppReducer,
-  // withAppSaga,
-  // withSaga,
   withConnect
 )(Organizations)
 

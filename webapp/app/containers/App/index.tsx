@@ -18,15 +18,17 @@
  * >>
  */
 
-import React, { useCallback } from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Route, HashRouter as Router, Switch, Redirect, withRouter } from 'react-router-dom'
+import { Route, HashRouter as Router, Switch, Redirect } from 'react-router-dom'
 import { RouteComponentWithParams } from 'utils/types'
 
 import { compose } from 'redux'
-import { logged, logout, getLoginUser } from './actions'
+import { logged, logout, getServerConfigurations, getUserByToken } from './actions'
+import injectReducer from 'utils/injectReducer'
+import reducer from './reducer'
 import injectSaga from 'utils/injectSaga'
 import saga from './sagas'
 
@@ -35,27 +37,21 @@ import { makeSelectLogged } from './selectors'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
 import { statistic } from 'utils/statistic/statistic.dv'
+import FindPassword from 'containers/FindPassword'
 
 import { Background } from 'containers/Background/Loadable'
 import { Main } from 'containers/Main/Loadable'
 import { Activate } from 'containers/Register/Loadable'
 
-interface IAppStateProps {
-  logged: boolean
-}
-
-interface IAppDispatchProps {
-  onLogged: (user) => void
-  onLogout: () => void
-  onGetLoginUser: (resolve: () => void) => any
-}
-
-type AppProps = IAppStateProps & IAppDispatchProps & RouteComponentWithParams
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+type AppProps = MappedStates & MappedDispatches & RouteComponentWithParams
 
 export class App extends React.PureComponent<AppProps> {
 
   constructor (props: AppProps) {
     super(props)
+    props.onGetServerConfigurations()
     this.checkTokenLink()
   }
 
@@ -111,7 +107,6 @@ export class App extends React.PureComponent<AppProps> {
       statistic.sendPrevDurationRecord()
     } else {
       this.props.onLogout()
-      // this.props.history.replace('/login')
     }
   }
 
@@ -147,6 +142,7 @@ export class App extends React.PureComponent<AppProps> {
           <Switch>
             <Route path="/activate" component={Activate} />
             <Route path="/joinOrganization" exact component={Background} />
+            <Route path="/findPassword" component={FindPassword} />
             <Route path="/" exact render={this.renderRoute} />
             <Route path="/" component={logged ? Main : Background} />
           </Switch>
@@ -156,6 +152,7 @@ export class App extends React.PureComponent<AppProps> {
   }
 }
 
+const withReducer = injectReducer({ key: 'global', reducer })
 const withSaga = injectSaga({ key: 'global', saga })
 
 const mapStateToProps = createStructuredSelector({
@@ -165,7 +162,8 @@ const mapStateToProps = createStructuredSelector({
 const mapDispatchToProps = (dispatch) => ({
   onLogged: (user) => dispatch(logged(user)),
   onLogout: () => dispatch(logout()),
-  onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve))
+  onGetLoginUser: (token: string) => dispatch(getUserByToken(token)),
+  onGetServerConfigurations: () => dispatch(getServerConfigurations())
 })
 
 const withConnect = connect(
@@ -174,6 +172,7 @@ const withConnect = connect(
 )
 
 export default compose(
+  withReducer,
   withSaga,
   withConnect
 )(App)

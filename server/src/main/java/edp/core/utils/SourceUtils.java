@@ -24,7 +24,7 @@ import static edp.core.consts.Consts.COLON;
 import static edp.core.consts.Consts.DOUBLE_SLASH;
 import static edp.core.consts.Consts.EMPTY;
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
-import static edp.core.consts.Consts.JDBC_PREFIX_FORMATER;
+import static edp.core.consts.Consts.JDBC_PREFIX_FORMATTER;
 import static edp.core.consts.Consts.NEW_LINE_CHAR;
 import static edp.core.consts.Consts.PATTERN_JDBC_TYPE;
 import static edp.core.consts.Consts.SPACE;
@@ -34,6 +34,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import javax.sql.DataSource;
@@ -49,6 +51,7 @@ import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
 import edp.core.model.JdbcSourceInfo;
 import edp.davinci.runner.LoadSupportDataSourceRunner;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -56,8 +59,36 @@ public class SourceUtils {
 
     private JdbcDataSource jdbcDataSource;
 
+    @Getter
+    private static Set releaseSourceSet = new HashSet();
+
     public SourceUtils(JdbcDataSource jdbcDataSource) {
         this.jdbcDataSource = jdbcDataSource;
+    }
+
+    /**
+     * 测试数据源
+     *
+     * @param jdbcSourceInfo
+     * @return
+     * @throws SourceException
+     */
+    public boolean testSource(JdbcSourceInfo jdbcSourceInfo) {
+
+        try {
+            Class.forName(getDriverClassName(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getDbVersion()));
+        } catch (ClassNotFoundException e) {
+            log.error(e.toString(), e);
+            return false;
+        }
+
+        try (Connection con = DriverManager.getConnection(jdbcSourceInfo.getJdbcUrl(), jdbcSourceInfo.getUsername(), jdbcSourceInfo.getPassword());) {
+            return con != null;
+        } catch (SQLException e) {
+            log.error(e.toString(), e);
+        }
+
+        return false;
     }
 
     /**
@@ -67,62 +98,58 @@ public class SourceUtils {
      * @return
      * @throws SourceException
      */
-	DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+	public DataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
 		return jdbcDataSource.getDataSource(jdbcSourceInfo);
 	}
 
-    Connection getConnection(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
-        DataSource dataSource = getDataSource(jdbcSourceInfo);
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-        } catch (Exception e) {
-
-        }
-        
-        try {
-            if (null == connection) {
-                log.info("connection is closed, retry get connection!");
-                releaseDataSource(jdbcSourceInfo);
-                dataSource = getDataSource(jdbcSourceInfo);
-                connection = dataSource.getConnection();
-            }
-        } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-            throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
-        }
-
-        try {
-            if (!connection.isValid(5)) {
-                log.info("connection is invalid, retry get connection!");
-                releaseDataSource(jdbcSourceInfo);
-                connection = null;
-            }
-        } catch (Exception e) {
-
-        }
-
-        if (null == connection) {
+    public Connection getConnection(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
+        Connection conn = getConnectionWithRetry(jdbcSourceInfo);
+        if (conn == null) {
             try {
-                dataSource = getDataSource(jdbcSourceInfo);
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-                throw new SourceException("create connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl());
+                releaseDataSource(jdbcSourceInfo);
+                DataSource dataSource = getDataSource(jdbcSourceInfo);
+                return dataSource.getConnection();
+            } catch (Exception e) {
+                log.error("get connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
+                throw new SourceException("get connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl() + " you can try again later or reset datasource");
             }
         }
+        return conn;
+    }
 
-        return connection;
+    private Connection getConnectionWithRetry(JdbcSourceInfo jdbcSourceInfo) {
+        int rc = 1;
+        for (; ; ) {
+
+            if (rc > 3) {
+                return null;
+            }
+
+            try {
+                Connection connection = getDataSource(jdbcSourceInfo).getConnection();
+                if (connection != null && connection.isValid(5)) {
+                    return connection;
+                }
+            } catch (Exception e) {
+
+            }
+
+            try {
+                Thread.sleep((long) Math.pow(2, rc) * 1000);
+            } catch (InterruptedException e) {
+
+            }
+
+            rc++;
+        }
     }
 
     public static void releaseConnection(Connection connection) {
         if (null != connection) {
             try {
                 connection.close();
-                connection = null;
             } catch (Exception e) {
-                e.printStackTrace();
-                log.error("connection close error", e.getMessage());
+                log.error("connection release error", e.getMessage());
             }
         }
     }
@@ -131,9 +158,7 @@ public class SourceUtils {
         if (rs != null) {
             try {
                 rs.close();
-                rs = null;
             } catch (Exception e) {
-                e.printStackTrace();
                 log.error("resultSet close error", e.getMessage());
             }
         }
@@ -147,7 +172,7 @@ public class SourceUtils {
         
 		if (isExt && !StringUtils.isEmpty(version) && !JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
 			String path = System.getenv("DAVINCI3_HOME") + File.separator
-					+ String.format(Consts.PATH_EXT_FORMATER, dataSourceName, version);
+					+ String.format(Consts.PATH_EXT_FORMATTER, dataSourceName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDataSource dataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
 			try {
@@ -185,7 +210,7 @@ public class SourceUtils {
             throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
         }
 
-        String urlPrefix = String.format(JDBC_PREFIX_FORMATER, dataSourceName);
+        String urlPrefix = String.format(JDBC_PREFIX_FORMATTER, dataSourceName);
         String checkUrl = jdbcUrl.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SYMBOL, EMPTY);
         if (urlPrefix.equals(checkUrl)) {
             throw new SourceException("Communications link failure");

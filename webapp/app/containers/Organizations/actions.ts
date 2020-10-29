@@ -327,12 +327,14 @@ export const OrganizationActions = {
     }
   },
 
-  inviteMember (orgId, memId) {
+  inviteMember (orgId, members, needEmail, resolve) {
     return {
       type: ActionTypes.INVITE_MEMBER,
       payload: {
         orgId,
-        memId
+        members,
+        needEmail,
+        resolve
       }
     }
   },
@@ -533,6 +535,35 @@ export const OrganizationActions = {
         id,
         resolve,
         permission
+      }
+    }
+  },
+
+  getRoleListByMemberId (orgId: number, memberId: number, resolve: (res: any) => void) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID,
+      payload: {
+        orgId,
+        memberId,
+        resolve
+      }
+    }
+  },
+  getRoleListByMemberIdSuccess (result, memberId: number) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID_SUCCESS,
+      payload: {
+        result,
+        memberId
+      }
+    }
+  },
+  getRoleListByMemberIdFail (error, memberId: number) {
+    return {
+      type: ActionTypes.GET_ROLELISTS_BY_MEMBERID_ERROR,
+      payload: {
+        error,
+        memberId
       }
     }
   }

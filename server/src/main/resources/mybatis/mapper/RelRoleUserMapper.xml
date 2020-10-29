@@ -71,6 +71,18 @@
             #{item}
         </foreach>
     </select>
+    <select id="selectByUserAndRoles" resultType="edp.davinci.model.RelRoleUser">
+        select * from rel_role_user where user_id = #{userId}
+        <if test="roleIds != null and roleIds.size > 0">
+            and role_id in
+            <foreach collection="roleIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="roleIds == null or roleIds.size == 0">
+            and 1=0
+        </if>
+    </select>
 
     <delete id="deleteByRoleIdAndMemberIds">
         delete from rel_role_user where role_id = #{roleId}

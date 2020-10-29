@@ -23,12 +23,20 @@ import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
 import {
-  IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
-  IDacChannel, IDacTenant, IDacBiz
+  IViewBase,
+  IView,
+  IExecuteSqlParams,
+  IExecuteSqlResponse,
+  IViewInfo,
+  IDacChannel,
+  IDacTenant,
+  IDacBiz,
+  IViewQueryResponse
 } from './types'
-import { IDataRequestParams } from 'containers/Dashboard/Grid'
+import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
+import { EExecuteType } from './Editor'
 const CancelToken = axios.CancelToken
 
 export const ViewActions = {
@@ -65,7 +73,11 @@ export const ViewActions = {
       }
     }
   },
-  loadViewsDetail (viewIds: number[], resolve?: () => void, isEditing: boolean = false) {
+  loadViewsDetail (
+    viewIds: number[],
+    resolve?: (views: IView[]) => void,
+    isEditing: boolean = false
+  ) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL,
       payload: {
@@ -179,11 +191,21 @@ export const ViewActions = {
     }
   },
 
-  executeSql (params: IExecuteSqlParams) {
+  setIsLastExecuteWholeSql (isLastExecuteWholeSql: boolean) {
+    return {
+      type: ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL,
+      payload: {
+        isLastExecuteWholeSql
+      }
+    }
+  },
+
+  executeSql (params: IExecuteSqlParams, exeType: EExecuteType) {
     return {
       type: ActionTypes.EXECUTE_SQL,
       payload: {
-        params
+        params,
+        exeType
       }
     }
   },
@@ -201,6 +223,12 @@ export const ViewActions = {
       payload: {
         err
       }
+    }
+  },
+  executeSqlCancel () {
+    return {
+      type: ActionTypes.EXECUTE_SQL_CANCEL,
+      payload: {}
     }
   },
 
@@ -308,7 +336,11 @@ export const ViewActions = {
   /** */
 
   /** Actions for external usages */
-  loadSelectOptions (controlKey: string, requestParams: { [viewId: string]: IDistinctValueReqeustParams }, itemId?: number) {
+  loadSelectOptions (
+    controlKey: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
@@ -319,7 +351,11 @@ export const ViewActions = {
       }
     }
   },
-  selectOptionsLoaded (controlKey: string, values: any[], itemId?: number) {
+  selectOptionsLoaded (
+    controlKey: string,
+    values: object[],
+    itemId?: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
       payload: {
@@ -340,7 +376,7 @@ export const ViewActions = {
 
   loadViewData (
     id: number,
-    requestParams: IDataRequestParams,
+    requestParams: IDataRequestBody,
     resolve: (data: any[]) => void,
     reject: (error) => void
   ) {
@@ -368,29 +404,17 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, params: Partial<IDistinctValueReqeustParams>, resolve?: any) {
+  loadColumnDistinctValue(
+    paramsByViewId: {
+      [viewId: string]: Omit<IDistinctValueReqeustParams, 'cache' | 'expired'>
+    },
+    callback: (options?: object[]) => void
+  ) {
     return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
+      type: ActionTypes.LOAD_COLUMN_DISTINCT_VALUE,
       payload: {
-        viewId,
-        params,
-        resolve
-      }
-    }
-  },
-  viewDistinctValueLoaded (data: any[]) {
-    return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS,
-      payload: {
-        data
-      }
-    }
-  },
-  loadViewDistinctValueFail (err) {
-    return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE,
-      payload: {
-        err
+        paramsByViewId,
+        callback
       }
     }
   },
@@ -399,7 +423,7 @@ export const ViewActions = {
     renderType: RenderType,
     itemId: number | [number, number],
     viewId: number,
-    requestParams: IDataRequestParams,
+    requestParams: any,
     vizType: 'dashboard' | 'display',
     statistic
   ) {
@@ -419,8 +443,8 @@ export const ViewActions = {
   viewDataFromVizItemLoaded (
     renderType: RenderType,
     itemId: number | [number, number],
-    requestParams: IDataRequestParams,
-    result: any[],
+    requestParams: any,
+    result: IViewQueryResponse,
     vizType: 'dashboard' | 'display',
     statistic
   ) {
@@ -436,7 +460,11 @@ export const ViewActions = {
       statistic
     }
   },
-  loadViewDataFromVizItemFail (itemId: number | [number, number], vizType: 'dashboard' | 'display', errorMessage: string) {
+  loadViewDataFromVizItemFail (
+    itemId: number | [number, number],
+    vizType: 'dashboard' | 'display',
+    errorMessage: string
+  ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE,
       payload: {

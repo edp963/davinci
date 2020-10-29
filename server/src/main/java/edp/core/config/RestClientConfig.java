@@ -19,8 +19,13 @@
 
 package edp.core.config;
 
+import com.alibaba.druid.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestWrapper;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -28,8 +33,11 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -41,11 +49,11 @@ import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Configuration
 public class RestClientConfig {
-
 
     /**
      * 最大连接数
@@ -71,10 +79,20 @@ public class RestClientConfig {
      * 重试次数
      */
     private int retryTimes = 2;
+
     /**
      * 从连接池获取连接的超时时间, 单位ms
      */
     private int connectionRequestTimout = 200;
+
+    @Value("${spring.rest.proxy-host}")
+    private String proxyHost;
+
+    @Value("${spring.rest.proxy-port}")
+    private Integer proxyPort;
+
+    @Value("${spring.rest.proxy-ignore}")
+    private String proxyIgnore;
 
     @Bean
     public RestTemplate restTemplate() {
@@ -88,32 +106,52 @@ public class RestClientConfig {
     public HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory() {
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
         try {
-            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, ((x509Certificates, s) -> true)).build();
+            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, ((x509Certificates, s) -> true))
+                    .build();
 
             httpClientBuilder.setSSLContext(sslContext);
             HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
 
-            PoolingHttpClientConnectionManager poolingHttpClientConnectionManager =
-                    new PoolingHttpClientConnectionManager(
-                            RegistryBuilder.<ConnectionSocketFactory>create()
-                                    .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                                    .register("https", new SSLConnectionSocketFactory(sslContext, hostnameVerifier))
-                                    .build()
-                    );
+            PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(
+                    RegistryBuilder.<ConnectionSocketFactory>create()
+                            .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                            .register("https", new SSLConnectionSocketFactory(sslContext, hostnameVerifier)).build());
 
             poolingHttpClientConnectionManager.setMaxTotal(maxTotalConnect);
             poolingHttpClientConnectionManager.setDefaultMaxPerRoute(maxConnectPerRoute);
             httpClientBuilder.setConnectionManager(poolingHttpClientConnectionManager);
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryTimes, true));
+            
+            if (!StringUtils.isEmpty(proxyHost)) {
+                HttpHost proxy = new HttpHost(proxyHost, proxyPort);
+                httpClientBuilder.setRoutePlanner(new DefaultProxyRoutePlanner(proxy) {
+                    @Override
+                    public HttpHost determineProxy(HttpHost target, HttpRequest request, HttpContext context)
+                            throws HttpException {
+                        HttpRequestWrapper wrapper = (HttpRequestWrapper) request;
+                        if (StringUtils.isEmpty(proxyIgnore)) {
+                            return super.determineProxy(target, request, context);
+                        }
+                        
+                        Pattern pattern = Pattern.compile(proxyIgnore);
+                        if (pattern.matcher(wrapper.getURI().getHost()).matches()) {
+                            return null;
+                        }
+                        
+                        return super.determineProxy(target, request, context);
+                    }
+                });
+            }
+            
             HttpClient httpClient = httpClientBuilder.build();
-            HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+            HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
+                    httpClient);
             clientHttpRequestFactory.setConnectTimeout(connectTimeout);
             clientHttpRequestFactory.setReadTimeout(readTimeout);
             clientHttpRequestFactory.setConnectionRequestTimeout(connectionRequestTimout);
             return clientHttpRequestFactory;
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            e.printStackTrace();
-            log.error("Initializing HTTP connection pool ERROR, {}", e);
+            log.error("Initializing HTTP connection pool error", e);
         }
         return null;
     }

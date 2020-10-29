@@ -1,0 +1,44 @@
+@import "~assets/less/variable";
+
+.configPanel {
+  height: 480px;
+}
+
+.list {
+  padding: 8px 0;
+}
+
+.listItem {
+  height: 32px;
+  padding: 0 8px 0 16px;
+  line-height: 2.286em;
+  cursor: pointer;
+
+  &:hover {
+    h4 {
+      color: @primary-color;
+    }
+  }
+
+  &.selected {
+    background: fade(@primary-color, 15);
+    border-right: 3px solid @primary-color;
+
+    &:hover {
+      h4 {
+        color: @heading-color;
+      }
+    }
+  }
+}
+
+.form {
+  flex: 1;
+  padding: 16px;
+  .antFormItemLabelCustom(0.8571em, 1em, 4px);
+}
+
+.colorPicker {
+  height: 32px;
+  margin-top: 4px;
+}

@@ -1,34 +1,46 @@
 module.exports = {
   preset: 'ts-jest/presets/js-with-babel',
+  collectCoverage: true,
+  coverageReporters: ['html', 'lcov', 'text-summary'],
+  coverageDirectory: './coverage',
   collectCoverageFrom: [
-    'app/**/*.{js,jsx}',
-    '!app/**/*.test.{js,jsx}',
-    '!app/*/RbGenerated*/*.{js,jsx}',
-    '!app/app.js',
-    '!app/*/*/Loadable.{js,jsx}'
+    'app/**/*.{ts,tsx}',
+    '!app/app.tsx',
+    '!app/*/*/Loadable.{ts,tsx}'
   ],
-  coverageThreshold: {
-    global: {
-      statements: 98,
-      branches: 91,
-      functions: 98,
-      lines: 98
-    }
-  },
-  moduleFileExtensions: ['ts', 'tsx', 'js'],
+  // coverageThreshold: {
+  //   global: {
+  //     statements: 98,
+  //     branches: 91,
+  //     functions: 98,
+  //     lines: 98
+  //   }
+  // },
   globals: {
     'ts-jest': {
-      tsConfig: 'tsconfig.json',
+      tsConfig: 'tsconfig.test.json',
     },
   },
-  moduleDirectories: ['node_modules', 'app'],
+  moduleDirectories: ['node_modules', 'libs', 'app'],
+  moduleFileExtensions: ['ts', 'tsx', 'js'],
   moduleNameMapper: {
-    '.*\\.(css|less|styl|scss|sass)$': '<rootDir>/internals/mocks/cssModule.js',
+    '.*\\.(css|less|styl|scss|sass)$': '<rootDir>/test/mocks/cssModule.js',
     '.*\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      '<rootDir>/internals/mocks/image.js'
+      '<rootDir>/test/mocks/image.js',
+    '^app/(.*)$': '<rootDir>/app/$1',
+    '^test/(.*)$': '<rootDir>/test/$1',
+    '^libs/(.*)$': '<rootDir>/libs/$1',
+    '^assets/fonts/(.*)$': '<rootDir>/test/mocks/font.js'
   },
-  setupTestFrameworkScriptFile: '<rootDir>/internals/testing/test-bundler.js',
-  setupFiles: ['raf/polyfill', '<rootDir>/internals/testing/enzyme-setup.js'],
-  // testRegex: 'tests/.*\\.test\\.js$',
-  snapshotSerializers: ['enzyme-to-json/serializer']
+  setupFilesAfterEnv: [
+    // '<rootDir>/test/utils/test-bundler.js',
+    '@testing-library/jest-dom/extend-expect'
+  ],
+  setupFiles: ['raf/polyfill'],
+  snapshotSerializers: [],
+  testRegex: '\\/test\\/.*\\.test\\.tsx?$',
+  transform: {
+    // '^.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$': 'jest-transform-stub',
+    // '^.+\\.svg$': 'jest-svg-transformer'
+  }
 }

@@ -18,80 +18,51 @@
  * >>
  */
 
-import React from 'react'
-
+import React, { FC, ChangeEvent, FormEvent } from 'react'
 import { Icon } from 'antd'
-
-const styles = require('./Login.less')
+import styles from './Login.less'
 
 interface ILoginFormProps {
   username: string
   password: string
-  onChangeUsername: (e: any) => any
-  onChangePassword: (e: any) => any
-  onLogin: () => any
+  loading: boolean
+  onChangeUsername: (e: ChangeEvent<HTMLInputElement>) => void
+  onChangePassword: (e: ChangeEvent<HTMLInputElement>) => void
+  onLogin: (e: FormEvent<HTMLFormElement>) => void
 }
 
-export class LoginForm extends React.PureComponent<ILoginFormProps, {}> {
-  constructor (props) {
-    super(props)
-  }
-
-  private enterLogin: (e: KeyboardEvent) => any = null
-
-  public componentWillUnmount () {
-    this.unbindDocumentKeypress()
-  }
-
-  private bindDocumentKeypress = () => {
-    this.enterLogin = (e) => {
-      if (e.keyCode === 13) {
-        this.props.onLogin()
-      }
-    }
-
-    document.addEventListener('keypress', this.enterLogin, false)
-  }
-
-  private unbindDocumentKeypress = () => {
-    document.removeEventListener('keypress', this.enterLogin, false)
-    this.enterLogin = null
-  }
-
-  public render () {
-    const {
-      username,
-      password,
-      onChangeUsername,
-      onChangePassword
-    } = this.props
-
-    return (
-      <div className={styles.form}>
-        <div className={styles.input}>
-          <Icon type="user" />
-          <input
-            placeholder="用户名"
-            value={username}
-            onFocus={this.bindDocumentKeypress}
-            onBlur={this.unbindDocumentKeypress}
-            onChange={onChangeUsername}
-          />
-        </div>
-        <div className={styles.input}>
-          <Icon type="unlock" />
-          <input
-            placeholder="密码"
-            type="password"
-            value={password}
-            onFocus={this.bindDocumentKeypress}
-            onBlur={this.unbindDocumentKeypress}
-            onChange={onChangePassword}
-          />
-        </div>
+const LoginForm: FC<ILoginFormProps> = ({
+  username,
+  password,
+  loading,
+  onChangeUsername,
+  onChangePassword,
+  onLogin
+}) => {
+  return (
+    <form className={styles.form} onSubmit={onLogin}>
+      <div className={styles.input}>
+        <Icon type="user" />
+        <input
+          placeholder="用户名"
+          value={username}
+          onChange={onChangeUsername}
+        />
       </div>
-    )
-  }
+      <div className={styles.input}>
+        <Icon type="unlock" />
+        <input
+          placeholder="密码"
+          type="password"
+          value={password}
+          onChange={onChangePassword}
+        />
+      </div>
+      <button type="submit" className={styles.submit} disabled={loading}>
+        {loading ? <Icon type="loading" /> : ''}登 录
+      </button>
+    </form>
+  )
 }
 
 export default LoginForm

@@ -28,6 +28,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.organizationDto.*;
 import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.roleDto.RoleBaseInfo;
+import edp.davinci.model.Role;
 import edp.davinci.model.User;
 import edp.davinci.service.OrganizationService;
 import edp.davinci.service.ProjectService;
@@ -38,6 +39,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -305,6 +307,42 @@ public class OrganizationController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
+    /**
+     * 邀请组织成员
+     *
+     * @param orgId
+     * @param inviteMembers
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "invite members to join the organization")
+    @PostMapping("{orgId}/invite/members")
+    public ResponseEntity batchInviteMembers(@PathVariable("orgId") Long orgId,
+                                             @Valid @RequestBody InviteMembers inviteMembers,
+                                             @ApiIgnore BindingResult bindingResult,
+                                             @ApiIgnore @CurrentUser User user,
+                                             HttpServletRequest request) {
+
+        if (invalidId(orgId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+
+        BatchInviteMemberResult result = organizationService.batchInviteMembers(orgId, inviteMembers, user);
+        if (result.getStatus() == HttpStatus.OK.value()) {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
+        } else {
+            return ResponseEntity.status(result.getStatus()).body(new ResultMap(tokenUtils).failAndRefreshToken(request).payload(result));
+        }
+    }
+
 
 //    /**
 //     * 成员确认邀请
@@ -401,6 +439,26 @@ public class OrganizationController extends BaseController {
 
         organizationService.updateMemberRole(relationId, user, organzationRole.getRole());
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+    @ApiOperation(value = "get roles of member in organization")
+    @GetMapping(value = "/{id}/member/{memberId}/roles")
+    public ResponseEntity getMemberRole(@PathVariable Long id,
+                                        @PathVariable Long memberId,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(memberId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<Role> roles = roleService.getMemberRoles(id, memberId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(roles));
     }
 
 }

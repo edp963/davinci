@@ -25,6 +25,12 @@ const selectGlobal = (state) => state.global
 
 const selectRouter = (state: { router: RouterState }) => state.router
 
+const makeSelectExternalAuthProviders = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.externalAuthProviders
+  )
+
 const makeSelectLogged = () =>
   createSelector(
     selectGlobal,
@@ -67,8 +73,23 @@ const makeSelectLocation = () =>
     (routerState) => routerState.location
   )
 
+const makeSelectVersion = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.version
+  )
+
+const makeSelectOauth2Enabled = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.oauth2Enabled
+  )
+
 export {
   selectGlobal,
+  makeSelectVersion,
+  makeSelectOauth2Enabled,
+  makeSelectExternalAuthProviders,
   makeSelectLogged,
   makeSelectLoginUser,
   makeSelectLoginLoading,

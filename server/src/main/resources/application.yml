@@ -14,10 +14,13 @@
 #   limitations under the License.
 #  >>
 
+davinci:
+  version: 0.3-rc
+
+
 file:
   userfiles-path: ${DAVINCI3_HOME}/userfiles/
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
-  phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
   base-path: ${DAVINCI3_HOME}/lib/
 
 
@@ -33,24 +36,11 @@ spring:
     additional-location: file:${DAVINCI3_HOME}/config/
     name: application
 
-  datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    time-between-eviction-runs-millis: 30000
-    min-evictable-idle-time-millis: 300000
-    test-while-idle: true
-    test-on-borrow: false
-    test-on-return: false
-    filters: stat
-    break-after-acquire-failure: true
-    connection-error-retry-attempts: 3
-    validation-query: SELECT 1
-
   resources:
     static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}
 
   mvc:
     static-path-pattern: /**
-
 
   thymeleaf:
     mode: HTML5
@@ -73,6 +63,7 @@ spring:
 logging:
   config: file:${DAVINCI3_HOME}/config/logback.xml
 
+
 springfox:
   documentation:
     swagger:
@@ -87,6 +78,7 @@ pagehelper:
   helperDialect: mysql
   params: count=countSql
 
+
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml
   config-locations: classpath:mybatis/mybatis-config.xml
@@ -95,11 +87,14 @@ mybatis:
     map-underscore-to-camel-case: true
     use-generated-keys: true
 
+
 mapper:
   identity: MYSQL
   not-empty: false
   mappers: edp.davinci.dao
 
+
 sql_template_delimiter: $
+
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml

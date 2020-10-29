@@ -27,6 +27,7 @@
         </selectKey>
         insert into mem_dashboard_widget
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            `alias`,
             `dashboard_id`,
             `widget_Id`,
             `x`,
@@ -41,6 +42,7 @@
             `create_time`
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{alias,jdbcType=VARCHAR},
             #{dashboardId,jdbcType=BIGINT},
             #{widgetId,jdbcType=BIGINT},
             #{x,jdbcType=INTEGER},
@@ -59,10 +61,11 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_dashboard_widget
-        (`dashboard_id`,`widget_Id`,`x`,`y`,`width`,`height`,`frequency`,`polling`,`create_by`,`create_time`)
+        (`alias`, `dashboard_id`,`widget_Id`,`x`,`y`,`width`,`height`,`frequency`,`polling`,`create_by`,`create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
+            #{record.alias,jdbcType=VARCHAR},
             #{record.dashboardId,jdbcType=BIGINT},
             #{record.widgetId,jdbcType=BIGINT},
             #{record.x,jdbcType=INTEGER},
@@ -81,6 +84,7 @@
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update mem_dashboard_widget
             <set>
+                `alias` = #{item.alias,jdbcType=VARCHAR},
                 `dashboard_id` = #{item.dashboardId,jdbcType=BIGINT},
                 `widget_Id` = #{item.widgetId,jdbcType=BIGINT},
                 `x` = #{item.x,jdbcType=INTEGER},

@@ -33,7 +33,7 @@ import static edp.core.consts.Consts.EMPTY;
 
 public class ResultMap extends HashMap<String, Object> {
 
-    private HashMap<String, Object> header;
+    private HashMap<String, Object> header = new HashMap<>();
 
     private int code = HttpCodeEnum.OK.getCode();
 
@@ -44,11 +44,11 @@ public class ResultMap extends HashMap<String, Object> {
     }
 
     public ResultMap() {
+
     }
 
     public ResultMap success() {
         this.code = HttpCodeEnum.OK.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", this.code);
         this.header.put("msg", "Success");
         this.put("header", header);
@@ -58,7 +58,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap success(String token) {
         this.code = HttpCodeEnum.OK.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", this.code);
         this.header.put("msg", "Success");
         this.header.put("token", token);
@@ -70,7 +69,6 @@ public class ResultMap extends HashMap<String, Object> {
     public ResultMap successAndRefreshToken(HttpServletRequest request) {
         String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
         this.code = HttpCodeEnum.OK.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", this.code);
         this.header.put("msg", "Success");
         this.header.put("token", this.tokenUtils.refreshToken(token));
@@ -82,7 +80,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap fail() {
         this.code = HttpCodeEnum.FAIL.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", code);
         this.put("header", header);
         this.put("payload", EMPTY);
@@ -91,7 +88,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap fail(int code) {
         this.code = code;
-        this.header = new HashMap<>();
         this.header.put("code", code);
         this.put("header", header);
         this.put("payload", EMPTY);
@@ -101,7 +97,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap failWithToken(String token) {
         this.code = HttpCodeEnum.FAIL.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", code);
         this.header.put("msg", HttpCodeEnum.FAIL.getMessage());
         this.header.put("token", tokenUtils.refreshToken(token));
@@ -113,7 +108,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap failAndRefreshToken(HttpServletRequest request) {
         this.code = HttpCodeEnum.FAIL.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", code);
         this.header.put("msg", HttpCodeEnum.FAIL.getMessage());
 
@@ -129,7 +123,6 @@ public class ResultMap extends HashMap<String, Object> {
 
     public ResultMap failAndRefreshToken(HttpServletRequest request, HttpCodeEnum httpCodeEnum) {
         this.code = httpCodeEnum.getCode();
-        this.header = new HashMap<>();
         this.header.put("code", code);
         this.header.put("msg", httpCodeEnum.getMessage());
 

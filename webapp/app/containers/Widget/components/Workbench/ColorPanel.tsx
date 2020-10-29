@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { SketchPicker } from 'react-color'
 import { IDataParamSource } from './Dropbox'
 import { getAggregatorLocale, decodeMetricName } from '../util'
@@ -96,7 +96,6 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
         </ul>
         <div className={styles.picker}>
           <SketchPicker
-            className="sketchpickerinpanel"
             color={color}
             presetColors={defaultThemeColors}
             onChangeComplete={this.colorChange}

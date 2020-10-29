@@ -27,7 +27,7 @@ import React, {
   forwardRef
 } from 'react'
 import moment, { Moment } from 'moment'
-import { Form, Row, Col, Input, Select, DatePicker, Spin } from 'antd'
+import { Form, Row, Col, Input, Select, DatePicker, Spin, Checkbox } from 'antd'
 const FormItem = Form.Item
 const { TextArea } = Input
 const { Option } = Select
@@ -37,8 +37,10 @@ import { FormComponentProps } from 'antd/lib/form'
 import {
   SchedulePeriodUnit,
   ISchedule,
-  ICronExpressionPartition
+  ICronExpressionPartition,
+  JobType
 } from '../types'
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 import { FormItemStyle, LongFormItemStyle } from '../constants'
 
 import Styles from './ScheduleBaseConfig.less'
@@ -108,6 +110,7 @@ const monthOptions = [...Array(12).keys()].map((m) => (
 export type ScheduleBaseFormProps = ISchedule &
   ICronExpressionPartition & {
     dateRange: [Moment, Moment]
+    setCronExpressionManually: boolean
   }
 
 interface IScheduleBaseConfigProps
@@ -119,6 +122,7 @@ interface IScheduleBaseConfigProps
     resolve: () => any,
     reject: (error: string) => any
   ) => any
+  onChangeJobType: (data: any) => any
 }
 
 const computePeriodUnit = (cronExpression: string) => {
@@ -146,7 +150,12 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
   props,
   ref
 ) => {
-  const { form, schedule, loading, onCheckUniqueName } = props
+  const { form, schedule, loading, onCheckUniqueName, onChangeJobType } = props
+  const { cronExpression, config } = schedule
+  const [currentPeriodUnit, setCurrentPeriodUnit] = useState<
+    SchedulePeriodUnit
+  >(computePeriodUnit(cronExpression))
+  const [manual, setManual] = useState(config.setCronExpressionManually)
 
   const checkNameUnique = useCallback(
     (_, name = '', callback) => {
@@ -166,42 +175,46 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
     [onCheckUniqueName, schedule]
   )
 
-  const { cronExpression } = schedule
-  const [currentPeriodUnit, setCurrentPeriodUnit] = useState<
-    SchedulePeriodUnit
-  >(computePeriodUnit(cronExpression))
-
-  useEffect(
-    () => {
-      const periodUnit = computePeriodUnit(cronExpression)
-      setCurrentPeriodUnit(periodUnit)
+  const changeJobType = useCallback(
+    (value: JobType) => {
+      onChangeJobType(value)
     },
-    [cronExpression]
+    [onChangeJobType]
   )
+
+  const changeManual = useCallback((e: CheckboxChangeEvent) => {
+    setManual(e.target.checked)
+  }, [])
+
+  useEffect(() => {
+    const periodUnit = computePeriodUnit(cronExpression)
+    setCurrentPeriodUnit(periodUnit)
+  }, [cronExpression])
+
+  useEffect(() => {
+    setManual(config.setCronExpressionManually)
+  }, [config.setCronExpressionManually])
 
   let { minute, hour, day, month, weekDay } = useMemo<
     Partial<ScheduleBaseFormProps>
-  >(
-    () => {
-      const partitions = cronExpression.split(' ')
-      let minute =
-        form.getFieldValue('minute') ||
-        +(partitions[1].includes('/')
-          ? partitions[1].slice(2) // slice(2) to remove */
-          : partitions[1])
-      // min minute duration is 10
-      if (currentPeriodUnit === 'Minute' && minute < 10) {
-        minute = 10
-        form.setFieldsValue({ minute })
-      }
-      const hour = +partitions[2] || 0
-      const day = +partitions[3] || 1
-      const month = +partitions[4] || 1
-      const weekDay = +partitions[5] || 1
-      return { minute, hour, day, month, weekDay }
-    },
-    [cronExpression, currentPeriodUnit]
-  )
+  >(() => {
+    const partitions = cronExpression.split(' ')
+    let minute =
+      form.getFieldValue('minute') ||
+      +(partitions[1].includes('/')
+        ? partitions[1].slice(2) // slice(2) to remove */
+        : partitions[1])
+    // min minute duration is 10
+    if (currentPeriodUnit === 'Minute' && minute < 10) {
+      minute = 10
+      form.setFieldsValue({ minute })
+    }
+    const hour = +partitions[2] || 0
+    const day = +partitions[3] || 1
+    const month = +partitions[4] || 1
+    const weekDay = +partitions[5] || 1
+    return { minute, hour, day, month, weekDay }
+  }, [cronExpression, currentPeriodUnit])
 
   const { getFieldDecorator } = form
   const { startDate, endDate } = schedule
@@ -227,8 +240,9 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
             {getFieldDecorator<ScheduleBaseFormProps>('jobType', {
               initialValue: schedule.jobType
             })(
-              <Select>
+              <Select onChange={changeJobType}>
                 <Option value="email">Email</Option>
+                <Option value="weChatWork">企业微信</Option>
               </Select>
             )}
           </FormItem>
@@ -258,107 +272,128 @@ export const ScheduleBaseConfig: React.FC<IScheduleBaseConfigProps> = (
           <Spin />
         ) : (
           <Row className={Styles.cronSetting} gutter={8}>
-            <span>每</span>
-            {/* Minute */}
-            {currentPeriodUnit === 'Minute' && (
+            {manual ? (
+              <Col span={12}>
+                {getFieldDecorator<ScheduleBaseFormProps>('cronExpression', {
+                  rules: [{ required: true }],
+                  initialValue: cronExpression
+                })(<Input placeholder="请输入cron表达式" />)}
+              </Col>
+            ) : (
               <>
-                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
-                  initialValue: minute
+                <span>每</span>
+                {/* Minute */}
+                {currentPeriodUnit === 'Minute' && (
+                  <>
+                    {getFieldDecorator<ScheduleBaseFormProps>('minute', {
+                      initialValue: minute
+                    })(
+                      <Select style={{ width: 80 }}>
+                        {minutePeriodOptions}
+                      </Select>
+                    )}
+                  </>
+                )}
+                {/** */}
+                {getFieldDecorator<ScheduleBaseFormProps>('periodUnit', {
+                  initialValue: currentPeriodUnit
                 })(
-                  <Select style={{ width: 80 }}>{minutePeriodOptions}</Select>
+                  <Select
+                    style={{ width: 80 }}
+                    onChange={(value: SchedulePeriodUnit) =>
+                      setCurrentPeriodUnit(value)
+                    }
+                  >
+                    {periodUnitList.map((unit) => (
+                      <Option key={unit} value={unit}>
+                        {periodUnitListLocale[unit]}
+                      </Option>
+                    ))}
+                  </Select>
                 )}
-              </>
-            )}
-            {/** */}
-            {getFieldDecorator<ScheduleBaseFormProps>('periodUnit', {
-              initialValue: currentPeriodUnit
-            })(
-              <Select
-                style={{ width: 80 }}
-                onChange={(value: SchedulePeriodUnit) =>
-                  setCurrentPeriodUnit(value)
-                }
-              >
-                {periodUnitList.map((unit) => (
-                  <Option key={unit} value={unit}>
-                    {periodUnitListLocale[unit]}
-                  </Option>
-                ))}
-              </Select>
-            )}
 
-            {/* Hour */}
-            {currentPeriodUnit === 'Hour' && (
-              <>
-                <span>的第</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
-                  initialValue: minute
-                })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
-              </>
-            )}
-            {/* Day */}
-            {currentPeriodUnit === 'Day' && (
-              <>
-                <span>的</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
-                  initialValue: hour
-                })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
-                <span>:</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
-                  initialValue: minute
-                })(<Select style={{ width: 100 }}>{minuteOptions}</Select>)}
-              </>
-            )}
-            {/* Week */}
-            {currentPeriodUnit === 'Week' && (
-              <>
-                {getFieldDecorator<ScheduleBaseFormProps>('weekDay', {
-                  initialValue: weekDay
-                })(<Select style={{ width: 95 }}>{weekOptions}</Select>)}
-                <span>的</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
-                  initialValue: hour
-                })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
-                <span>:</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
-                  initialValue: minute
-                })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
-              </>
-            )}
-            {/* Month */}
-            {currentPeriodUnit === 'Month' && (
-              <>
-                {getFieldDecorator<ScheduleBaseFormProps>('day', {
-                  initialValue: day
-                })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
-                <span>的</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
-                  initialValue: hour
-                })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
-                <span>:</span>
-                {getFieldDecorator('minute', { initialValue: minute })(
-                  <Select style={{ width: 80 }}>{minuteOptions}</Select>
+                {/* Hour */}
+                {currentPeriodUnit === 'Hour' && (
+                  <>
+                    <span>的第</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('minute', {
+                      initialValue: minute
+                    })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
+                  </>
+                )}
+                {/* Day */}
+                {currentPeriodUnit === 'Day' && (
+                  <>
+                    <span>的</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('hour', {
+                      initialValue: hour
+                    })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
+                    <span>:</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('minute', {
+                      initialValue: minute
+                    })(<Select style={{ width: 100 }}>{minuteOptions}</Select>)}
+                  </>
+                )}
+                {/* Week */}
+                {currentPeriodUnit === 'Week' && (
+                  <>
+                    {getFieldDecorator<ScheduleBaseFormProps>('weekDay', {
+                      initialValue: weekDay
+                    })(<Select style={{ width: 95 }}>{weekOptions}</Select>)}
+                    <span>的</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('hour', {
+                      initialValue: hour
+                    })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
+                    <span>:</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('minute', {
+                      initialValue: minute
+                    })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
+                  </>
+                )}
+                {/* Month */}
+                {currentPeriodUnit === 'Month' && (
+                  <>
+                    {getFieldDecorator<ScheduleBaseFormProps>('day', {
+                      initialValue: day
+                    })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
+                    <span>的</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('hour', {
+                      initialValue: hour
+                    })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
+                    <span>:</span>
+                    {getFieldDecorator('minute', { initialValue: minute })(
+                      <Select style={{ width: 80 }}>{minuteOptions}</Select>
+                    )}
+                  </>
+                )}
+                {/* Year */}
+                {currentPeriodUnit === 'Year' && (
+                  <>
+                    {getFieldDecorator<ScheduleBaseFormProps>('month', {
+                      initialValue: month
+                    })(<Select style={{ width: 80 }}>{monthOptions}</Select>)}
+                    {getFieldDecorator<ScheduleBaseFormProps>('day', {
+                      initialValue: day
+                    })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
+                    <span>的</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('hour', {
+                      initialValue: hour
+                    })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
+                    <span>:</span>
+                    {getFieldDecorator<ScheduleBaseFormProps>('minute', {
+                      initialValue: minute
+                    })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
+                  </>
                 )}
               </>
             )}
-            {/* Year */}
-            {currentPeriodUnit === 'Year' && (
-              <>
-                {getFieldDecorator<ScheduleBaseFormProps>('month', {
-                  initialValue: month
-                })(<Select style={{ width: 80 }}>{monthOptions}</Select>)}
-                {getFieldDecorator<ScheduleBaseFormProps>('day', {
-                  initialValue: day
-                })(<Select style={{ width: 80 }}>{dayOptions}</Select>)}
-                <span>的</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('hour', {
-                  initialValue: hour
-                })(<Select style={{ width: 80 }}>{hourOptions}</Select>)}
-                <span>:</span>
-                {getFieldDecorator<ScheduleBaseFormProps>('minute', {
-                  initialValue: minute
-                })(<Select style={{ width: 80 }}>{minuteOptions}</Select>)}
-              </>
+            {getFieldDecorator<ScheduleBaseFormProps>(
+              'setCronExpressionManually',
+              { initialValue: manual, valuePropName: 'checked' }
+            )(
+              <Checkbox className={Styles.manual} onChange={changeManual}>
+                手动输入
+              </Checkbox>
             )}
           </Row>
         )}

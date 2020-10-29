@@ -18,9 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { Form, Row, Col, Input, Tag, Button, Select, Menu, Icon, Tooltip, Popconfirm, Table, Modal} from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
@@ -32,18 +33,13 @@ import ProjectAdmin from './ProjectAdmin'
 
 interface IProjectsFormProps {
   type: string
-  form: any
-  onCheckName: (id, name, type, resolve, reject) => void
   deleteProject: (id: number) => any
   currentProject: any
   organizations?: any
-  onTransfer: () => any
   onModalOk: () => any
   modalLoading: boolean
-  onWidgetTypeChange: () => any
   onCancel: () => any
-  showEditProjectForm: () => any
-  showAdminProjectForm: () => any
+  showEditProjectForm: (e) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   onTabsChange: (mode: string) => any
 }
@@ -57,7 +53,7 @@ interface IProjectsFormStates {
   authSettingVisible: boolean
 }
 
-export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProjectsFormStates> {
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps & FormComponentProps, IProjectsFormStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -103,8 +99,12 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
     }
   }
 
+  private substr (str: string) {
+    return  str?.length > 14 ?  `${str.substr(0, 14)}...` : str
+  }
+
   public render () {
-    const { type, organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
+    const { type, organizations, modalLoading, onCheckUniqueName } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 3 },
@@ -123,18 +123,6 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
       </Button>
     )]
 
-    const transferButtons = [(
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        onClick={this.props.onTransfer}
-        loading={modalLoading}
-        disabled={modalLoading}
-      >
-        移交
-      </Button>
-    )]
     const organizationOptions = organizations ? organizations.map((o) => {
       const orgId = this.props.form.getFieldValue('orgId_hc')
       if (this.props.type === 'transfer' && o.id === Number(orgId)) {
@@ -181,13 +169,13 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
         <Form>
             <Row gutter={24}>
                 <Col span={12}>
+                  {type !== 'add' && (
                     <FormItem className={utilStyles.hide}>
-                      {getFieldDecorator('id', {
-                        hidden: this.props.type === 'add'
-                      })(
+                      {getFieldDecorator('id', {})(
                         <Input />
                       )}
                     </FormItem>
+                  )}
                     <FormItem label="名称">
                       {getFieldDecorator('name', {
                       //  hidden: this.props.type === 'transfer',
@@ -252,7 +240,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
               <p className={styles.desc}><span className={styles.label}>创建人</span>  <b>{createBy.username}</b></p>
               <p className={styles.button}>
                 <Tooltip title="移交">
-                  <Button type="default" onClick={this.props.showEditProjectForm}>移交 {name}</Button>
+                  <Button type="default" onClick={this.props.showEditProjectForm}>移交 {this.substr(name)}</Button>
                 </Tooltip>
               </p>
             </div>
@@ -270,7 +258,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                   onConfirm={this.deleteProject(id)}
                 >
                   <Tooltip title="删除">
-                    <Button type="danger"  onClick={this.stopPPG} >删除 {name}</Button>
+                    <Button type="danger"  onClick={this.stopPPG} >删除 {this.substr(name)}</Button>
                   </Tooltip>
                 </Popconfirm>
               </p>
@@ -309,7 +297,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
   }
 }
 
-export default Form.create()(ProjectsForm)
+export default Form.create<IProjectsFormProps & FormComponentProps>()(ProjectsForm)
 
 
 

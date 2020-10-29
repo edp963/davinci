@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
@@ -46,11 +46,13 @@ import {
   Icon,
   Button,
   Tooltip,
-  Popconfirm
+  Popconfirm,
+  message,
+  Modal
 } from 'antd'
 import { ButtonProps } from 'antd/lib/button'
 import { ColumnProps } from 'antd/lib/table'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Box from 'components/Box'
 
 import { ISchedule, JobStatus, IScheduleLoading } from './types'
@@ -69,6 +71,7 @@ interface IScheduleListDispatchProps {
   onLoadSchedules: (projectId: number) => any
   onDeleteSchedule: (id: number) => any
   onChangeScheduleJobStatus: (id: number, status: JobStatus) => any
+  onExecuteScheduleImmediately: (id: number, resolve: () => void) => any
 }
 
 type ScheduleListProps = IScheduleListStateProps &
@@ -89,52 +92,6 @@ const JobStatusIcons: { [key in JobStatus]: string } = {
   stopped: 'caret-right'
 }
 
-const columns: Array<ColumnProps<ISchedule>> = [
-  {
-    title: '名称',
-    dataIndex: 'name',
-    render: (name, record) => {
-      if (!record.execLog) {
-        return name
-      }
-      return (
-        <>
-          <span>{name}</span>
-          <Tooltip title={record.execLog}>
-            <Icon className={Styles.info} type="info-circle" />
-          </Tooltip>
-        </>
-      )
-    }
-  },
-  {
-    title: '描述',
-    dataIndex: 'description'
-  },
-  {
-    title: '类型',
-    dataIndex: 'jobType',
-    width: 60,
-    align: 'center'
-  },
-  {
-    title: '有效开始时间',
-    dataIndex: 'startDate',
-    width: 160
-  },
-  {
-    title: '有效结束时间',
-    dataIndex: 'endDate',
-    width: 160
-  },
-  {
-    title: '状态',
-    dataIndex: 'jobStatus',
-    width: 70,
-    align: 'center'
-  }
-]
-
 const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   const {
     match,
@@ -144,9 +101,73 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
     currentProject,
     onLoadSchedules,
     onDeleteSchedule,
-    onChangeScheduleJobStatus
+    onChangeScheduleJobStatus,
+    onExecuteScheduleImmediately
   } = props
+  const [execLogModalVisible, setExecLogModalVisible] = useState(false)
+  const [execLog, setExecLogContent] = useState('')
   const tablePagination = useTablePagination(0)
+
+  const openExecLogModal = useCallback((logContent) => () => {
+    setExecLogModalVisible(true)
+    setExecLogContent(logContent)
+  }, [])
+  const closeExecLogModal = useCallback(() => {
+    setExecLogModalVisible(false)
+  }, [])
+
+  const columns: Array<ColumnProps<ISchedule>> = useMemo(() => {
+    return [
+      {
+        title: '名称',
+        dataIndex: 'name',
+        render: (name, record) => {
+          if (!record.execLog) {
+            return name
+          }
+          return (
+            <p className={Styles.info}>
+              {name}
+              <Tooltip title="点击查看错误日志">
+                <Icon
+                  type="info-circle"
+                  onClick={openExecLogModal(record.execLog)}
+                />
+              </Tooltip>
+            </p>
+          )
+        }
+      },
+      {
+        title: '描述',
+        dataIndex: 'description'
+      },
+      {
+        title: '类型',
+        dataIndex: 'jobType',
+        width: 60,
+        align: 'center'
+      },
+      {
+        title: '有效开始时间',
+        dataIndex: 'startDate',
+        width: 180,
+        align: 'center'
+      },
+      {
+        title: '有效结束时间',
+        dataIndex: 'endDate',
+        width: 180,
+        align: 'center'
+      },
+      {
+        title: '状态',
+        dataIndex: 'jobStatus',
+        width: 80,
+        align: 'center'
+      }
+    ]
+  }, [])
 
   useEffect(() => {
     onLoadSchedules(+match.params.projectId)
@@ -188,6 +209,15 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
     [onChangeScheduleJobStatus]
   )
 
+  const executeScheduleImmediately = useCallback(
+    (id: number) => () => {
+      onExecuteScheduleImmediately(id, () => {
+        message.success('任务已开始执行')
+      })
+    },
+    [onExecuteScheduleImmediately]
+  )
+
   const editSchedule = useCallback(
     (scheduleId: number) => () => {
       const { projectId } = match.params
@@ -209,7 +239,7 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
       title: '操作',
       key: 'action',
       align: 'center',
-      width: 145,
+      width: 185,
       render: (_, record) => (
         <span className="ant-table-action-column">
           <Tooltip title={JobStatusNextOperations[record.jobStatus]}>
@@ -220,6 +250,20 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
               onClick={changeJobStatus(record)}
             />
           </Tooltip>
+          <Popconfirm
+            title="确定立即执行？"
+            placement="bottom"
+            onConfirm={executeScheduleImmediately(record.id)}
+          >
+            <Tooltip title="立即执行">
+              <Button
+                shape="circle"
+                type="ghost"
+              >
+                <i className="iconfont icon-lijitoudi" />
+              </Button>
+            </Tooltip>
+          </Popconfirm>
           <Tooltip title="修改" trigger="hover">
             <EditButton
               icon="edit"
@@ -245,7 +289,7 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
   return (
     <Container>
       <Helmet title="Schedule" />
-      <Container.Title>
+      <ContainerTitle>
         <Row>
           <Col span={24}>
             <Breadcrumb className={utilStyles.breadcrumb}>
@@ -255,8 +299,8 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
             </Breadcrumb>
           </Col>
         </Row>
-      </Container.Title>
-      <Container.Body>
+      </ContainerTitle>
+      <ContainerBody>
         <Box>
           <Box.Header>
             <Box.Title>
@@ -284,7 +328,16 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
             </Row>
           </Box.Body>
         </Box>
-      </Container.Body>
+      </ContainerBody>
+      <Modal
+        title="错误日志"
+        wrapClassName="ant-modal-large"
+        visible={execLogModalVisible}
+        onCancel={closeExecLogModal}
+        footer={false}
+      >
+        {execLog}
+      </Modal>
     </Container>
   )
 }
@@ -301,7 +354,9 @@ function mapDispatchToProps(dispatch) {
       dispatch(ScheduleActions.loadSchedules(projectId)),
     onDeleteSchedule: (id) => dispatch(ScheduleActions.deleteSchedule(id)),
     onChangeScheduleJobStatus: (id, currentStatus) =>
-      dispatch(ScheduleActions.changeSchedulesStatus(id, currentStatus))
+      dispatch(ScheduleActions.changeSchedulesStatus(id, currentStatus)),
+    onExecuteScheduleImmediately: (id, resolve) =>
+      dispatch(ScheduleActions.executeScheduleImmediately(id, resolve))
   }
 }
 

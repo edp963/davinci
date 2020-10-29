@@ -67,4 +67,4 @@ const LayerCommandList: React.FC<ILayerCommandListProps> = (props) => {
   )
 }
 
-export default LayerCommandList
+export default React.memo(LayerCommandList)

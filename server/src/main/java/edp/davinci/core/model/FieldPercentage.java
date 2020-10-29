@@ -22,6 +22,6 @@ package edp.davinci.core.model;
 import lombok.Data;
 
 @Data
-public class FieldPercentage {
+public class FieldPercentage extends FieldFormat {
     private int decimalPlaces;
 }

@@ -18,8 +18,7 @@
  * >>
  */
 
-import '@babel/polyfill'
-import 'url-search-params-polyfill'
+import 'intersection-observer'
 
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -29,12 +28,12 @@ import history from 'utils/history'
 
 import App from 'containers/App'
 
-import { LocaleProvider } from 'antd'
-import zh_CN from 'antd/lib/locale-provider/zh_CN'
+import { ConfigProvider } from 'antd'
+import zh_CN from 'antd/es/locale/zh_CN'
 import LanguageProvider from 'containers/LanguageProvider'
 import { translationMessages } from './i18n'
 import moment from 'moment'
-import 'moment/src/locale/zh-cn'
+import 'moment/dist/locale/zh-cn'
 moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
@@ -42,12 +41,10 @@ import 'file-loader?name=[name].[ext]!./.htaccess'
 import 'react-grid-layout/css/styles.css'
 import 'libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
-import 'react-quill/dist/quill.snow.css'
 import 'assets/fonts/iconfont.css'
 import 'assets/override/antd.css'
 import 'assets/override/react-grid.css'
 import 'assets/override/datepicker.css'
-import 'assets/override/react-color.css'
 import 'assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'
@@ -78,12 +75,15 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
 import 'echarts/lib/component/brush'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
 import 'assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from 'app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 import configureStore from './configureStore'
+
 
 const initialState = {}
 const store = configureStore(initialState, history)
@@ -93,11 +93,11 @@ const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <LocaleProvider locale={zh_CN}>
+        <ConfigProvider locale={zh_CN}>
           <ConnectedRouter history={history}>
             <App />
           </ConnectedRouter>
-        </LocaleProvider>
+        </ConfigProvider>
       </LanguageProvider>
     </Provider>,
     MOUNT_NODE

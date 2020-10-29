@@ -102,42 +102,42 @@ public class DateUtils {
         }
     }
 
-    public static Date currentData() {
+    public static Date currentDate() {
         return new Date();
     }
 
     public static long getNowMilliSecondTime() {
-        return currentData().getTime();
+        return currentDate().getTime();
     }
 
 
     public static String getNowDateYYYYMM() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMM");
 
-        return formatter.format(currentData());
+        return formatter.format(currentDate());
     }
 
     public static String getNowDateYYYYMMDD() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
 
-        return formatter.format(currentData());
+        return formatter.format(currentDate());
     }
 
-    public static String getTheDayBeforNowDateYYYYMMDD() {
+    public static String getTheDayBeforeNowDateYYYYMMDD() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentData());
+        calendar.setTime(currentDate());
         calendar.add(Calendar.DAY_OF_MONTH, -1);
 
         return formatter.format(calendar.getTime());
     }
 
-    public static String getTheDayBeforAWeekYYYYMMDD() {
+    public static String getTheDayBeforeAWeekYYYYMMDD() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentData());
+        calendar.setTime(currentDate());
         calendar.add(Calendar.DAY_OF_MONTH, -7);
 
         return formatter.format(calendar.getTime());
@@ -146,12 +146,12 @@ public class DateUtils {
     public static String getNowDateFormatCustom(String format) {
         SimpleDateFormat formatter = new SimpleDateFormat(format);
 
-        return formatter.format(currentData());
+        return formatter.format(currentDate());
     }
 
     public static long getNowDaySecondTime0() {
         Calendar c = Calendar.getInstance();
-        Date d = currentData();
+        Date d = currentDate();
         c.setTime(d);
         c.set(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
 
@@ -312,6 +312,45 @@ public class DateUtils {
             return null;
         }
         return toSqlDate(new Date(timeLongInMicros));
+    }
+
+    public static Date dateFormat(String date, String dateFormat) {
+        if (date == null) {
+            return null;
+        }
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        try {
+            return format.parse(date);
+        } catch (Exception ex) {
+
+        }
+        return null;
+    }
+
+    public static String dateFormat(Date date, String dateFormat) {
+        if (date == null) {
+            return "";
+        }
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        try {
+            return format.format(date);
+        } catch (Exception ex) {
+
+        }
+        return "";
+    }
+
+    public static Date add(Date date, int field, int amount) {
+
+        if (date == null) {
+            date = new Date();
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(field, amount);
+
+        return cal.getTime();
     }
 
 }

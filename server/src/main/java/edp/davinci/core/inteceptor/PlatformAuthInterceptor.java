@@ -26,6 +26,7 @@ import edp.core.annotation.AuthShare;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.AuthenticationService;
 import edp.davinci.dao.PlatformMapper;
@@ -84,7 +85,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (null == parameterMap) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_MSG_AUTHENTICATION);
             response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
@@ -92,7 +93,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (!parameterMap.containsKey(AUTH_CODE) || null == parameterMap.get(AUTH_CODE) || parameterMap.get(AUTH_CODE).length == 0) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_MSG_AUTHENTICATION);
             response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
@@ -101,7 +102,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (StringUtils.isEmpty(authCode)) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_MSG_AUTHENTICATION);
             response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
@@ -110,15 +111,15 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (null == platform) {
             response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
             resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                    .message("The resource requires authentication, which was not supplied with the request");
+                    .message(ErrorMsg.ERR_MSG_AUTHENTICATION);
             response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 
         User user = null;
 
-        AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (null != authShareMethoed) {
+        AuthShare authShareMethod = method.getAnnotation(AuthShare.class);
+        if (null != authShareMethod) {
             String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);
@@ -128,7 +129,7 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                 } else {
                     response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
                     resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
-                            .message("The resource requires authentication, which was not supplied with the request");
+                            .message(ErrorMsg.ERR_MSG_AUTHENTICATION);
                     response.getWriter().print(JSONObject.toJSONString(resultMap));
                     return false;
                 }
@@ -140,14 +141,14 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
                 if (null == user) {
                     response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
                     resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                            .message("ERROR Permission denied");
+                            .message(ErrorMsg.ERR_MSG_PERMISSION);
                     response.getWriter().print(JSONObject.toJSONString(resultMap));
                     return false;
                 }
             } catch (Exception e) {
                 response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
                 resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                        .message("ERROR Permission denied");
+                        .message(ErrorMsg.ERR_MSG_PERMISSION);
                 response.getWriter().print(JSONObject.toJSONString(resultMap));
                 return false;
             }

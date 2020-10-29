@@ -33,3 +33,4 @@ userfiles/
 *yarn.lock
 bin/upgrade.go
 bin/upgrade
+.history/

@@ -20,12 +20,11 @@
 
 import React, { useState } from 'react'
 import classnames from 'classnames'
-import { ResizableBox } from 'libs/react-resizable'
-import { ResizableProps } from 'libs/react-resizable'
+import { ResizableBox, ResizableProps } from 'libs/react-resizable'
 import ResizeHandle from './ResizeHandle'
 import './SplitPane.less'
 
-interface ISplitPaneProps {
+export interface ISplitPaneProps {
   className?: string
   type: 'horizontal' | 'vertical'
   invert?: boolean
@@ -34,6 +33,8 @@ interface ISplitPaneProps {
   maxSize?: number
   minSize?: number
   onResize?: (newSize: number) => void
+  onResizeStart?: () => void
+  onResizeStop?: (newSize: number) => void
 }
 
 const SplitPane: React.FC<ISplitPaneProps> = (props) => {
@@ -46,7 +47,9 @@ const SplitPane: React.FC<ISplitPaneProps> = (props) => {
     maxSize,
     minSize,
     children,
-    onResize
+    onResize,
+    onResizeStart,
+    onResizeStop
   } = props
 
   const [child1, child2] = React.Children.toArray(
@@ -71,7 +74,25 @@ const SplitPane: React.FC<ISplitPaneProps> = (props) => {
         newSize = size.height
       }
       setCurrentSize(newSize)
-      onResize && onResize(newSize)
+      if (onResize) {
+        onResize(newSize)
+      }
+    },
+    onResizeStart: () => {
+      if (onResizeStart) {
+        onResizeStart()
+      }
+    },
+    onResizeStop: (e, { size }) => {
+      let newSize: number
+      if (type === 'horizontal') {
+        newSize = size.width
+      } else if (type === 'vertical') {
+        newSize = size.height
+      }
+      if (onResizeStop) {
+        onResizeStop(newSize)
+      }
     }
   }
 

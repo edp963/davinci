@@ -1,10 +1,11 @@
 import React from 'react'
 const styles = require('../Organization.less')
 import { Button, Input, Form, Row, Col, Radio, Modal } from 'antd'
+import {FormComponentProps} from 'antd/lib/form'
 const FormItem = Form.Item
 const RadioButton = Radio.Button
 import UploadAvatar from 'components/UploadAvatar'
-import { IOrganization } from '../Organization'
+import { IOrganization } from '../types'
 const utilStyles = require('assets/less/util.less')
 
 interface ISettingProps {
@@ -130,36 +131,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                     )}
                   </FormItem>
                 </Col>
-                {/*<Col>*/}
-                  {/*<FormItem*/}
-                    {/*label="删除和移交项目"*/}
-                 {/*//   {...commonFormItemStyle}*/}
-                  {/*>*/}
-                    {/*{getFieldDecorator('allowDeleteOrTransferProject', {*/}
-                      {/*initialValue: true*/}
-                    {/*})(*/}
-                      {/*<Radio.Group size="small">*/}
-                        {/*<RadioButton value={false}>禁止</RadioButton>*/}
-                        {/*<RadioButton value={true}>允许</RadioButton>*/}
-                      {/*</Radio.Group>*/}
-                    {/*)}*/}
-                  {/*</FormItem>*/}
-                {/*</Col>*/}
-                {/*<Col>*/}
-                  {/*<FormItem*/}
-                 {/*//   {...commonFormItemStyle}*/}
-                    {/*label="修改项目是否可见"*/}
-                  {/*>*/}
-                    {/*{getFieldDecorator('allowChangeVisibility', {*/}
-                      {/*initialValue: true*/}
-                    {/*})(*/}
-                      {/*<Radio.Group size="small">*/}
-                        {/*<RadioButton value={false}>禁止</RadioButton>*/}
-                        {/*<RadioButton value={true}>允许</RadioButton>*/}
-                      {/*</Radio.Group>*/}
-                    {/*)}*/}
-                  {/*</FormItem>*/}
-                {/*</Col>*/}
                 <Col>
                   <FormItem
                  //   {...commonFormItemStyle}
@@ -171,8 +142,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                       <Radio.Group size="small">
                         <RadioButton value={0}>不可见任何</RadioButton>
                         <RadioButton value={1}>只可见公开</RadioButton>
-                        {/* <RadioButton value={2}>修改</RadioButton>
-                        <RadioButton value={3}>删除</RadioButton> */}
                       </Radio.Group>
                     )}
                   </FormItem>
@@ -205,7 +174,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
   }
 }
 
-export default Form.create()(Setting)
+export default Form.create<ISettingProps & FormComponentProps>()(Setting)
 
 
 

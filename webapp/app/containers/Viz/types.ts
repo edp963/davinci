@@ -24,15 +24,15 @@ import {
   IDisplayParams,
   IDisplayFormed,
   Display,
-  IDashboard,
+  IDashboardBase,
+  IDashboardRaw,
   IDashboardNode,
   ISlideBase,
   SlideScaleMode,
   ISlideParams,
   ISlideFormed
 } from './components/types'
-
-import { DashboardTypes } from './components/constants'
+import { IDashboard } from 'containers/Dashboard/types'
 
 export interface ISlideRaw extends ISlideBase {
   config: string
@@ -63,13 +63,14 @@ interface IVizState {
 
 export {
   IPortal,
+  IDashboard,
   IDisplayRaw,
   IDisplayParams,
   IDisplayFormed,
   Display,
-  IDashboard,
+  IDashboardBase,
+  IDashboardRaw,
   IDashboardNode,
-  DashboardTypes,
   SlideScaleMode,
   ISlideParams,
   ISlideFormed,

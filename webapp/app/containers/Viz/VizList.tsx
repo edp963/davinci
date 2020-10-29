@@ -16,7 +16,7 @@ import { makeSelectPortals, makeSelectDisplays } from '../Viz/selectors'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from 'components/Box'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import PortalList from './components/PortalList'
 import DisplayList from './components/DisplayList'
 
@@ -136,7 +136,7 @@ export class VizList extends React.Component<
     return (
       <Container>
         <Helmet title="Viz" />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col span={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
@@ -146,8 +146,8 @@ export class VizList extends React.Component<
               </Breadcrumb>
             </Col>
           </Row>
-        </Container.Title>
-        <Container.Body>
+        </ContainerTitle>
+        <ContainerBody>
           <Box>
             <Box.Header>
               <Box.Title>
@@ -206,7 +206,7 @@ export class VizList extends React.Component<
               />
             </div>
           </Box>
-        </Container.Body>
+        </ContainerBody>
       </Container>
     )
   }

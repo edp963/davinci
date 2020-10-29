@@ -33,7 +33,9 @@ public class ShareDashboard {
 
     private String config;
 
-    private Set<ShareWidget> widgets;
+    private Set<SimpleShareWidget> widgets;
 
     private List<MemDashboardWidget> relations;
+
+    private Set<ShareView> views;
 }

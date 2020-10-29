@@ -64,7 +64,7 @@ type SettingComponent =
 export type SettingItem = {
   name: string
   title: string
-  default: string | number
+  default: string | number | boolean
   relatedItems: Array<{
     name: string,
     values: string[] | number[] | boolean[]
@@ -77,11 +77,13 @@ export type SettingItem = {
 export type SettingParam = {
   name: string
   title: string
+  visible: boolean
   items: SettingItem[]
 }
 
 export type SlideLayerSetting = {
   name: string
   title: string
+  visible: boolean
   params: SettingParam[]
 }

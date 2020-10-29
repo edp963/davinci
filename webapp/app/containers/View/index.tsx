@@ -44,12 +44,11 @@ import { initializePermission } from '../Account/components/checkUtilPermission'
 import { Table, Tooltip, Button, Row, Col, Breadcrumb, Icon, Popconfirm, message } from 'antd'
 import { ColumnProps, PaginationConfig, SorterResult } from 'antd/lib/table'
 import { ButtonProps } from 'antd/lib/button'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
 import CopyModal from './components/CopyModal'
 
-import { IRouteParams } from 'app/routes'
 import { IViewBase, IView, IViewLoading } from './types'
 import { IProject } from '../Projects/types'
 
@@ -288,7 +287,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
       <>
         <Container>
           <Helmet title="View" />
-          <Container.Title>
+          <ContainerTitle>
             <Row>
               <Col span={24}>
                 <Breadcrumb className={utilStyles.breadcrumb}>
@@ -298,8 +297,8 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
                 </Breadcrumb>
               </Col>
             </Row>
-          </Container.Title>
-          <Container.Body>
+          </ContainerTitle>
+          <ContainerBody>
             <Box>
               <Box.Header>
                 <Box.Title>
@@ -328,7 +327,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
                 </Row>
               </Box.Body>
             </Box>
-          </Container.Body>
+          </ContainerBody>
         </Container>
         <CopyModal
           visible={copyModalVisible}

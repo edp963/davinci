@@ -1,9 +1,26 @@
 module.exports = {
+  ignore: [
+    /[\\\/]core-js/,
+    /webpack[\\\/]buildin/
+  ],
+  overrides: [{
+    test: "./node_modules",
+  }],
+  sourceType: "unambiguous",
   presets: [
     [
       '@babel/preset-env',
       {
-        modules: false
+        modules: false,
+        useBuiltIns: 'usage',
+        corejs: {
+          version: 3,
+          proposals: true
+        },
+        targets: {
+          "chrome": 58,
+          "ie": 11
+        }
       }
     ],
     '@babel/preset-react',
@@ -13,6 +30,7 @@ module.exports = {
     'react-hot-loader/babel',
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-syntax-dynamic-import',
+    '@babel/plugin-proposal-optional-chaining',
     ["import", {
       "libraryName": "antd",
       "libraryDirectory": "es",

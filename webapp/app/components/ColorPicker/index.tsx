@@ -9,9 +9,13 @@ import { SketchPicker, ColorResult } from 'react-color'
 import { Popover } from 'antd'
 const styles = require('./ColorPicker.less')
 
+const defaultTheme = require('assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
+
 interface IColorPickerProps {
   value?: string | [number, number, number, number]
   size?: 'default' | 'small' | 'large'
+  preset?: boolean
   disableAlpha?: boolean
   rawValue?: boolean
   className?: string
@@ -22,7 +26,7 @@ const ColorPicker: RefForwardingComponent<
   Popover,
   PropsWithChildren<IColorPickerProps>
 > = (props, ref) => {
-  const { value, size, disableAlpha, rawValue, className, onChange } = props
+  const { value, size, preset, disableAlpha, rawValue, className, onChange } = props
 
   const cls = classnames({
     [styles.picker]: true,
@@ -54,7 +58,7 @@ const ColorPicker: RefForwardingComponent<
         <div style={{ margin: '-8px -16px' }}>
           <SketchPicker
             color={color}
-            presetColors={[]}
+            presetColors={preset ? defaultThemeColors : []}
             onChangeComplete={colorChange}
             disableAlpha={disableAlpha}
           />

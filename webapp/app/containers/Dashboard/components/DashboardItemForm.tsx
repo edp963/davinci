@@ -18,26 +18,28 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
 import { Form, Row, Col, Table, Input, InputNumber, Select, Steps } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { SortOrder } from 'antd/lib/table'
+import { SortOrder, RowSelectionType } from 'antd/lib/table'
+import { IDashboard } from '../types'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
+import { IWidgetFormed } from 'app/containers/Widget/types'
+import ChartTypes from 'app/containers/Widget/config/chart/ChartTypes'
 
 const utilStyles = require('assets/less/util.less')
-import { ICurrentDashboard } from '../'
 
 interface IDashboardItemFormProps {
   type: string
-  widgets: any[]
+  widgets: IWidgetFormed[]
   selectedWidgets: number[]
-  currentDashboard?: ICurrentDashboard
+  currentDashboard?: IDashboard
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
@@ -82,10 +84,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     let tableWidget
     if (dashboardType === 2) {  //
       tableWidget = widgets.filter((widget) => {
-        console.log(widget.name)
-        const widgetConfig = JSON.parse(widget.config)
-        console.log(widgetConfig)
-        return widgetConfig['selectedChart'] === 1 && widgetConfig['mode'] === 'chart'
+        const { selectedChart, mode } = widget.config
+        return selectedChart === ChartTypes.Table && mode === 'chart'
       })
     } else {
       tableWidget = widgets
@@ -192,6 +192,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       onPollingSelect,
       currentDashboard
     } = this.props
+
     const {
       filteredWidgets,
       pageSize,
@@ -238,7 +239,9 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange,
-      type: dashboardType === 2 ? 'radio' : 'checkbox'
+      type: dashboardType === 2
+        ? 'radio' as RowSelectionType
+        : 'checkbox' as RowSelectionType
     }
 
     const stepIndicator = type === 'add'
@@ -267,6 +270,10 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       [utilStyles.hide]: !polling
     })
 
+    const isShowName = classnames({
+      [utilStyles.hide]: !!(type === 'add')
+    })
+
     return (
       <Form>
         <Row className={utilStyles.formStepArea}>
@@ -290,6 +297,16 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
                 {getFieldDecorator('id')(
                   <Input />
                 )}
+              </FormItem>
+              <FormItem
+                label="widget别名"
+                labelCol={{span: 10}}
+                wrapperCol={{span: 14}}
+                className={isShowName}
+              >
+                {getFieldDecorator('alias', {})(
+                    <Input/>
+                  )}
               </FormItem>
               <FormItem
                 label="数据刷新模式"

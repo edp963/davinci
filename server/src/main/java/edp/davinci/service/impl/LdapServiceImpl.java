@@ -136,6 +136,7 @@ public class LdapServiceImpl implements LdapService {
         Organization organization = new Organization(orgName, null, user.getId());
         if (organizationMapper.insert(organization) > 0) {
             RelUserOrganization relUserOrganization = new RelUserOrganization(organization.getId(), user.getId(), UserOrgRoleEnum.OWNER.getRole());
+            relUserOrganization.createdBy(user.getId());
             relUserOrganizationMapper.insert(relUserOrganization);
         }
 
