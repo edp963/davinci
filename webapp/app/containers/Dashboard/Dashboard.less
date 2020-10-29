@@ -1,5 +1,9 @@
 @import "~assets/less/variable";
 
+.grid {
+  margin-top: -16px;
+}
+
 .unit {
   height: 120px;
   background-color: @body-background;
@@ -102,10 +106,18 @@
         margin-left: 8px;
       }
 
-      .toggle {
+      i {
         font-size: 16px;
         margin-left: 8px;
         cursor: pointer;
+
+        &:last-child {
+          margin-right: 8px;
+        }
+      }
+
+      .activated {
+        color: @primary-color;
       }
 
       .error {
@@ -114,7 +126,8 @@
     }
 
     .tools {
-      opacity: 0;
+      display: none;
+      height: 40px;
       padding-right: 10px;
       flex-shrink: 0;
 
@@ -136,7 +149,7 @@
   &:hover {
     .header {
       .tools {
-        opacity: 1;
+        display: block;
       }
     }
   }
@@ -189,71 +202,6 @@
     }
   }
 
-  .controlPanel {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    overflow: hidden;
-    z-index: 2;
-    display: none;
-
-    &.show {
-      display: block;
-      background-color: fade(@black, 50);
-      cursor: pointer;
-    }
-
-    .form {
-      max-height: 100%;
-      background-color: @white;
-      border-top: 1px solid @border-color-base;
-      overflow-y: auto;
-      cursor: default;
-
-      &.show {
-        transform: translate(0, 0);
-      }
-    }
-
-    &.controlPanelEnter {
-      background-color: transparent;
-
-      .form {
-        transform: translate(0, -100%);
-      }
-
-      &.controlPanelEnterActive {
-        background-color: fade(@black, 50);
-        transition: background-color 350ms ease;
-
-        .form {
-          transform: translate(0, 0);
-          transition: transform 200ms ease-out;
-        }
-      }
-    }
-
-    &.controlPanelLeave {
-      background-color: fade(@black, 50);
-
-      .form {
-        transform: translate(0, 0);
-      }
-
-      &.controlPanelLeaveActive {
-        background-color: transparent;
-        transition: background-color 350ms ease;
-
-        .form {
-          transform: translate(0, -100%);
-          transition: transform 200ms ease-out;
-        }
-      }
-    }
-  }
-
   .block {
     flex: 1;
     min-height: 0;
@@ -265,8 +213,17 @@
 
 .widgetInfoContent {
   max-width: 480px;
-  max-height: 360px;
-  overflow-y: auto;
+
+  :global {
+    .ant-popover-title {
+      font-weight: bold;
+      color: @primary-color;
+    }
+    .ant-popover-inner-content {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+  }
 }
 
 .gridBottom {
@@ -320,18 +277,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-}
-
-.controlForm {
-  padding: 10px;
-
-  .formItem {
-    margin-bottom: 10px;
-  }
-
-  .buttonRow {
-    text-align: right;
-  }
 }
 
 .menuItem {
@@ -534,12 +479,12 @@
   }
 
   .itemAction {
-    display: none;
+    opacity: 0;
   }
 
   &:hover {
     .itemAction {
-      display: inline-block !important;
+      opacity: 1;
       cursor: pointer;
       font-weight: 900;
       margin-bottom: 1px;
@@ -655,7 +600,3 @@
     background-color: #fff;
   }
 }
-.mt16{
-  margin-top: 16px;
-}
-

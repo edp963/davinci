@@ -6,13 +6,13 @@ import ComponentPermission from 'containers/Account/components/checkMemberPermis
 import Star from 'components/StarPanel/Star'
 import { IProject, IStarUser } from 'containers/Projects/types'
 
+
 interface IProjectItemProps {
   key: number
-  options: IProject,
+  pro: IProject,
   toProject: (id: number) => any
   loginUser: any
-  deleteProject: (id: number) => any
-  starUser: IStarUser[]
+  deleteProject?: (id: number) => any
   collectProjects: IProject[]
   currentOrganization: IOrganization
   unStar?: (id: number) => any
@@ -25,15 +25,6 @@ interface IProjectItemProps {
 interface IPropsState {
   currentCollectProjectIds: any[],
   isDisableCollect: boolean
-}
-
-interface IProjectOptions {
-  id: number
-  name: string
-  description: string
-  createBy: number
-  pic: string
-  isLike: boolean
 }
 
 export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsState> {
@@ -67,7 +58,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
     const { onClickCollectProjects, collectProjects } = this.props
     this.stopPPG(e)
     const { currentCollectProjectIds } = this.state
-    onClickCollectProjects(formType, option, () => {
+    onClickCollectProjects(formType, option.id, () => {
       if (formType === 'collect') {
         currentCollectProjectIds.push(option.id)
         this.setState({
@@ -86,7 +77,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
   }
 
   public render () {
-    const { options, loginUser, currentOrganization, starUser, collectProjects} = this.props
+    const { pro, loginUser, currentOrganization, collectProjects} = this.props
     const { currentCollectProjectIds } = this.state
 
     let currentCollectIds = []
@@ -96,46 +87,45 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
       currentCollectIds = collectProjects.map((cp) => cp.id)
     }
 
-    const currentLoginUser = JSON.parse(localStorage.getItem('loginUser'))
-
-    const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
+    const tags = (<div className={styles.tag}>{pro.createBy.id === loginUser.id ? <Tag key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Icon)
     }
 
-   // const bg = require(`assets/images/bg${options.pic}.png`)
+   // const bg = require(`assets/images/bg${pro.pic}.png`)
     let StarPanel = void 0
-    if (options) {
-      StarPanel = <Star d={options} starUser={starUser} unStar={this.props.unStar} userList={this.props.userList}/>
+    if (pro) {
+      const { isStar, starNum, id} = pro
+      StarPanel = <Star isStar={isStar} starNum={starNum} proId={id} unStar={this.props.unStar} userList={this.props.userList}/>
     }
 
     return (
-      <div className={styles.projectItemWrap} onClick={this.props.toProject(options.id)}>
+      <div className={styles.projectItemWrap} onClick={this.props.toProject(pro.id)}>
         <div
           className={styles.avatarWrapper}
-          style={{backgroundImage: `url(${require(`assets/images/bg${options.pic}.png`)})`}}
+          style={{backgroundImage: `url(${require(`assets/images/bg${pro.pic}.png`)})`}}
         />
         <div className={styles.detailWrapper}>
           <div className={styles.titleWrapper} style={{ flex: 1 }}>
-            <div className={styles.title}>{options.name}</div>
-            <div className={styles.desc}>{options.description}</div>
+            <div className={styles.title}>{pro.name}</div>
+            <div className={styles.desc}>{pro.description}</div>
           </div>
           {tags}
           <div className={styles.others}>
             {StarPanel}
             {
-              (loginUser.id === options.createBy.id)
+              (loginUser.id === pro.createBy.id)
                 ? ''
                 : (
                   <div className={styles.delete}>
                     {
-                      currentCollectIds.indexOf(options.id) < 0
+                      currentCollectIds.indexOf(pro.id) < 0
                         ? (
                           <Tooltip title="收藏">
                             <i
                               className="iconfont icon-heart1"
-                              onClick={this.collectProjectItem('collect', options)}
+                              onClick={this.collectProjectItem('collect', pro)}
                             />
                           </Tooltip>
                         )
@@ -143,7 +133,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
                           <Tooltip title="取消收藏">
                             <i
                               className="iconfont icon-heart"
-                              onClick={this.collectProjectItem('unCollect', options)}
+                              onClick={this.collectProjectItem('unCollect', pro)}
                             />
                           </Tooltip>
                         )
@@ -153,23 +143,9 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IPropsSt
             }
             <div className={styles.delete}>
               <Tooltip title="设置">
-                <CreateButton type="setting" onClick={this.showProjectForm('edit', options)} />
+                <CreateButton type="setting" onClick={this.showProjectForm('edit', pro)} />
               </Tooltip>
             </div>
-            {/* <div className={styles.delete}>
-              <Popconfirm
-                title="确定删除？"
-                placement="bottom"
-                onConfirm={this.props.deleteProject(options.id)}
-              >
-                <Tooltip title="删除">
-                  <CreateButton
-                    type="delete"
-                    onClick={this.stopPPG}
-                  />
-                </Tooltip>
-              </Popconfirm>
-            </div> */}
           </div>
         </div>
       </div>

@@ -33,6 +33,8 @@ import projectReducer from '../Projects/reducer'
 import projectSaga from '../Projects/sagas'
 import vizReducer from '../Viz/reducer'
 import vizSaga from '../Viz/sagas'
+import widgetReducer from 'containers/Widget/reducer'
+import widgetSaga from 'containers/Widget/sagas'
 import viewReducer from '../View/reducer'
 import viewSaga from '../View/sagas'
 
@@ -48,17 +50,20 @@ import AntdFormType from 'antd/lib/form/Form'
 const Search = Input.Search
 
 import { VizActions } from 'containers/Viz/actions'
+import DashboardActions from './actions'
+import WidgetActions from 'containers/Widget/actions'
 import { makeSelectCurrentDashboards, makeSelectCurrentPortal, makeSelectVizLoading } from 'containers/Viz/selectors'
 import { makeSelectCurrentDashboard } from './selectors'
+import { makeSelectWidgets } from 'containers/Widget/selectors'
 import {
   hideNavigator,
   checkNameUniqueAction,
-  initiateDownloadTask,
   loadDownloadList,
   downloadFile
 } from '../App/actions'
 import { makeSelectDownloadList, makeSelectDownloadListLoading } from '../App/selectors'
-import { DownloadTypes, IDownloadRecord } from '../App/types'
+import { IDownloadRecord } from '../App/types'
+import { DownloadTypes } from '../App/constants'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { ProjectActions } from '../Projects/actions'
 const { loadProjectDetail, excludeRoles } = ProjectActions
@@ -74,12 +79,12 @@ const SplitPane = React.lazy(() => import('react-split-pane'))
 import {IProjectRoles} from '../Organizations/component/ProjectRole'
 import { OrganizationActions } from '../Organizations/actions'
 const { loadProjectRoles } = OrganizationActions
-import { IGlobalControl, GlobalControlQueryMode } from 'app/components/Filters/types'
 import { RouteComponentWithParams } from 'utils/types'
+import { IWidgetFormed } from '../Widget/types'
 
 import { Grid } from './Loadable'
 
-interface IDashboardProps {
+interface IDashboardProps extends RouteComponentWithParams {
   modalLoading: {
     portal: boolean
     display: boolean
@@ -88,12 +93,14 @@ interface IDashboardProps {
     slides: boolean
   }
   dashboards: IDashboard[]
+  widgets: IWidgetFormed[]
   currentDashboard: IDashboard,
   currentProject: IProject
   currentPortal: any
   projectRoles: IProjectRoles[]
   downloadList: IDownloadRecord[]
   onLoadDashboards: (portalId: number, resolve: any) => void
+  onLoadWidgets: (projectId: number) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
   onDeleteDashboard: (id: number, portalId: number, resolve: any) => void
@@ -106,6 +113,7 @@ interface IDashboardProps {
   onInitiateDownloadTask: (id: number, type: DownloadTypes, downloadParams?: any[]) => void
   onLoadDownloadList: () => void
   onDownloadFile: (id) => void
+  onLoadViews: (projectId: number) => void
 }
 
 export interface IDashboard {
@@ -117,16 +125,6 @@ export interface IDashboard {
   index?: number
   type?: number
   children?: any[]
-}
-
-export interface IDashboardConfig {
-  filters?: IGlobalControl[]
-  linkagers?: any[]
-  queryMode?: GlobalControlQueryMode
-}
-
-export interface ICurrentDashboard extends IDashboard {
-  widgets: any[]
 }
 
 interface IDashboardStates {
@@ -147,7 +145,7 @@ interface IDashboardStates {
   exludeRoles: IExludeRoles[]
 }
 
-export class Dashboard extends React.Component<IDashboardProps & RouteComponentWithParams, IDashboardStates> {
+export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
   private defaultSplitSize = 190
   private maxSplitSize = this.defaultSplitSize * 1.5
   constructor (props) {
@@ -178,11 +176,42 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
   }
 
   public componentWillMount () {
-    const { match, history, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail, onLoadProjectRoles } = this.props
+    const {
+      match,
+      onLoadWidgets,
+      onLoadPortals,
+      onLoadProjectDetail,
+      onLoadProjectRoles
+    } = this.props
     const { projectId, portalId } = match.params
+    onLoadWidgets(Number(projectId))
+    onLoadPortals(projectId)
+    onLoadProjectDetail(projectId)
+    onLoadProjectRoles(Number(projectId))
+    this.initPortal(projectId, portalId)
+  }
+
+  public componentWillReceiveProps (nextProps: IDashboardProps) {
+    const { match, dashboards } = nextProps
+    const { projectId, portalId } = match.params
+
+    if (portalId !== this.props.match.params.portalId) {
+      this.initPortal(projectId, portalId)
+    }
+
+    if (dashboards !== this.props.dashboards) {
+      this.initalDashboardData(dashboards)
+    }
+  }
+
+  public componentDidMount () {
+    this.props.onHideNavigator()
+  }
+
+  private initPortal = (projectId, portalId) => {
+    const { history, onLoadDashboards } = this.props
     const dashboardId = this.getDashboardIdFromLocation()
 
-    onLoadProjectRoles(Number(projectId))
     onLoadDashboards(+portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
@@ -193,10 +222,8 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
       }
       defaultDashboardId = findFirstLeaf(treeData)
 
-      if (defaultDashboardId >= 0) {
-        if (!dashboardId) {
-          history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
-        }
+      if (defaultDashboardId >= 0 && !dashboardId) {
+        history.replace(`/project/${projectId}/portal/${portalId}/dashboard/${defaultDashboardId}`)
       }
 
       this.setState({
@@ -206,19 +233,6 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
       })
       this.expandAll(result)
     })
-
-    onLoadPortals(projectId)
-    onLoadProjectDetail(projectId)
-  }
-
-  public componentWillReceiveProps (nextProps) {
-    if (nextProps.dashboards !== this.props.dashboards) {
-      this.initalDashboardData(nextProps.dashboards)
-    }
-  }
-
-  public componentDidMount () {
-    this.props.onHideNavigator()
   }
 
   private initalDashboardData = (dashboards) => {
@@ -648,11 +662,19 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
     })
   }
 
-  private saveSplitSize = (newSize: number) => {
-    localStorage.setItem('dashboardSplitSize', newSize.toString())
+  private changePortalTreeWidth = (newSize: number) => {
     this.setState({
       portalTreeWidth: newSize
     })
+  }
+
+  private saveSplitSize = (newSize: number) => {
+    localStorage.setItem('dashboardSplitSize', newSize.toString())
+    this.changePortalTreeWidth(newSize)
+    // triggering ResponsiveReactGridLayout readjustment
+    const resizeEvent = document.createEvent('Event')
+    resizeEvent.initEvent('resize', false, true)
+    window.dispatchEvent(resizeEvent)
   }
 
   private changePermission = (scope: IExludeRoles, event) => {
@@ -667,6 +689,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
       match,
       currentDashboard,
       dashboards,
+      widgets,
       modalLoading,
       currentProject,
       currentPortal,
@@ -779,7 +802,8 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
               defaultSize={splitSize}
               minSize={this.defaultSplitSize}
               maxSize={this.maxSplitSize}
-              onChange={this.saveSplitSize}
+              onChange={this.changePortalTreeWidth}
+              onDragFinished={this.saveSplitSize}
             >
               <div className={styles.portalTree} style={{ width: portalTreeWidth || 190 }}>
                 <div className={styles.portalRow}>
@@ -851,7 +875,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
               </div>
               <div className={styles.gridClass}>
                 {
-                  isGrid
+                  isGrid && widgets
                   ? <Route path="/project/:projectId/portal/:portalId/dashboard/:dashboardId" component={Grid} />
                   : (
                     <div className={styles.noDashboard}>
@@ -889,6 +913,7 @@ export class Dashboard extends React.Component<IDashboardProps & RouteComponentW
 
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectCurrentDashboards(),
+  widgets: makeSelectWidgets(),
   currentDashboard: makeSelectCurrentDashboard(),
   modalLoading: makeSelectVizLoading(),
   currentProject: makeSelectCurrentProject(),
@@ -900,6 +925,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboards: (portalId, resolve) => dispatch(VizActions.loadPortalDashboards(portalId, resolve, false)),
+    onLoadWidgets: (projectId: number) => dispatch(WidgetActions.loadWidgets(projectId)),
     onAddDashboard: (dashboard, resolve) => dispatch(VizActions.addDashboard(dashboard, resolve)),
     onEditDashboard: (formType, dashboard, resolve) => dispatch(VizActions.editDashboard(formType, dashboard, resolve)),
     onDeleteDashboard: (id, portalId, resolve) => dispatch(VizActions.deleteDashboard(id, portalId, resolve)),
@@ -909,7 +935,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve)),
     onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
-    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(initiateDownloadTask(id, type, downloadParams)),
+    onInitiateDownloadTask: (id, type, downloadParams?) => dispatch(DashboardActions.initiateDownloadTask(id, type, downloadParams)),
     onLoadDownloadList: () => dispatch(loadDownloadList()),
     onDownloadFile: (id) => dispatch(downloadFile(id))
   }
@@ -926,6 +952,9 @@ const withProjectSaga = injectSaga({ key: 'project', saga: projectSaga })
 const withVizReducer = injectReducer({ key: 'viz', reducer: vizReducer })
 const withVizSaga = injectSaga({ key: 'viz', saga: vizSaga })
 
+const withWidgetReducer = injectReducer({ key: 'widget', reducer: widgetReducer })
+const withWidgetSaga = injectSaga({ key: 'widget', saga: widgetSaga })
+
 const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
 const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 
@@ -933,10 +962,12 @@ export default compose(
   withReducer,
   withProjectReducer,
   withVizReducer,
+  withWidgetReducer,
   withViewReducer,
   withSaga,
   withProjectSaga,
   withVizSaga,
+  withWidgetSaga,
   withViewSaga,
   withConnect
 )(Dashboard)

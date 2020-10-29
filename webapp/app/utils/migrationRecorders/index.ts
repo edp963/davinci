@@ -1,31 +1,47 @@
-import { IGlobalControl, ILocalControl } from 'app/components/Filters/types'
-import { IWidgetDimension, IChartStyles } from 'app/containers/Widget/components/Widget'
-import globalControl from './globalControl'
-import localControl from './localControl'
-import widgetDimension from './widgetDimension'
-import barChartStyles from './barChartStyles'
+import widgetConfig from './widgetConfig'
+import dashboardConfig from './dashboardConfig'
+import scheduleConfig from './scheduleConfig'
+import { IWidgetConfig } from 'app/containers/Widget/components/Widget'
+import { IDashboardConfig } from 'app/containers/Dashboard/types'
+import {
+  IScheduleMailConfig,
+  IScheduleWeChatWorkConfig
+} from 'app/containers/Schedule/components/types'
+import displayParamsConfig from './displayParams'
+import { ILayerParams } from 'app/containers/Display/components/types'
 
-export interface IMigrationRecorder<T> {
+export interface IMigrationRecorder {
   versions: string[]
-  recorder: {
-    [version: string]: (data: T) => T
+  recorders: {
+    [version: string]: (data, options?) => any
   }
 }
 
-function executeMigration<T> (data: T, migrationRecorder: IMigrationRecorder<T>): T {
-  const { versions, recorder } = migrationRecorder
+function executeMigration(
+  migrationRecorder: IMigrationRecorder,
+  data: any,
+  options?
+) {
+  const { versions, recorders } = migrationRecorder
 
-  return versions.reduce((mergedData: T, v) => recorder[v](mergedData), data)
+  return versions.reduce(
+    (mergedData, version) => recorders[version](mergedData, options),
+    data
+  )
 }
 
-const globalControlMigrationRecorder = (data: IGlobalControl) => executeMigration<IGlobalControl>(data, globalControl)
-const localControlMigrationRecorder = (data: ILocalControl) => executeMigration<ILocalControl>(data, localControl)
-const widgetDimensionMigrationRecorder = (data: IWidgetDimension) => executeMigration<IWidgetDimension>(data, widgetDimension)
-const barChartStylesMigrationRecorder = (data: IChartStyles) => executeMigration<IChartStyles>(data, barChartStyles)
-
+const widgetConfigMigrationRecorder = (data: IWidgetConfig, options?) =>
+  executeMigration(widgetConfig, data, options)
+const dashboardConfigMigrationRecorder = (data: IDashboardConfig) =>
+  executeMigration(dashboardConfig, data)
+const scheduleConfigMigrationRecorder = (
+  data: IScheduleMailConfig | IScheduleWeChatWorkConfig
+) => executeMigration(scheduleConfig, data)
+const displayParamsMigrationRecorder = (data: ILayerParams) => 
+  executeMigration(displayParamsConfig, data)
 export {
-  globalControlMigrationRecorder,
-  localControlMigrationRecorder,
-  widgetDimensionMigrationRecorder,
-  barChartStylesMigrationRecorder
+  widgetConfigMigrationRecorder,
+  dashboardConfigMigrationRecorder,
+  scheduleConfigMigrationRecorder,
+  displayParamsMigrationRecorder
 }

@@ -50,6 +50,9 @@ enum Types {
   CHANGE_SCHEDULE_STATUS = 'app/Schedule/CHANGE_SCHEDULE_STATUS',
   CHANGE_SCHEDULE_STATUS_SUCCESS = 'app/Schedule/CHANGE_SCHEDULE_STATUS_SUCCESS',
   CHANGE_SCHEDULE_STATUS_FAILURE = 'app/Schedule/CHANGE_SCHEDULE_STATUS_FAILURE',
+  CHANGE_SCHEDULE_JOB_TYPE = 'app/Schedule/CHANGE_SCHEDULE_JOB_TYPE',
+
+  EXECUTE_SCHEDULE_IMMEDIATELY = 'app/Schedule/EXECUTE_SCHEDULE_IMMEDIATELY',
 
   RESET_SCHEDULE_STATE = 'davinci/View/RESET_SCHEDULE_STATE',
 
@@ -86,6 +89,28 @@ export const EmptySchedule: ISchedule = {
     bcc: '',
     type: 'image',
     imageWidth: DefaultMailImageWidth,
-    contentList: []
+    contentList: [],
+    setCronExpressionManually: false
+  }
+}
+
+
+export const EmptyWeChatWorkSchedule: ISchedule = {
+  id: 0,
+  name: '',
+  description: '',
+  projectId: 0,
+  startDate: '',
+  endDate: '',
+  cronExpression: DefaultSchedulePeriodExpression.Day,
+  jobStatus: 'new',
+  jobType: 'weChatWork',
+  execLog: '',
+  config: {
+    webHookUrl: '',
+    type: 'image',
+    imageWidth: DefaultMailImageWidth,
+    contentList: [],
+    setCronExpressionManually: false
   }
 }

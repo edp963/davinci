@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { IDrawingData, IMetricAxisConfig } from './Pivot'
 import { IWidgetMetric , DimetionType, IChartStyles } from '../Widget'
 import { IChartLine } from './Chart'

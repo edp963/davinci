@@ -23,13 +23,13 @@ import { ActionTypes } from './constants'
 import { ViewActions, ViewActionType } from './actions'
 import omit from 'lodash/omit'
 
-import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import axios, { AxiosResponse, AxiosError, CancelTokenSource } from 'axios'
 import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler, getErrorMessage } from 'utils/util'
 
-import { IViewBase, IView, IExecuteSqlResponse, IExecuteSqlParams, IViewVariable } from './types'
-import { IDistinctValueReqeustParams } from 'app/components/Filters/types'
+import { IViewBase, IView, IExecuteSqlResponse, IViewVariable } from './types'
+import { EExecuteType } from './Editor'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
@@ -60,7 +60,7 @@ export function* getViewsDetail (action: ViewActionType) {
     const asyncData = yield all(viewIds.map((viewId) => (call(request, `${api.view}/${viewId}`))))
     const views: IView[] = asyncData.map((item) => item.payload)
     yield put(viewsDetailLoaded(views, isEditing))
-    if (resolve) { resolve() }
+    if (resolve) { resolve(views) }
   } catch (err) {
     yield put(loadViewsDetailFail())
     errorHandler(err)
@@ -143,13 +143,20 @@ export function* copyView (action: ViewActionType) {
   }
 }
 
+let cancelTokenSource = null as CancelTokenSource
 export function* executeSql (action: ViewActionType) {
   if (action.type !== ActionTypes.EXECUTE_SQL) { return }
-  const { params } = action.payload
+  const { sqlExecuted, executeSqlFail, executeSqlCancel, setIsLastExecuteWholeSql } = ViewActions
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel('cancel execute')
+    yield put(executeSqlCancel())
+    return cancelTokenSource = null
+  }
+  cancelTokenSource = axios.CancelToken.source()
+  const { params, exeType } = action.payload
   const { variables, ...rest } = params
   const omitKeys: Array<keyof IViewVariable> = ['key', 'alias', 'fromService']
   const variableParam = variables.map((v) => omit(v, omitKeys))
-  const { sqlExecuted, executeSqlFail } = ViewActions
   try {
     const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call(request, {
       method: 'post',
@@ -157,15 +164,19 @@ export function* executeSql (action: ViewActionType) {
       data: {
         ...rest,
         variables: variableParam
-      }
+      },
+      cancelToken: cancelTokenSource.token
     })
     yield put(sqlExecuted(asyncData))
+    const isLastExecuteWholeSql = exeType === EExecuteType.whole ? true : false
+    yield put(setIsLastExecuteWholeSql(isLastExecuteWholeSql))
+    cancelTokenSource = null
   } catch (err) {
     const { response } = err as AxiosError
     const { data } = response as AxiosResponse<IDavinciResponse<any>>
     yield put(executeSqlFail(data.header))
+    cancelTokenSource = null
   }
-
 }
 
 /** View sagas for external usages */
@@ -180,8 +191,7 @@ export function* getViewData (action: ViewActionType) {
       data: requestParams
     })
     yield put(viewDataLoaded())
-    const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    asyncData.payload.resultList = asyncData.payload.resultList || []
     resolve(asyncData.payload)
   } catch (err) {
     const { response } = err as AxiosError
@@ -192,17 +202,22 @@ export function* getViewData (action: ViewActionType) {
 }
 
 export function* getSelectOptions (action: ViewActionType) {
-  if (action.type !== ActionTypes.LOAD_SELECT_OPTIONS) { return }
-  const { payload } = action
+  if (action.type !== ActionTypes.LOAD_SELECT_OPTIONS) {
+    return
+  }
   const { selectOptionsLoaded, loadSelectOptionsFail } = ViewActions
   try {
-    const { controlKey, requestParams, itemId, cancelTokenSource } = payload
-    const requestParamsMap: Array<[string, IDistinctValueReqeustParams]> = Object.entries(requestParams)
-    const requests = requestParamsMap.map(([viewId, params]: [string, IDistinctValueReqeustParams]) => {
+    const {
+      controlKey,
+      requestParams,
+      itemId,
+      cancelTokenSource
+    } = action.payload
+    const requests = Object.entries(requestParams).map(([viewId, params]) => {
       const { columns, filters, variables, cache, expired } = params
       return call(request, {
         method: 'post',
-        url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+        url: `${api.view}/${viewId}/getdistinctvalue`,
         data: {
           columns,
           filters,
@@ -213,44 +228,40 @@ export function* getSelectOptions (action: ViewActionType) {
         cancelToken: cancelTokenSource.token
       })
     })
-    const results = yield all(requests)
-    const values = results.reduce((payloads, r, index) => {
-      const { columns } = requestParamsMap[index][1]
-      if (columns.length === 1) {
-        return payloads.concat(r.payload.map((obj) => obj[columns[0]]))
-      }
-      return payloads
-    }, [])
-    yield put(selectOptionsLoaded(controlKey, Array.from(new Set(values)), itemId))
+    const results: Array<IDavinciResponse<object[]>> = yield all(requests)
+    yield put(selectOptionsLoaded(
+      controlKey,
+      results.reduce((arr, result) => arr.concat(result.payload), []),
+      itemId
+    ))
   } catch (err) {
     yield put(loadSelectOptionsFail(err))
-    // errorHandler(err)
   }
 }
 
-export function* getViewDistinctValue (action: ViewActionType) {
-  if (action.type !== ActionTypes.LOAD_VIEW_DISTINCT_VALUE) { return }
-  const { viewId, params, resolve } = action.payload
-  const { viewDistinctValueLoaded, loadViewDistinctValueFail } = ViewActions
+export function* getColumnDistinctValue(action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_COLUMN_DISTINCT_VALUE) {
+    return
+  }
+  const { paramsByViewId, callback } = action.payload
+
   try {
-    const result = yield call(request, {
-      method: 'post',
-      url: `${api.view}/${viewId}/getdistinctvalue`,
-      data: {
-        cache: false,
-        expired: 0,
-        ...params
-      }
+    const requests = Object.entries(paramsByViewId).map(([viewId, params]) => {
+      return call(request, {
+        method: 'post',
+        url: `${api.view}/${viewId}/getdistinctvalue`,
+        data: {
+          ...params,
+          cache: false,
+          expired: 0,
+          columns: params.columns
+        }
+      })
     })
-    const list = params.columns.reduce((arr, col) => {
-      return arr.concat(result.payload.map((item) => item[col]))
-    }, [])
-    yield put(viewDistinctValueLoaded(Array.from(new Set(list))))
-    if (resolve) {
-      resolve(result.payload)
-    }
+    const results: Array<IDavinciResponse<object[]>> = yield all(requests)
+    callback(results.reduce((arr, result) => arr.concat(result.payload), []))
   } catch (err) {
-    yield put(loadViewDistinctValueFail(err))
+    callback()
     errorHandler(err)
   }
 }
@@ -261,7 +272,7 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
   const {
     filters,
-    tempFilters,
+    tempFilters,  // @TODO combine widget static filters with local filters
     linkageFilters,
     globalFilters,
     variables,
@@ -275,8 +286,8 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   let searchFilters = filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters)
-  if (drillStatus && drillStatus.filter) {
-    searchFilters = searchFilters.concat( drillStatus.filter.sqls)
+  if (drillStatus && drillStatus.filters) {
+    searchFilters = searchFilters.concat(drillStatus.filters)  // 改成 drillStatus.filters
   }
 
   try {
@@ -293,8 +304,9 @@ export function* getViewDataFromVizItem (action: ViewActionType) {
       },
       cancelToken: cancelTokenSource.token
     })
-    const { resultList } = asyncData.payload
-    asyncData.payload.resultList = (resultList && resultList.slice(0, 600)) || []
+    asyncData.payload = asyncData.payload || {}
+    const { payload } = asyncData
+    payload.resultList = payload.resultList || []
     yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType, action.statistic))
   } catch (err) {
     yield put(loadViewDataFromVizItemFail(itemId, vizType, getErrorMessage(err)))
@@ -355,7 +367,7 @@ export default function* rootViewSaga () {
 
     takeEvery(ActionTypes.LOAD_VIEW_DATA, getViewData),
     takeEvery(ActionTypes.LOAD_SELECT_OPTIONS, getSelectOptions),
-    takeEvery(ActionTypes.LOAD_VIEW_DISTINCT_VALUE, getViewDistinctValue),
+    takeEvery(ActionTypes.LOAD_COLUMN_DISTINCT_VALUE, getColumnDistinctValue),
     takeEvery(ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM, getViewDataFromVizItem),
 
     takeEvery(ActionTypes.LOAD_DAC_CHANNELS, getDacChannels),

@@ -26,6 +26,5 @@ public class ViewBaseInfo {
     private Long id;
     private String name;
     private String description;
-
     private String sourceName;
 }

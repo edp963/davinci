@@ -13,11 +13,9 @@ module.exports = require('./webpack.base.babel')({
   // In production, we skip all hot-reloading stuff
   entry: {
     app: [
-      require.resolve('react-app-polyfill/ie11'),
       path.join(process.cwd(), 'app/app.tsx')
     ],
     share: [
-      require.resolve('react-app-polyfill/ie11'),
       path.join(process.cwd(), 'share/app.tsx')
     ]
   },
@@ -57,7 +55,8 @@ module.exports = require('./webpack.base.babel')({
     sideEffects: true,
     concatenateModules: true,
     splitChunks: {
-      chunks: 'all',
+      // chunks: 'all',
+      chunks: 'async',
       minSize: 30000,
       minChunks: 1,
       maxAsyncRequests: 5,

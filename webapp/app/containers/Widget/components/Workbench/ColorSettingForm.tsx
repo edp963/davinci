@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { SketchPicker } from 'react-color'
 import { decodeMetricName } from '../util'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
@@ -19,7 +19,6 @@ interface IColorProp {
 interface IColorSettingFormProps {
   mode: WidgetMode
   list: string[]
-  loading: boolean
   metrics: IDataParamSource[]
   config: IDataParamConfig
   onSave: (config) => void
@@ -116,7 +115,7 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
   }
 
   public render () {
-    const { mode, loading, metrics, onCancel } = this.props
+    const { mode, metrics, onCancel } = this.props
     const { actOn, list, selected } = this.state
 
     const metricRadioButtons = [{ name: 'all' }].concat(metrics).map((m) => (
@@ -158,7 +157,6 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
           </div>
           <div className={styles.picker}>
             <SketchPicker
-              className="sketchpickerinpanel"
               color={selected.color}
               presetColors={defaultThemeColors}
               onChangeComplete={this.colorChange}

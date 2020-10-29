@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { AggregatorType, IDataParamSource, IDataParamSourceInBox } from '../Dropbox'
 import PivotChartSelector from '../PivotChartSelector'
 import { getFieldAlias } from '../../Config/Field'
@@ -127,7 +127,8 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       'iconfont': true,
       [styles.sort]: true,
       'icon-sortascending': sort && sort.sortType === FieldSortTypes.Asc,
-      'icon-sortdescending': sort && sort.sortType === FieldSortTypes.Desc
+      'icon-sortdescending': sort && sort.sortType === FieldSortTypes.Desc,
+      'icon-zidingyipaixu': sort && sort.sortType === FieldSortTypes.Custom
     })
 
     const desc = field ? field.desc : ''

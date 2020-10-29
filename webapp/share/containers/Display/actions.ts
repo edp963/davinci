@@ -33,13 +33,14 @@ export const ShareDisplayActions = {
       }
     }
   },
-  displayLoaded(display: IDisplayFormed, slides, widgets) {
+  displayLoaded(display: IDisplayFormed, slides, widgets, formedViews) {
     return {
       type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
       payload: {
         display,
         slides,
-        widgets
+        widgets,
+        formedViews
       }
     }
   },

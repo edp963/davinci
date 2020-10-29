@@ -31,11 +31,12 @@ import { SourceActionType } from 'containers/Source/actions'
 
 import { ActionTypes as WidgetActionTypes } from 'containers/Widget/constants'
 import { WidgetActionType } from 'containers/Widget/actions'
-import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
+import { ActionTypes as DashboardActionTypes } from 'containers/Dashboard/constants'
+import { DashboardActionType } from 'containers/Dashboard/actions'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
 import { DisplayActionType } from 'containers/Display/actions'
-import { LOCATION_CHANGE } from 'connected-react-router'
+import { LOCATION_CHANGE, LocationChangeAction } from 'connected-react-router'
 
 const emptyView: IView = {
   id: null,
@@ -86,12 +87,19 @@ const initialState: IViewState = {
   channels: [],
   tenants: [],
   bizs: [],
-  cancelTokenSources: []
+  cancelTokenSources: [],
+  isLastExecuteWholeSql: true
 }
 
 const viewReducer = (
   state = initialState,
-  action: ViewActionType | WidgetActionType | DisplayActionType | SourceActionType
+  action:
+    | ViewActionType
+    | WidgetActionType
+    | DashboardActionType
+    | DisplayActionType
+    | SourceActionType
+    | LocationChangeAction
 ): IViewState =>
   produce(state, (draft) => {
     switch (action.type) {
@@ -105,8 +113,38 @@ const viewReducer = (
         break
       case ActionTypes.LOAD_VIEWS_SUCCESS:
         draft.views = action.payload.views
-        draft.formedViews = {}
+        draft.formedViews = Object.entries(draft.formedViews).reduce(
+          (obj, [viewId, formedView]) => {
+            const existView = action.payload.views.find(
+              (v) => v.id === Number(viewId)
+            )
+            if (existView) {
+              obj[viewId] = formedView
+            }
+            return obj
+          },
+          {}
+        )
         draft.loading.view = false
+        break
+      case ActionTypes.LOAD_VIEWS_DETAIL:
+        draft.formedViews = action.payload.viewIds.reduce((acc, id) => {
+          if (!acc[id]) {
+            acc[id] = {
+              id,
+              name: '',
+              description: '',
+              sql: '',
+              config: '',
+              sourceId: 0,
+              projectId: 0,
+              model: {},
+              variable: [],
+              roles: []
+            }
+          }
+          return acc
+        }, draft.formedViews)
         break
       case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
         const detailedViews = action.payload.views
@@ -154,6 +192,9 @@ const viewReducer = (
           `${tableColumns.sourceId}_${databaseName}_${tableColumns.tableName}`
         ] = tableColumns
         break
+      case ActionTypes.IS_LAST_EXECUTE_WHOLE_SQL:
+        draft.isLastExecuteWholeSql = action.payload.isLastExecuteWholeSql
+        break
       case ActionTypes.EXECUTE_SQL:
         draft.loading.execute = true
         draft.sqlValidation = { code: null, message: null }
@@ -185,6 +226,15 @@ const viewReducer = (
           message: action.payload.err.msg
         }
         break
+      case ActionTypes.EXECUTE_SQL_CANCEL:
+        draft.sqlDataSource = {
+          ...draft.sqlDataSource,
+          columns: [],
+          totalCount: 0,
+          resultList: []
+        }
+        draft.loading.execute = false
+        break
       case ActionTypes.UPDATE_EDITING_VIEW:
         draft.editingView = action.payload.view
         break
@@ -207,16 +257,13 @@ const viewReducer = (
         break
       case ActionTypes.COPY_VIEW_SUCCESS:
         const fromViewId = action.payload.fromViewId
-        const copiedViewKeys: Array<keyof IViewBase> = [
-          'id',
-          'name',
-          'description'
-        ]
-        const copiedView: IViewBase = pick(
-          action.payload.result,
-          copiedViewKeys
-        )
-        copiedView.sourceName = action.payload.result.source.name
+        const { id, name, description, source } = action.payload.result
+        const copiedView: IViewBase = {
+          id,
+          name,
+          description,
+          sourceName: source.name
+        }
         draft.views.splice(
           draft.views.findIndex(({ id }) => id === fromViewId) + 1,
           0,
@@ -254,22 +301,11 @@ const viewReducer = (
           variable: JSON.parse(widgetView.variable || '[]')
         }
         break
-      case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      case DashboardActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
       case DisplayActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
-        const updatedViews: IFormedViews = (action.payload.views || []).reduce(
-          (obj, view) => {
-            obj[view.id] = {
-              ...view,
-              model: JSON.parse(view.model || '{}'),
-              variable: JSON.parse(view.variable || '[]')
-            }
-            return obj
-          },
-          {}
-        )
         draft.formedViews = {
           ...draft.formedViews,
-          ...updatedViews
+          ...action.payload.formedViews
         }
         break
       case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
@@ -289,4 +325,5 @@ const viewReducer = (
     }
   })
 
+export { initialState as viewInitialState }
 export default viewReducer

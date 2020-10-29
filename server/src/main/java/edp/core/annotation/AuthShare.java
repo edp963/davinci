@@ -19,6 +19,9 @@
 
 package edp.core.annotation;
 
+import edp.davinci.service.share.ShareOperation;
+import edp.davinci.service.share.ShareType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -31,4 +34,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AuthShare {
+    ShareType type();
+    ShareOperation operation() default ShareOperation.READ;
 }

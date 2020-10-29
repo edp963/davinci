@@ -1,42 +1,60 @@
-@import "~assets/less/variable";
+@import '~assets/less/variable';
 
-.enlargeAvatarWrapper {
+.largeWrapper {
   width: 160px;
   height: 160px;
+  line-height: 160px;
 }
-.avatarWrapper {
+
+.profileWrapper {
   width: 120px;
   height: 120px;
+  line-height: 120px;
 }
-.enlargeAvatarWrapper, .avatarWrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+
+.defaultWrapper {
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+}
+
+.smallWrapper {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.largeWrapper,
+.profileWrapper,
+.smallWrapper {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    margin: auto;
+    overflow: hidden;
+    line-height: 1;
+  }
+}
+
+.border {
   border: 1px solid rgba(0, 0, 0, 0.05);
-}
-.img {
-  max-width: 100%;
-  max-height: 100%;
-  overflow: hidden;
-  line-height: 1;
 }
 .large {
   border-radius: 6px;
 }
-.profile{
-  max-width: 100%;
-  max-height: 100%;
+.profile {
   border-radius: 6px;
 }
 .default {
-  width: 80px;
-  height:80px;
   border-radius: 8px;
 }
 .small {
-  // width: 40px;
-  // height:40px;
   border-radius: 6px;
 }
 .sourceSrc {
@@ -47,15 +65,9 @@
 .isEnlarge {
   cursor: pointer;
 }
-.imgWrapper {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  img {
-    max-width: 100%;
-    max-height: 100%;
-  }
+.height0 {
+  height: 0!important;
+}
+.height1 {
+  height: 100%!important;
 }

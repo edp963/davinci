@@ -20,17 +20,21 @@
 package edp.davinci.controller;
 
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.annotation.CurrentUser;
+import edp.core.exception.ServerException;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.dashboardDto.*;
+import edp.davinci.dto.shareDto.ShareEntity;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.User;
 import edp.davinci.service.DashboardPortalService;
 import edp.davinci.service.DashboardService;
+import edp.davinci.service.share.ShareResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -46,6 +50,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.regex.Matcher;
 
 @Api(value = "/dashboardPortals", tags = "dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "dashboardPortal not found"))
@@ -381,6 +386,7 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+            checkAliasName(memDashboardWidgetCreate.getAlias());
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -396,6 +402,24 @@ public class DashboardController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(memDashboardWidget));
     }
 
+    /**
+     * check alias for excel, because SheetName cannot include some special characters
+     *
+     * @param value
+     * @return
+     */
+    private boolean checkAliasName(String value) {
+        if (!StringUtils.isEmpty(value)) {
+            if (value.length() > Constants.INVALID_SHEET_NAME_LENGTH) {
+                throw new ServerException("Alias length cannot exceed 18 digits");
+            }
+            Matcher matcher = Constants.INVALID_SHEET_NAME.matcher(value);
+            if (matcher.find()) {
+                throw new ServerException("Alias cannot contain the following characters: !,:,\\,\\/,?,*,[,],");
+            }
+        }
+        return true;
+    }
 
     /**
      * 修改dashboard下的widget关联信息
@@ -422,6 +446,8 @@ public class DashboardController extends BaseController {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
+
+            checkAliasName(memDashboardWidget.getAlias());
 
             if (invalidId(memDashboardWidget.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
@@ -466,25 +492,38 @@ public class DashboardController extends BaseController {
      * 分享dashboard
      *
      * @param dashboardId
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share dashboard")
-    @GetMapping("/dashboards/{dashboardId}/share")
+    @ApiOperation(value = "share dashboard", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/dashboards/{dashboardId}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDashboard(@PathVariable Long dashboardId,
-                                         @RequestParam(required = false) String username,
+                                         @Valid @RequestBody ShareEntity shareEntity,
+                                         @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
         if (invalidId(dashboardId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid  id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = dashboardService.shareDashboard(dashboardId, username, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = dashboardService.shareDashboard(dashboardId, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
 }

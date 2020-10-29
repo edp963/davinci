@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 const styles = require('./register.less')
 import { Icon } from 'antd'
 

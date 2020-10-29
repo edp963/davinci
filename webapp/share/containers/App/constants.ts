@@ -18,8 +18,26 @@
  * >>
  */
 
-export const DEFAULT_LOCALE = 'en'
-export const LOGIN = 'davinci/App/LOGIN'
-export const LOGGED = 'davinci/App/LOGGED'
-export const LOGOUT = 'davinci/App/LOGOUT'
-export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
+import { createTypes } from 'app/utils/redux'
+
+enum Types {
+  DEFAULT_LOCALE = 'en',
+  LOGIN = 'davinci/Share/App/LOGIN',
+  LOGGED = 'davinci/Share/App/LOGGED',
+  LOGON_FAILURE = 'davinci/Share/App/LOGON_FAILURE',
+  LOGOUT = 'davinci/Share/App/LOGOUT',
+  GET_LOGIN_USER = 'davinci/Share/App/GET_LOGIN_USER',
+  INTERCEPTOR_PREFLIGHT = 'davinci/Share/App/INTERCEPTOR_PREFLIGHT',
+  INTERCEPTOR_PREFLIGHT_SUCCESS = 'davinci/Share/App/INTERCEPTOR_PREFLIGHT_SUCCESS',
+  INTERCEPTOR_PREFLIGHT_FAIL = 'davinci/Share/App/INTERCEPTOR_PREFLIGHT_FAIL',
+  GET_PERMISSIONS = 'davinci/Share/App/GET_PERMISSIONS',
+  GET_PERMISSIONS_SUCCESS = 'davinci/Share/App/GET_PERMISSIONS_SUCCESS',
+  GET_PERMISSIONS_FAIL = 'davinci/Share/App/GET_PERMISSIONS_FAIL',
+  PASSWORD_SHARE_TOKENS = 'davinci/Share/PASSWORD_SHARE_TOKENS',
+  AUTH_SHARE_TOKEN = 'davinci/Share/AUTH_SHARE_TOKEN',
+  GET_SERVER_CONFIGURATIONS = 'davinci/Share/GET_SERVER_CONFIGURATIONS',
+  GET_SERVER_CONFIGURATIONS_SUCCESS = 'davinci/Share/GET_SERVER_CONFIGURATIONS_SUCCESS',
+  GET_SERVER_CONFIGURATIONS_FAIL = 'davinci/Share/GET_SERVER_CONFIGURATIONS_FAIL'
+}
+
+export const ActionTypes = createTypes(Types)

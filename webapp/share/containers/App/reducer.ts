@@ -19,27 +19,60 @@
  */
 
 import produce from 'immer'
-import {
-  LOGGED,
-  LOGOUT
-} from './constants'
+import { ActionTypes } from './constants'
+import { Tmode } from 'app/components/SharePanel/types'
 
-const initialState = {
+interface IState {
+  loading: boolean,
+  logged: boolean,
+  loginUser: object
+  shareType: Tmode
+  vizType: 'dashboard' | 'widget' | 'display' | ''
+  permissionLoading: boolean
+  download: boolean
+}
+
+export const initialState: IState = {
+  loading: false,
   logged: false,
-  loginUser: null
+  loginUser: null,
+  shareType: '',
+  vizType: '',
+  permissionLoading: false,
+  download: false
 }
 
 const appReducer = (state = initialState, action) =>
   produce(state, (draft) => {
     switch (action.type) {
-      case LOGGED:
+      case ActionTypes.LOGIN:
+        draft.loading = true
+        break
+      case ActionTypes.LOGGED:
+        draft.loading = false
         draft.logged = true
         draft.loginUser = action.payload.user
         break
-      case LOGOUT:
+      case ActionTypes.LOGON_FAILURE:
+        draft.loading = false
+        break
+      case ActionTypes.LOGOUT:
         draft.logged = false
         draft.loginUser = null
         break
+      case ActionTypes.INTERCEPTOR_PREFLIGHT_SUCCESS:
+        draft.shareType = action.payload.shareType
+        draft.vizType = action.payload.vizType
+        break
+      case ActionTypes.GET_PERMISSIONS:
+        draft.permissionLoading = true
+        break
+      case ActionTypes.GET_PERMISSIONS_SUCCESS:
+        draft.permissionLoading = false
+        draft.download = action.payload.download
+        break
+      case ActionTypes.GET_PERMISSIONS_FAIL:
+        draft.permissionLoading = false
     }
   })
 

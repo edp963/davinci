@@ -26,6 +26,7 @@
 
     &-horizontal {
       flex-direction: row;
+      min-height: 0;
 
       &-spliter {
         border-right: @border-width-base @border-style-base @border-color-split;
@@ -34,6 +35,7 @@
 
     &-vertical {
       flex-direction: column;
+      min-width: 0;
 
       &-spliter {
         border-bottom: @border-width-base @border-style-base @border-color-split;
@@ -42,15 +44,18 @@
 
     &-1 {
       display: flex;
+      min-height: 0;
 
       & > .react-resizable {
         display: flex;
+        min-height: 0;
       }
     }
 
     &-2 {
       flex: 1;
       display: flex;
+      min-height: 0;
       overflow: hidden;
 
       & > .react-resizable {

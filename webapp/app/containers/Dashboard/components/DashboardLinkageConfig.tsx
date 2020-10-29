@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Button, Modal } from 'antd'
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from 'app/globalConstants'
@@ -74,8 +74,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     Object.keys(currentItemsInfo).forEach((infoKey) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === infoKey)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
-      const { cols, rows, metrics, color, label } = widgetConfig
+      const { cols, rows, metrics, color, label } = widget.config
       const view = views[widget.viewId]
       const { model, variable } = view
 
@@ -84,7 +83,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
         triggerDimensions = triggerDimensions.concat(color.items.map(({ name }) => name))
       }
       if (label) {
-        triggerDimensions = triggerDimensions.concat(color.items.map(({ name }) => name))
+        triggerDimensions = triggerDimensions.concat(label.items.map(({ name }) => name))
       }
 
       const triggerColumns = [

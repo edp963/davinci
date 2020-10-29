@@ -32,14 +32,16 @@ import {
   getGridPositions,
   makeGrouped,
   getGroupedXaxis,
-  getCartesianChartMetrics
+  getCartesianChartMetrics,
+  getCartesianChartReferenceOptions
 } from './util'
 import { getFormattedValue } from '../../components/Config/Format'
+import ChartTypes from '../../config/chart/ChartTypes'
 const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
-  const { data, cols, chartStyles, color, tip } = chartProps
+  const { data, cols, chartStyles, color, tip, references } = chartProps
   const metrics = getCartesianChartMetrics(chartProps.metrics)
   const { spec, xAxis, yAxis, splitLine, label, legend } = chartStyles
 
@@ -61,6 +63,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   const labelOption = {
     label: getLabelOption('line', label, metrics)
   }
+  const referenceOptions = getCartesianChartReferenceOptions(references, ChartTypes.Line, metrics, data)
 
   const xAxisColumnName = cols[0].name
   let xAxisData = []
@@ -85,7 +88,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
     if (color.items.length) {
-      Object.entries(grouped).forEach(([k, v]: [string, any[]]) => {
+      const groupedEntries = Object.entries(grouped)
+      groupedEntries.forEach(([k, v]: [string, any[]], gIndex) => {
         const serieObj = {
           id: `${m.name}${DEFAULT_SPLITER}${DEFAULT_SPLITER}${k}`,
           name: `${k}${metrics.length > 1 ? ` ${m.displayName}` : ''}`,
@@ -131,7 +135,10 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           },
           smooth,
           step,
-          ...labelOption
+          ...labelOption,
+          ...(gIndex === groupedEntries.length - 1 &&
+              i === metrics.length - 1 &&
+              referenceOptions)
         }
         series.push(serieObj)
         seriesData.push(grouped[k])
@@ -191,7 +198,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         },
         smooth,
         step,
-        ...labelOption
+        ...labelOption,
+        ...(i === metrics.length - 1 && referenceOptions)
       }
       series.push(serieObj)
       seriesData.push([...data])

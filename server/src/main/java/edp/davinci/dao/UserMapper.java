@@ -29,6 +29,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface UserMapper {
@@ -77,4 +78,6 @@ public interface UserMapper {
      */
     @Delete({"delete from `user` where id = #{id}"})
     int deleteById(@Param("id") Long id);
+
+    List<User> selectByEmails(@Param("emails") Set<String> emails);
 }

@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 
 import { Form, Row, Col, Input, Radio, Select, Tabs, Checkbox} from 'antd'
 import { IExludeRoles } from 'containers/Viz/components/PortalList'
@@ -35,7 +35,6 @@ interface IDashboardFormProps extends FormComponentProps {
   portalId: number
   type: string
   itemId: number
-  form: any
   dashboards: any[]
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   exludeRoles?: IExludeRoles[]
@@ -93,13 +92,13 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
 
     return (
       <Form>
-        <FormItem className={utilStyles.hide}>
-          {getFieldDecorator('id', {
-            hidden: type === 'add' && 'copy'
-          })(
-            <Input />
-          )}
-        </FormItem>
+        {type !== 'add' && type !== 'copy' && (
+          <FormItem className={utilStyles.hide}>
+            {getFieldDecorator('id', {})(
+              <Input />
+            )}
+          </FormItem>
+        )}
         <Row gutter={8} className={type === 'move' ? '' : utilStyles.hide}>
           <Col span={24}>
             <FormItem label="所属文件夹" {...commonFormItemStyle}>

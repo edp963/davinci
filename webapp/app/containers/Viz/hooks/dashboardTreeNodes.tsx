@@ -21,7 +21,8 @@
 import React, { useMemo } from 'react'
 import { Tree, TreeSelect, Icon } from 'antd'
 
-import { IDashboardNode, DashboardTypes } from '../types'
+import { IDashboardNode } from '../types'
+import { DashboardTypes } from '../constants'
 
 const dashboardNodeKeyPrefix = 'dashboard_'
 

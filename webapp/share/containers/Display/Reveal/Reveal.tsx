@@ -20,7 +20,6 @@
 
 import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { useHistory } from 'react-router-dom'
 
 import { makeSelectDisplay, makeSelectSlidesCount } from '../selectors'
 
@@ -38,8 +37,7 @@ const ShareDisplayReveal: React.FC = () => {
     displayParams || DefaultDisplayParams
 
   const slidesCount = useSelector(makeSelectSlidesCount())
-  const history = useHistory()
-  const slideNumberParam = new URLSearchParams(history.location.search).get('p')
+  const slideNumberParam = new URLSearchParams(window.location.search).get('p')
   const slideNumber = +slideNumberParam
   useEffect(() => {
     Reveal.initialize({

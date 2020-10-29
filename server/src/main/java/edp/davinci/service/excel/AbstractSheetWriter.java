@@ -90,7 +90,7 @@ public abstract class AbstractSheetWriter {
         if (context.getIsTable() && !CollectionUtils.isEmpty(context.getExcelHeaders())) {
             int rownum = 0;
             int colnum = 0;
-            Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x));
+            Map<String, QueryColumn> columnMap = context.getQueryColumns().stream().collect(Collectors.toMap(x -> x.getName(), x -> x, (v1, v2) -> v1));
             List<QueryColumn> queryColumns = new ArrayList<>();
             for (ExcelHeader excelHeader : context.getExcelHeaders()) {
                 //计算多级表头行

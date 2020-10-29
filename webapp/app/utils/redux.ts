@@ -3,7 +3,7 @@ type ReturnTypes<EnumTypes> = {
 }
 
 export function createTypes<EnumTypes> (enumTypes: EnumTypes): ReturnTypes<EnumTypes> {
-  // @FIXME temporarily not use Proxy to avoid PhantomJS screenshot error for not support ES6 Proxy
+  // @FIXME temporarily not use Proxy to avoid schedule screenshot error for not support ES6 Proxy
   // return new Proxy(enumTypes as any, {
   //   get (_, property: any) {
   //     return enumTypes[property]

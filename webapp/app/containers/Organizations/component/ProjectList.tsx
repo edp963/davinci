@@ -6,13 +6,10 @@ import ProjectItem from './ProjectItem'
 import AntdFormType from 'antd/lib/form/Form'
 import ProjectEditForm from './Project'
 import ProjectForm from './ProjectForm'
-import * as Organization from '../Organization'
 import ComponentPermission from 'containers/Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from 'containers/App/constants'
 import { checkNameUniqueAction } from 'containers/App/actions'
-import { IStarUser, IProject } from 'containers/Projects/types'
 import { createStructuredSelector } from 'reselect'
-import { IOrganization } from '../types'
 import { OrganizationActions } from '../actions'
 import {
   makeSelectOrganizations,
@@ -30,59 +27,22 @@ import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import scheduleReducer from 'containers/Schedule/reducer'
 import scheduleSaga from 'containers/Schedule/sagas'
-import { loadVizs } from 'containers/Schedule/actions'
+import { ScheduleActions } from 'containers/Schedule/actions'
 import { makeSelectLoginUser } from 'containers/App/selectors'
+import Star from 'components/StarPanel/Star'
+const StarUserModal = Star.StarUser
 const styles = require('../Organization.less')
-import { makeSelectStarUserList, makeSelectCollectProjects } from 'containers/Projects/selectors'
+import {
+  makeSelectStarUserList,
+  makeSelectCollectProjects
+} from 'containers/Projects/selectors'
+import {IProjectsProps, IProjectsStates } from '../types'
 
-interface IProjectsState {
-  formType?: string
-  formVisible: boolean
-  modalLoading: boolean
-  editFormVisible: boolean
-  adminFormVisible: boolean
-  pageNum: number
-  pageSize: number
-  currentProject: any
-  organizationProjects: IProject[]
-}
-
-interface IProjectsProps {
-  loginUser: any
-  organizationId: number
-  organizations: any
-  projectDetail: any
-  currentOrganization: IOrganization
-  toProject: (id: number) => any
-  deleteProject: (id: number) => any
-  starUser: IStarUser[]
-  collectProjects: IProject[]
-  onAddProject: (project: any, resolve: () => any) => any
-  onEditProject: (project: any, resolve: () => any) => any
-  organizationProjects: IProject[]
-  organizationProjectsDetail: {total?: number, list: IProject[]}
-  unStar?: (id: number) => any
-  userList?: (id: number) => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
-  getOrganizationProjectsByPagination: (obj: {keyword?: string, pageNum: number, pageSize: number}) => any
-  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
-  onClickCollectProjects: (formType, project: object, resolve: (id: number) => any) => any
-  onLoadCollectProjects: () => any
-  onTransferProject: (id: number, orgId: number, resolve: () => any) => any
-  onSetCurrentProject: (option: any) => any
-  starUserList: IStarUser[]
-  onStarProject: (id: number, resolve: () => any) => any
-  onDeleteProject: (id: number, resolve?: any) => any
-  onGetProjectStarUser: (id: number) => any
-  currentOrganizationProjects: IProject[]
-  organizationMembers: any[]
-  onLoadVizs: (projectId: number) => any
-  onLoadOrganizations: () => any
-  vizs: any
-}
-
-export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
-  constructor (props) {
+export class ProjectList extends React.PureComponent<
+  IProjectsProps,
+  IProjectsStates
+> {
+  constructor(props) {
     super(props)
     this.state = {
       formType: '',
@@ -93,15 +53,20 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       pageNum: 1,
       pageSize: 10,
       organizationProjects: null,
-      currentProject: null
+      currentProject: null,
+      starModalVisble: false
     }
   }
 
   private ProjectForm: AntdFormType = null
   private ProjectEditForm: AntdFormType = null
   private refHandlers = {
-    ProjectForm: (ref) => this.ProjectForm = ref,
-    ProjectEditForm: (ref) => this.ProjectEditForm = ref
+    ProjectForm: (ref) => (this.ProjectForm = ref),
+    ProjectEditForm: (ref) => (this.ProjectEditForm = ref)
+  }
+
+  private onCloseStarModal = () => {
+    this.setState({starModalVisble: false})
   }
 
   private showProjectForm = (type: string) => (e) => {
@@ -112,7 +77,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     })
   }
 
-  public componentWillMount () {
+  public componentWillMount() {
     const {
       onLoadOrganizationProjects,
       onLoadCollectProjects,
@@ -120,31 +85,34 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       onLoadVizs
     } = this.props
     this.props.onLoadOrganizations()
-    onLoadOrganizationProjects({id: Number(organizationId)})
+    onLoadOrganizationProjects({ id: Number(organizationId) })
     onLoadCollectProjects()
   }
 
   private showEditProjectForm = (formType, option) => (e) => {
     const { onLoadVizs } = this.props
-    const {orgId, id, name, pic, description, visibility} = option
+    const { orgId, id, name, pic, description, visibility } = option
     onLoadVizs(Number(id))
-    this.setState({
-      formType,
-      editFormVisible: true,
-      currentProject: option
-    }, () => {
-      setTimeout(() => {
-        this.props.onSetCurrentProject(option)
-        this.ProjectEditForm.props.form.setFieldsValue({
-          orgId: `${orgId}`,
-          id,
-          name,
-          pic,
-          description,
-          visibility: `${visibility}`
-        })
-      }, 0)
-    })
+    this.setState(
+      {
+        formType,
+        editFormVisible: true,
+        currentProject: option
+      },
+      () => {
+        setTimeout(() => {
+          this.props.onSetCurrentProject(option)
+          this.ProjectEditForm.props.form.setFieldsValue({
+            orgId: `${orgId}`,
+            id,
+            name,
+            pic,
+            description,
+            visibility: `${visibility}`
+          })
+        }, 0)
+      }
+    )
   }
   private getOrganizationProjectsByPagination = (obj) => {
     const { onLoadOrganizationProjects, organizationId } = this.props
@@ -180,9 +148,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     })
   }
 
-
-
-
   private afterProjectFormClose = () => {
     this.ProjectForm.props.form.resetFields()
   }
@@ -194,7 +159,9 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   private checkUniqueName = (rule, value = '', callback) => {
     const { onCheckUniqueName, organizationId } = this.props
     const { formVisible, editFormVisible } = this.state
-    const { getFieldsValue } = formVisible ? this.ProjectForm.props.form : this.ProjectEditForm.props.form
+    const { getFieldsValue } = formVisible
+      ? this.ProjectForm.props.form
+      : this.ProjectEditForm.props.form
     const id = getFieldsValue()['id']
     const data = {
       name: value,
@@ -202,39 +169,48 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       id
     }
 
-    onCheckUniqueName('project', data,
+    onCheckUniqueName(
+      'project',
+      data,
       () => {
         callback()
-      }, (err) => {
+      },
+      (err) => {
         callback(err)
-      })
+      }
+    )
   }
 
-
   private onModalOk = () => {
-    const { organizationId, currentOrganization, onAddProject, onEditProject, onLoadOrganizationProjects } = this.props
+    const {
+      organizationId,
+      currentOrganization,
+      onAddProject,
+      onEditProject,
+      onLoadOrganizationProjects
+    } = this.props
     const { formType } = this.state
-    const targetForm = formType === 'edit' ? this.ProjectEditForm : this.ProjectForm
+    const targetForm =
+      formType === 'edit' ? this.ProjectEditForm : this.ProjectForm
     targetForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         values.visibility = values.visibility === 'true' ? true : false
 
         if (formType === 'organizationProject') {
-          onAddProject({
-            ...values,
-            ...{orgId: organizationId},
-            pic: `${Math.ceil(Math.random() * 19)}`
-            // config: '{}'
-          }, () => {
-            this.hideProjectForm()
-          })
+          onAddProject(
+            {
+              ...values,
+              ...{ orgId: organizationId },
+              pic: `${Math.ceil(Math.random() * 19)}`
+            },
+            () => {
+              this.hideProjectForm()
+            }
+          )
         } else if (formType === 'edit') {
-          onEditProject({
-            ...values
-          //  ...{orgId: Number(values.orgId)}
-          }, () => {
-            onLoadOrganizationProjects({id: currentOrganization.id})
+          onEditProject({ ...values }, () => {
+            onLoadOrganizationProjects({ id: currentOrganization.id })
             this.hideProjectForm()
           })
         }
@@ -243,32 +219,38 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   }
 
   private onShowSizeChange = (current, pageSize) => {
-    this.setState({
-      pageNum: current,
-      pageSize
-    }, () => {
-      const param = {
-        pageNum: this.state.pageNum,
-        pageSize: this.state.pageSize
+    this.setState(
+      {
+        pageNum: current,
+        pageSize
+      },
+      () => {
+        const param = {
+          pageNum: this.state.pageNum,
+          pageSize: this.state.pageSize
+        }
+        this.getOrganizationProjectsByPagination(param)
       }
-      this.getOrganizationProjectsByPagination(param)
-    })
+    )
   }
 
   private onPaginationChange = (page) => {
-    this.setState({
-      pageNum: page
-    }, () => {
-      const param = {
-        pageNum: this.state.pageNum,
-        pageSize: this.state.pageSize
+    this.setState(
+      {
+        pageNum: page
+      },
+      () => {
+        const param = {
+          pageNum: this.state.pageNum,
+          pageSize: this.state.pageSize
+        }
+        this.getOrganizationProjectsByPagination(param)
       }
-      this.getOrganizationProjectsByPagination(param)
-    })
+    )
   }
 
-  public componentWillReceiveProps (nextProps) {
-    const {currentOrganizationProjects} = this.props
+  public componentWillReceiveProps(nextProps) {
+    const { currentOrganizationProjects } = this.props
     const nextOrgProjects = nextProps.currentOrganizationProjects
     if (nextOrgProjects && nextOrgProjects !== currentOrganizationProjects) {
       this.setState({
@@ -277,7 +259,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     }
   }
 
-  private starProject = (id)  => () => {
+  private starProject = (id) => () => {
     const { onStarProject, organizationId } = this.props
     const param = {
       id: Number(organizationId),
@@ -297,7 +279,14 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
   private tabsChange = (mode) => {
     if (mode === 'basic') {
-      const {orgId, id, name, pic, description, visibility} = this.state.currentProject
+      const {
+        orgId,
+        id,
+        name,
+        pic,
+        description,
+        visibility
+      } = this.state.currentProject
       this.ProjectEditForm.props.form.setFieldsValue({
         orgId: `${orgId}`,
         id,
@@ -313,8 +302,10 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     this.ProjectForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-        const {projectDetail: {id}} = this.props
-        const {orgId} = values
+        const {
+          projectDetail: { id }
+        } = this.props
+        const { orgId } = values
         this.props.onTransferProject(id, Number(orgId), () => {
           const param = {
             id: orgId,
@@ -331,30 +322,51 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   private getStarProjectUserList = (id) => () => {
     const { onGetProjectStarUser } = this.props
     onGetProjectStarUser(id)
+    this.setState({starModalVisble: true})
   }
 
-  public render () {
-    const { formVisible, formType, modalLoading, organizationProjects, editFormVisible, currentProject, adminFormVisible } = this.state
-    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs, organizations } = this.props
+  public render() {
+    const {
+      formVisible,
+      formType,
+      modalLoading,
+      organizationProjects,
+      editFormVisible,
+      currentProject,
+      adminFormVisible,
+      starModalVisble
+    } = this.state
+    const {
+      onLoadOrganizationProjects,
+      loginUser,
+      currentOrganization,
+      organizationProjectsDetail,
+      onCheckUniqueName,
+      collectProjects,
+      starUserList,
+      organizations
+    } = this.props
+
     let CreateButton = void 0
     if (currentOrganization) {
-       CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
+      CreateButton = ComponentPermission(
+        currentOrganization,
+        CREATE_ORGANIZATION_PROJECT
+      )(Button)
     }
-    const addButton =  (
-          <Tooltip placement="bottom" title="创建">
-            <CreateButton
-              type="primary"
-              icon="plus"
-              onClick={this.showProjectForm('organizationProject')}
-            />
-          </Tooltip>
-      )
+    const addButton = (
+      <Tooltip placement="bottom" title="创建">
+        <CreateButton
+          type="primary"
+          icon="plus"
+          onClick={this.showProjectForm('organizationProject')}
+        />
+      </Tooltip>
+    )
     let projectSearchPagination = void 0
     if (organizationProjectsDetail) {
-      projectSearchPagination =
-        (
+      projectSearchPagination = (
         <Pagination
-          //  simple={screenWidth < 768 || screenWidth === 768}
           showSizeChanger
           defaultCurrent={2}
           total={organizationProjectsDetail.total}
@@ -363,25 +375,27 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           defaultPageSize={10}
           pageSizeOptions={['10', '15', '20']}
           current={this.state.pageNum}
-        />)
+        />
+      )
     }
-    const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
-      <ProjectItem
-        unStar={this.starProject}
-        userList={this.getStarProjectUserList}
-        starUser={starUserList}
-        collectProjects={collectProjects}
-        currentOrganization={currentOrganization}
-        key={index}
-        loginUser={this.props.loginUser}
-        options={lists}
-        toProject={this.props.toProject}
-        showEditProjectForm={this.showEditProjectForm('edit', lists)}
-        onClickCollectProjects={this.props.onClickCollectProjects}
-        onLoadCollectProjects={this.props.onLoadCollectProjects}
-      />
-    )) : ''
 
+    const ProjectItems = Array.isArray(organizationProjects)
+      ? organizationProjects.map((lists, index) => (
+          <ProjectItem
+            key={index}
+            pro={lists}
+            unStar={this.starProject}
+            toProject={this.props.toProject}
+            loginUser={this.props.loginUser}
+            collectProjects={collectProjects}
+            userList={this.getStarProjectUserList}
+            currentOrganization={currentOrganization}
+            onLoadCollectProjects={this.props.onLoadCollectProjects}
+            onClickCollectProjects={this.props.onClickCollectProjects}
+            showEditProjectForm={this.showEditProjectForm('edit', lists)}
+          />
+        ))
+      : ''
 
     return (
       <div className={styles.listWrapper}>
@@ -393,18 +407,14 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             />
           </Col>
           <Col span={1} offset={7}>
-              {addButton}
+            {addButton}
           </Col>
         </Row>
         <Row>
-          <Col span={24}>
-            {ProjectItems}
-          </Col>
+          <Col span={24}>{ProjectItems}</Col>
         </Row>
-        <Row type="flex" justify="end" style={{marginTop: '16px'}}>
-          <Col>
-            {projectSearchPagination}
-          </Col>
+        <Row type="flex" justify="end" style={{ marginTop: '16px' }}>
+          <Col>{projectSearchPagination}</Col>
         </Row>
         <Modal
           title={null}
@@ -421,7 +431,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             onTransfer={this.onTransfer}
             onCheckUniqueName={this.checkUniqueName}
             wrappedComponentRef={this.refHandlers.ProjectForm}
-          //  onWidgetTypeChange={this.widgetTypeChange}
           />
         </Modal>
         <Modal
@@ -445,14 +454,17 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             wrappedComponentRef={this.refHandlers.ProjectEditForm}
           />
         </Modal>
+        <StarUserModal
+          visible={starModalVisble}
+          starUser={starUserList}
+          closeUserListModal={this.onCloseStarModal}
+        />
       </div>
     )
   }
 }
 
-
 const mapStateToProps = createStructuredSelector({
-  vizs: makeSelectVizs(),
   starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
   projectDetail: makeSelectCurrentOrganizationProject(),
@@ -464,32 +476,63 @@ const mapStateToProps = createStructuredSelector({
   collectProjects: makeSelectCollectProjects()
 })
 
-export function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps(dispatch) {
   return {
-    onLoadVizs: (projectId) => dispatch(loadVizs(projectId)),
-    onSetCurrentProject: (option) => dispatch(OrganizationActions.setCurrentProject(option)),
-    onTransferProject: (id, orgId, resolve) => dispatch(ProjectActions.transferProject(id, orgId, resolve)),
-    onStarProject: (id, resolve) => dispatch(ProjectActions.unStarProject(id, resolve)),
-    onLoadOrganizations: () => dispatch(OrganizationActions.loadOrganizations()),
-    onGetProjectStarUser: (id) => dispatch(ProjectActions.getProjectStarUser(id)),
-    onAddProject: (project, resolve) => dispatch(ProjectActions.addProject(project, resolve)),
-    onEditProject: (project, resolve) => dispatch(ProjectActions.editProject(project, resolve)),
-    onLoadOrganizationProjects: (param) => dispatch(OrganizationActions.loadOrganizationProjects(param)),
-    onDeleteProject: (id, resolve) => dispatch(ProjectActions.deleteProject(id, resolve)),
-    onDeleteOrganizationMember: (id, resolve) => dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
-    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(OrganizationActions.changeOrganizationMemberRole(id, role, resolve)),
-    onClickCollectProjects: (formType, project, resolve) => dispatch(ProjectActions.clickCollectProjects(formType, project, resolve)),
+    onLoadVizs: (projectId) => dispatch(ScheduleActions.loadVizs(projectId)),
+    onSetCurrentProject: (option) =>
+      dispatch(OrganizationActions.setCurrentProject(option)),
+    onTransferProject: (id, orgId, resolve) =>
+      dispatch(ProjectActions.transferProject(id, orgId, resolve)),
+    onStarProject: (id, resolve) =>
+      dispatch(ProjectActions.unStarProject(id, resolve)),
+    onLoadOrganizations: () =>
+      dispatch(OrganizationActions.loadOrganizations()),
+    onGetProjectStarUser: (id) =>
+      dispatch(ProjectActions.getProjectStarUser(id)),
+    onAddProject: (project, resolve) =>
+      dispatch(ProjectActions.addProject(project, resolve)),
+    onEditProject: (project, resolve) =>
+      dispatch(ProjectActions.editProject(project, resolve)),
+    onLoadOrganizationProjects: (param) =>
+      dispatch(OrganizationActions.loadOrganizationProjects(param)),
+    onDeleteProject: (id, resolve) =>
+      dispatch(ProjectActions.deleteProject(id, resolve)),
+    onDeleteOrganizationMember: (id, resolve) =>
+      dispatch(OrganizationActions.deleteOrganizationMember(id, resolve)),
+    onChangeOrganizationMemberRole: (id, role, resolve) =>
+      dispatch(
+        OrganizationActions.changeOrganizationMemberRole(id, role, resolve)
+      ),
+    onClickCollectProjects: (isFavorite, proId, result) =>
+      dispatch(ProjectActions.clickCollectProjects(isFavorite, proId, result)),
     onLoadCollectProjects: () => dispatch(ProjectActions.loadCollectProjects()),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) =>
+      dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 
-const withConnect = connect<{}, {}, IProjectsProps>(mapStateToProps, mapDispatchToProps)
 
-const withReducerSchedule = injectReducer({ key: 'schedule', reducer: scheduleReducer })
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+
+const withConnect = connect<MappedStates, MappedDispatches, IProjectsProps>(
+  mapStateToProps,
+  mapDispatchToProps
+)
+
+
+const withReducerSchedule = injectReducer({
+  key: 'schedule',
+  reducer: scheduleReducer
+})
 const withSagaSchedule = injectSaga({ key: 'schedule', saga: scheduleSaga })
 
- // const withConnect = connect(mapStateToProps, mapDispatchToProps)
-export default compose(withReducerSchedule, withSagaSchedule,  withConnect)(ProjectList)
+export default compose(
+  withConnect,
+  withReducerSchedule,
+  withSagaSchedule
+)(ProjectList)
+
+ 
 
 

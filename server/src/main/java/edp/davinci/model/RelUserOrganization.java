@@ -38,7 +38,6 @@ public class RelUserOrganization extends RecordInfo<RelUserOrganization> {
     }
 
     public RelUserOrganization(Long orgId, Long userId, Short role) {
-
         this.orgId = orgId;
         this.userId = userId;
         this.role = role;

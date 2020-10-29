@@ -12,7 +12,7 @@ import { IFieldFormatConfig } from '../../Config/Format'
 import { IFieldSortConfig, FieldSortTypes } from '../../Config/Sort'
 import { decodeMetricName } from '../../util'
 import { Popover, Icon } from 'antd'
-import { IFilters } from 'app/components/Filters/types'
+import { IFilter } from 'app/components/Control/types'
 
 const styles = require('../Workbench.less')
 
@@ -49,7 +49,7 @@ export interface IDataParamConfig {
     [key: string]: string
   },
   sql?: string
-  sqlModel?: IFilters[]
+  sqlModel?: IFilter[]
   filterSource?: any
   field?: {
     alias: string,

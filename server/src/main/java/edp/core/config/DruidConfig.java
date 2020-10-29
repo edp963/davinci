@@ -72,6 +72,9 @@ public class DruidConfig {
     @Value("${spring.datasource.min-evictable-idle-time-millis}")
     private int minEvictableIdleTimeMillis;
 
+    @Value("${spring.datasource.max-evictable-idle-time-millis}")
+    private int maxEvictableIdleTimeMillis;
+
     @Value("${spring.datasource.test-while-idle}")
     private boolean testWhileIdle;
 
@@ -92,6 +95,9 @@ public class DruidConfig {
 
     @Value("${spring.datasource.validation-query}")
     private String validationQuery;
+
+    @Value("${spring.datasource.validation-query-timeout}")
+    private int validationQueryTime;
 
     /**
      * druid监控
@@ -139,12 +145,14 @@ public class DruidConfig {
         druidDataSource.setMaxWait(maxWait);
         druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
         druidDataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
+        druidDataSource.setMaxEvictableIdleTimeMillis(maxEvictableIdleTimeMillis);
         druidDataSource.setTestWhileIdle(testWhileIdle);
         druidDataSource.setTestOnBorrow(testOnBorrow);
         druidDataSource.setTestOnReturn(testOnReturn);
         druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
         druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         druidDataSource.setValidationQuery(validationQuery);
+        druidDataSource.setValidationQueryTimeout(validationQueryTime);
 
         try {
             druidDataSource.setFilters(filters);

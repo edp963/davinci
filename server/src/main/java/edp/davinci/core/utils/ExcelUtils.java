@@ -32,7 +32,6 @@ import edp.davinci.core.enums.NumericUnitEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.model.*;
 import edp.davinci.dto.viewDto.Param;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -40,9 +39,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -50,8 +47,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static edp.core.consts.Consts.*;
-import static edp.davinci.common.utils.ScriptUtiils.formatHeader;
-import static edp.davinci.common.utils.ScriptUtiils.getCellValueScriptEngine;
+import static edp.davinci.common.utils.ScriptUtils.formatHeader;
+
 
 public class ExcelUtils {
 
@@ -195,8 +192,7 @@ public class ExcelUtils {
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                engine = getCellValueScriptEngine();
-                excelHeaders = formatHeader(engine, json, params);
+                excelHeaders = formatHeader(json, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -444,12 +440,6 @@ public class ExcelUtils {
 
         } else if (fieldTypeObject instanceof FieldCustom) {
 
-        } else if (fieldTypeObject instanceof FieldDate) {
-
-            // TODO need to fix impossible cast
-            FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
-
-            formatExpr = fieldCustom.getFormat().toLowerCase();
         } else if (fieldTypeObject instanceof FieldPercentage) {
 
             FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
@@ -457,12 +447,12 @@ public class ExcelUtils {
             StringBuilder fmtSB = new StringBuilder("0");
             if (fieldPercentage.getDecimalPlaces() > 0) {
                 fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
-
             }
 
             fmtSB.append(PERCENT_SIGN);
 
             formatExpr = fmtSB.toString();
+
         } else if (fieldTypeObject instanceof FieldScientificNotation) {
 
             FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
@@ -476,6 +466,7 @@ public class ExcelUtils {
             fmtSB.append("E+00");
 
             formatExpr = fmtSB.toString();
+
         }
 
         return formatExpr;
@@ -529,47 +520,6 @@ public class ExcelUtils {
     private static String makeNTimesString(int n, Object s) {
         return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(EMPTY));
     }
-
-
-    /**
-     * format cell value
-     *
-     * @param engine
-     * @param list
-     * @param json
-     * @return
-     */
-    private static List<Map<String, Object>> formatValue(ScriptEngine engine, List<Map<String, Object>> list, String json) {
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFormattedDataRows", json, list);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror som = (ScriptObjectMirror) obj;
-                if (som.isArray()) {
-                    final List<Map<String, Object>> convertList = new ArrayList<>();
-                    Collection<Object> values = som.values();
-                    values.forEach(v -> {
-                        Map<String, Object> map = new HashMap<>();
-                        ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                        for (String key : vsom.keySet()) {
-                            map.put(key, vsom.get(key));
-                        }
-                        convertList.add(map);
-                    });
-                    return convertList;
-                }
-            }
-
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
 
     public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {

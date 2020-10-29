@@ -1,4 +1,4 @@
-import { SettingTypes, ItemTypes, ItemValueTypes, ISettingItem } from './type'
+import { SettingTypes, ItemTypes, ItemValueTypes, ISettingItem } from './types'
 import {
   getAggregatorLocale
 } from 'containers/Widget/components/util'

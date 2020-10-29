@@ -18,331 +18,378 @@
  * >>
  */
 
+import { returnType } from 'utils/redux'
+import { ActionTypes } from './constants'
 import {
-  LOAD_SHARE_DASHBOARD,
-  LOAD_SHARE_DASHBOARD_SUCCESS,
-  LOAD_SHARE_DASHBOARD_FAILURE,
-  LOAD_SHARE_WIDGET,
-  LOAD_SHARE_WIDGET_SUCCESS,
-  LOAD_SHARE_RESULTSET,
-  LOAD_SHARE_RESULTSET_SUCCESS,
-  LOAD_SHARE_RESULTSET_FAILURE,
-  SET_INDIVIDUAL_DASHBOARD,
-  LOAD_WIDGET_CSV,
-  LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE,
-  LOAD_SELECT_OPTIONS,
-  LOAD_SELECT_OPTIONS_SUCCESS,
-  LOAD_SELECT_OPTIONS_FAILURE,
-  RESIZE_ALL_DASHBOARDITEM,
-  DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY,
-  SET_SELECT_OPTIONS,
-  SELECT_DASHBOARD_ITEM_CHART,
-  LOAD_DOWNLOAD_LIST,
-  LOAD_DOWNLOAD_LIST_SUCCESS,
-  LOAD_DOWNLOAD_LIST_FAILURE,
-  DOWNLOAD_FILE,
-  DOWNLOAD_FILE_FAILURE,
-  DOWNLOAD_FILE_SUCCESS,
-  INITIATE_DOWNLOAD_TASK,
-  INITIATE_DOWNLOAD_TASK_SUCCESS,
-  INITIATE_DOWNLOAD_TASK_FAILURE,
-  SEND_SHARE_PARAMS
-} from './constants'
+  IDashboard,
+  IDashboardItem,
+  IQueryConditions,
+  IDataRequestParams
+} from 'app/containers/Dashboard/types'
+import { IWidgetFormed } from 'app/containers/Widget/types'
+import {
+  IShareFormedViews,
+  IViewQueryResponse
+} from 'app/containers/View/types'
+import { RenderType } from 'app/containers/Widget/components/Widget'
+import { ControlPanelTypes } from 'app/components/Control/constants'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 
-export function getDashboard (token, reject) {
-  return {
-    type: LOAD_SHARE_DASHBOARD,
-    payload: {
-      token,
-      reject
+export const DashboardActions = {
+  getDashboard(token, reject) {
+    return {
+      type: ActionTypes.LOAD_SHARE_DASHBOARD,
+      payload: {
+        token,
+        reject
+      }
+    }
+  },
+
+  dashboardGetted(
+    dashboard: IDashboard,
+    items: IDashboardItem[],
+    widgets: IWidgetFormed[],
+    formedViews: IShareFormedViews
+  ) {
+    return {
+      type: ActionTypes.LOAD_SHARE_DASHBOARD_SUCCESS,
+      payload: {
+        dashboard,
+        items,
+        widgets,
+        formedViews
+      }
+    }
+  },
+
+  loadDashboardFail() {
+    return {
+      type: ActionTypes.LOAD_SHARE_DASHBOARD_FAILURE
+    }
+  },
+
+  getWidget(token, resolve, reject) {
+    return {
+      type: ActionTypes.LOAD_SHARE_WIDGET,
+      payload: {
+        token,
+        resolve,
+        reject
+      }
+    }
+  },
+
+  widgetGetted(widget: IWidgetFormed, formedViews: IShareFormedViews) {
+    return {
+      type: ActionTypes.LOAD_SHARE_WIDGET_SUCCESS,
+      payload: {
+        widget,
+        formedViews
+      }
+    }
+  },
+
+  getResultset(
+    renderType: RenderType,
+    itemId: number,
+    queryConditions: Partial<IQueryConditions>
+  ) {
+    return {
+      type: ActionTypes.LOAD_SHARE_RESULTSET,
+      payload: {
+        renderType,
+        itemId,
+        queryConditions
+      }
+    }
+  },
+
+  resultsetGetted(
+    renderType: RenderType,
+    itemId: number,
+    requestParams: IDataRequestParams,
+    result: IViewQueryResponse
+  ) {
+    return {
+      type: ActionTypes.LOAD_SHARE_RESULTSET_SUCCESS,
+      payload: {
+        renderType,
+        itemId,
+        requestParams,
+        result
+      }
+    }
+  },
+
+  getResultsetFail(itemId, errorMessage) {
+    return {
+      type: ActionTypes.LOAD_SHARE_RESULTSET_FAILURE,
+      payload: {
+        itemId,
+        errorMessage
+      }
+    }
+  },
+
+  getBatchDataWithControlValues(
+    type: ControlPanelTypes,
+    relatedItems: number[],
+    formValues?: object,
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES,
+      payload: {
+        type,
+        relatedItems,
+        formValues,
+        itemId
+      }
+    }
+  },
+
+  setIndividualDashboard(
+    widget: IWidgetFormed,
+    formedViews: IShareFormedViews,
+    token: string
+  ) {
+    return {
+      type: ActionTypes.SET_INDIVIDUAL_DASHBOARD,
+      payload: {
+        widget,
+        formedViews,
+        token
+      }
+    }
+  },
+
+  loadWidgetCsv(itemId, requestParams, token) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV,
+      payload: {
+        itemId,
+        requestParams,
+        token
+      }
+    }
+  },
+
+  widgetCsvLoaded(itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV_SUCCESS,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  loadWidgetCsvFail(itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV_FAILURE,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  loadSelectOptions(
+    controlKey: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId: number
+  ) {
+    return {
+      type: ActionTypes.LOAD_SELECT_OPTIONS,
+      payload: {
+        controlKey,
+        requestParams,
+        itemId
+      }
+    }
+  },
+
+  selectOptionsLoaded(controlKey, values, itemId) {
+    return {
+      type: ActionTypes.LOAD_SELECT_OPTIONS_SUCCESS,
+      payload: {
+        controlKey,
+        values,
+        itemId
+      }
+    }
+  },
+
+  loadSelectOptionsFail(error) {
+    return {
+      type: ActionTypes.LOAD_SELECT_OPTIONS_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  resizeDashboardItem(itemId) {
+    return {
+      type: ActionTypes.RESIZE_DASHBOARDITEM,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  resizeAllDashboardItem() {
+    return {
+      type: ActionTypes.RESIZE_ALL_DASHBOARDITEM
+    }
+  },
+
+  renderChartError(itemId: number, error: Error) {
+    return {
+      type: ActionTypes.RENDER_CHART_ERROR,
+      payload: {
+        itemId,
+        error
+      }
+    }
+  },
+
+  drillDashboardItem(itemId, drillHistory) {
+    return {
+      type: ActionTypes.DRILL_DASHBOARDITEM,
+      payload: {
+        itemId,
+        drillHistory
+      }
+    }
+  },
+
+  deleteDrillHistory(itemId, index) {
+    return {
+      type: ActionTypes.DELETE_DRILL_HISTORY,
+      payload: {
+        itemId,
+        index
+      }
+    }
+  },
+
+  selectDashboardItemChart(itemId, renderType, selectedItems) {
+    return {
+      type: ActionTypes.SELECT_DASHBOARD_ITEM_CHART,
+      payload: {
+        itemId,
+        renderType,
+        selectedItems
+      }
+    }
+  },
+
+  loadDownloadList(shareClinetId, token) {
+    return {
+      type: ActionTypes.LOAD_DOWNLOAD_LIST,
+      payload: {
+        shareClinetId,
+        token
+      }
+    }
+  },
+
+  downloadListLoaded(list) {
+    return {
+      type: ActionTypes.LOAD_DOWNLOAD_LIST_SUCCESS,
+      payload: {
+        list
+      }
+    }
+  },
+
+  loadDownloadListFail(error) {
+    return {
+      type: ActionTypes.LOAD_DOWNLOAD_LIST_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  downloadFile(id, shareClinetId, token) {
+    return {
+      type: ActionTypes.DOWNLOAD_FILE,
+      payload: {
+        id,
+        shareClinetId,
+        token
+      }
+    }
+  },
+
+  fileDownloaded(id) {
+    return {
+      type: ActionTypes.DOWNLOAD_FILE_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+
+  downloadFileFail(error) {
+    return {
+      type: ActionTypes.DOWNLOAD_FILE_FAILURE,
+      payload: {
+        error
+      }
+    }
+  },
+
+  initiateDownloadTask(shareClientId: string, itemId: number) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK,
+      payload: {
+        shareClientId,
+        itemId
+      }
+    }
+  },
+
+  DownloadTaskInitiated(itemId: number) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  initiateDownloadTaskFail(error, itemId: number) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE,
+      payload: {
+        error,
+        itemId
+      }
+    }
+  },
+
+  sendShareParams(params) {
+    return {
+      type: ActionTypes.SEND_SHARE_PARAMS,
+      payload: {
+        params
+      }
+    }
+  },
+
+  setFullScreenPanelItemId(itemId) {
+    return {
+      type: ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID,
+      payload: {
+        itemId
+      }
     }
   }
 }
 
-export function dashboardGetted (dashboard) {
-  return {
-    type: LOAD_SHARE_DASHBOARD_SUCCESS,
-    payload: {
-      dashboard
-    }
-  }
-}
+const mockAction = returnType(DashboardActions)
+export type DashboardActionType = typeof mockAction
 
-export function loadDashboardFail () {
-  return {
-    type: LOAD_SHARE_DASHBOARD_FAILURE
-  }
-}
-
-export function getWidget (token, resolve, reject) {
-  return {
-    type: LOAD_SHARE_WIDGET,
-    payload: {
-      token,
-      resolve,
-      reject
-    }
-  }
-}
-
-export function widgetGetted (widget) {
-  return {
-    type: LOAD_SHARE_WIDGET_SUCCESS,
-    payload: {
-      widget
-    }
-  }
-}
-
-export function getResultset (renderType, itemId, dataToken, requestParams) {
-  return {
-    type: LOAD_SHARE_RESULTSET,
-    payload: {
-      renderType,
-      itemId,
-      dataToken,
-      requestParams
-    }
-  }
-}
-
-export function resultsetGetted (renderType, itemId, requestParams, resultset) {
-  return {
-    type: LOAD_SHARE_RESULTSET_SUCCESS,
-    payload: {
-      renderType,
-      itemId,
-      requestParams,
-      resultset
-    }
-  }
-}
-
-export function getResultsetFail (itemId, errorMessage) {
-  return {
-    type: LOAD_SHARE_RESULTSET_FAILURE,
-    payload: {
-      itemId,
-      errorMessage
-    }
-  }
-}
-
-export function setIndividualDashboard (widgetId, token) {
-  return {
-    type: SET_INDIVIDUAL_DASHBOARD,
-    payload: {
-      widgetId,
-      token
-    }
-  }
-}
-
-export function loadWidgetCsv (itemId, requestParams, token) {
-  return {
-    type: LOAD_WIDGET_CSV,
-    payload: {
-      itemId,
-      requestParams,
-      token
-    }
-  }
-}
-
-export function widgetCsvLoaded (itemId) {
-  return {
-    type: LOAD_WIDGET_CSV_SUCCESS,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function loadWidgetCsvFail (itemId) {
-  return {
-    type: LOAD_WIDGET_CSV_FAILURE,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function loadSelectOptions (controlKey, dataToken, requestParams, itemId) {
-  return {
-    type: LOAD_SELECT_OPTIONS,
-    payload: {
-      controlKey,
-      dataToken,
-      requestParams,
-      itemId
-    }
-  }
-}
-
-export function selectOptionsLoaded (controlKey, values, itemId) {
-  return {
-    type: LOAD_SELECT_OPTIONS_SUCCESS,
-    payload: {
-      controlKey,
-      values,
-      itemId
-    }
-  }
-}
-
-export function loadSelectOptionsFail (error) {
-  return {
-    type: LOAD_SELECT_OPTIONS_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function resizeAllDashboardItem () {
-  return {
-    type: RESIZE_ALL_DASHBOARDITEM
-  }
-}
-
-export function drillDashboardItem (itemId, drillHistory) {
-  return {
-    type: DRILL_DASHBOARDITEM,
-    payload: {
-      itemId,
-      drillHistory
-    }
-  }
-}
-
-export function deleteDrillHistory (itemId, index) {
-  return {
-    type: DELETE_DRILL_HISTORY,
-    payload: {
-      itemId,
-      index
-    }
-  }
-}
-
-export function setSelectOptions (controlKey, options, itemId) {
-  return {
-    type: SET_SELECT_OPTIONS,
-    payload: {
-      controlKey,
-      options,
-      itemId
-    }
-  }
-}
-
-
-export function selectDashboardItemChart (itemId, renderType, selectedItems) {
-  return {
-    type: SELECT_DASHBOARD_ITEM_CHART,
-    payload: {
-      itemId,
-      renderType,
-      selectedItems
-    }
-  }
-}
-
-export function loadDownloadList (shareClinetId, token) {
-  return {
-    type: LOAD_DOWNLOAD_LIST,
-    payload: {
-      shareClinetId,
-      token
-    }
-  }
-}
-
-export function downloadListLoaded (list) {
-  return {
-    type: LOAD_DOWNLOAD_LIST_SUCCESS,
-    payload: {
-      list
-    }
-  }
-}
-
-export function loadDownloadListFail (error) {
-  return {
-    type: LOAD_DOWNLOAD_LIST_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function downloadFile (id, shareClinetId, token) {
-  return {
-    type: DOWNLOAD_FILE,
-    payload: {
-      id,
-      shareClinetId,
-      token
-    }
-  }
-}
-
-export function fileDownloaded (id) {
-  return {
-    type: DOWNLOAD_FILE_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function downloadFileFail (error) {
-  return {
-    type: DOWNLOAD_FILE_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function initiateDownloadTask (shareClientId, dataToken, type, downloadParams?, itemId?) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK,
-    payload: {
-      shareClientId,
-      dataToken,
-      type,
-      downloadParams,
-      itemId
-    }
-  }
-}
-
-export function DownloadTaskInitiated (type, itemId?) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_SUCCESS,
-    payload: {
-      type,
-      itemId
-    }
-  }
-}
-
-export function initiateDownloadTaskFail (error) {
-  return {
-    type: INITIATE_DOWNLOAD_TASK_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-export function sendShareParams (params) {
-  return {
-    type: SEND_SHARE_PARAMS,
-    payload: {
-      params
-    }
-  }
-}
+export default DashboardActions

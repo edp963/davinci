@@ -25,7 +25,6 @@ import lombok.Data;
 
 @Data
 public class ViewWithProjectAndSource extends ViewWithSource {
-
     private Project project;
     private Source source;
 }

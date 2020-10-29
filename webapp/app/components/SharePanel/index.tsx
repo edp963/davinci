@@ -18,196 +18,150 @@
  * >>
  */
 
-import * as React from 'react'
-
-import ShareForm from './ShareForm'
-import { Icon, Input, Button, Row, Col, Radio } from 'antd'
-const RadioButton = Radio.Button
-const RadioGroup = Radio.Group
-
-const styles = require('./SharePanel.less')
+import React, { useCallback, useState, useMemo, createRef } from 'react'
+import moment from 'moment'
+import ConfigForm from './ConfigForm'
+import { Modal } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import Ctrl from './Ctrl'
+import { Tmode, TShareVizsType, IShareTokenParams } from './types'
+import { IProjectRoles } from 'containers/Organizations/component/ProjectRole'
+import { IOrganizationMember } from 'containers/Organizations/types'
+import { DEFAULT_DATETIME_FORMAT, SHARE_HOST } from 'app/globalConstants'
+import styles from './SharePanel.less'
 
 interface ISharePanelProps {
-  id?: number
-  type: string
+  visible: boolean
+  id: number
   itemId?: number
-  active?: string
-  shareInfo: string
-  secretInfo: string
-  shareInfoLoading: boolean
-  authorized: boolean
-  afterAuthorization: () => void
-  onLoadDashboardShareLink?: (id: number, authName: string) => void
-  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onLoadDisplayShareLink?: (id: number, authName: string) => void
+  type: TShareVizsType
+  title: string
+  shareToken: string
+  passwordShareToken: string
+  password: string
+  authorizedShareToken: string
+  loading: boolean
+  projectRoles: IProjectRoles[]
+  organizationMembers: IOrganizationMember[]
+  onLoadDashboardShareLink?: (params: IShareTokenParams) => void
+  onLoadWidgetShareLink?: (params: IShareTokenParams) => void
+  onLoadDisplayShareLink?: (params: IShareTokenParams) => void
+  onClose: () => void
 }
 
-interface ISharePanelStates {
-  active: string
-  authName: string
-}
+const SharePanel: React.FC<ISharePanelProps> = (props) => {
+  const {
+    id,
+    type,
+    title,
+    itemId,
+    loading,
+    onClose,
+    visible,
+    passwordShareToken,
+    password,
+    shareToken,
+    projectRoles,
+    organizationMembers,
+    authorizedShareToken,
+    onLoadWidgetShareLink,
+    onLoadDisplayShareLink,
+    onLoadDashboardShareLink
+  } = props
+  const [mode, setMode] = useState<Tmode>('NORMAL')
+  const [viewers, setViewers] = useState<number[]>()
+  const [roles, setRoles] = useState<number[]>()
+  const configForm = createRef<FormComponentProps>()
 
-export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePanelStates> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      active: this.props.active,
-      authName: ''
-    }
-  }
-
-  public static defaultProps = {
-    active: 'normal'
-  }
-
-  public componentWillMount () {
-    if (!this.props.shareInfo) {
-      this.getShareInfo('')
-    }
-  }
-
-  public componentWillReceiveProps () {
-    this.setState({
-      authName: ''
-    })
-  }
-
-  public componentDidUpdate () {
-    const { shareInfo, shareInfoLoading } = this.props
-    if (!shareInfo && !shareInfoLoading) {
-      this.getShareInfo('')
-    }
-  }
-
-  private getShareInfo = (authName) => {
-    const {
-      id,
-      type,
-      itemId,
-      onLoadDashboardShareLink,
-      onLoadWidgetShareLink,
-      onLoadDisplayShareLink
-    } = this.props
-
-    const name = authName.target
-      ? authName.target.value
-      : authName
-
-    switch (type) {
-      case 'dashboard':
-        onLoadDashboardShareLink(id, name)
-        break
-      case 'widget':
-        onLoadWidgetShareLink(id, itemId, name)
-        break
-      case 'display':
-        onLoadDisplayShareLink(id, name)
-      default:
-        break
-    }
-  }
-
-  private radioChange = (e) => {
-    this.setState({
-      active: e.target.value
-    })
-  }
-
-  private creditShare = () => {
-    this.getShareInfo(this.state.authName)
-    this.props.afterAuthorization()
-  }
-
-  private authNameChange = (event) => {
-    this.setState({authName: event.target.value})
-  }
-
-  public render () {
-    const {
-      type,
-      shareInfo,
-      secretInfo,
-      shareInfoLoading,
-      authorized
-    } = this.props
-
-    const {
-      active,
-      authName
-    } = this.state
-
-    const segmentControl = (
-      <div className={styles.panelHead}>
-        <RadioGroup defaultValue={active} onChange={this.radioChange}>
-          <RadioButton value="normal">普通分享</RadioButton>
-          <RadioButton value="secret">授权分享</RadioButton>
-        </RadioGroup>
-      </div>
-      )
-
-    let content
-    let secretContent
-
-    if (shareInfo) {
-      content = (
-        <ShareForm
-          type={type}
-          shareInfo={shareInfo}
-        />
-      )
-    } else {
-      if (shareInfoLoading) {
-        content = (<Icon type="loading" />)
-      } else {
-        content = (<Button size="small" onClick={this.getShareInfo}>点击重新加载</Button>)
+  const getShareToken = useCallback(() => {
+    configForm.current.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const { permission } = values
+        const expired = moment(values.expired).format(DEFAULT_DATETIME_FORMAT)
+        const params = { id, itemId, mode, expired, permission, roles, viewers }
+        switch (type) {
+          case 'dashboard':
+            onLoadDashboardShareLink(params)
+            break
+          case 'widget':
+            onLoadWidgetShareLink(params)
+            break
+          case 'display':
+            onLoadDisplayShareLink(params)
+          default:
+            break
+        }
       }
+    })
+  }, [id, itemId, mode, type, roles, viewers, configForm])
+
+  const afterModalClose = () => {
+    setMode('NORMAL')
+  }
+
+  const modeChange = useCallback((val: Tmode) => {
+    if (val === 'AUTH') {
+      setViewers([])
+      setRoles([])
+    }
+    setMode(val)
+  }, [])
+
+  const shareUrl = useMemo(() => {
+    let token = ''
+    switch (mode) {
+      case 'NORMAL':
+        token = shareToken
+        break
+      case 'PASSWORD':
+        token = passwordShareToken
+        break
+      case 'AUTH':
+        token = authorizedShareToken
+        break
     }
 
-    if (secretInfo && authorized) {
-      secretContent = (
-        <ShareForm
-          type={type}
-          shareInfo={secretInfo}
-        />
-      )
-    } else {
-      if (shareInfoLoading) {
-        secretContent = (<Icon type="loading" />)
-      } else {
-        secretContent = (
-          <Row gutter={8} className={styles.shareRow}>
-            <Col span={24}>
-              <Input
-                className={styles.shareInput}
-                placeholder="请输入要分享的用户名"
-                onChange={this.authNameChange}
-                value={authName}
-                addonAfter={
-                  <span
-                    style={{cursor: 'pointer'}}
-                    onClick={this.creditShare}
-                  >
-                    确定
-                  </span>
-                }
-              />
-            </Col>
-          </Row>
-        )
+    if (token) {
+      switch (type) {
+        case 'dashboard':
+          return `${SHARE_HOST}?shareToken=${encodeURI(token)}#share/dashboard`
+        case 'widget':
+          return `${SHARE_HOST}?shareToken=${encodeURI(token)}#share/dashboard`
+        case 'display':
+          return `${SHARE_HOST}?shareToken=${encodeURI(token)}#share/display`
       }
+    } else {
+      return ''
     }
+  }, [mode, type, shareToken, passwordShareToken, authorizedShareToken])
 
-    return (
+  return (
+    <Modal
+      title={`分享-${title}`}
+      visible={visible}
+      wrapClassName="ant-modal-small"
+      footer={false}
+      onCancel={onClose}
+      afterClose={afterModalClose}
+      destroyOnClose
+    >
       <div className={styles.sharePanel}>
-        {segmentControl}
-        <div className={styles.panelContent}>
-          {
-            active === 'normal' ? content : secretContent
-          }
-        </div>
+        <Ctrl mode={mode} onModeChange={modeChange} />
+        <ConfigForm
+          mode={mode}
+          shareUrl={shareUrl}
+          password={password}
+          loading={loading}
+          projectRoles={projectRoles}
+          organizationMembers={organizationMembers}
+          onSetRoles={setRoles}
+          onSetViewers={setViewers}
+          onGetToken={getShareToken}
+          wrappedComponentRef={configForm}
+        />
       </div>
-    )
-  }
+    </Modal>
+  )
 }
 
 export default SharePanel

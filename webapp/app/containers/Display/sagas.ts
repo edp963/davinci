@@ -24,7 +24,8 @@ import {
   all,
   select,
   takeLatest,
-  takeEvery
+  takeEvery,
+  take
 } from 'redux-saga/effects'
 
 import produce from 'immer'
@@ -32,10 +33,11 @@ import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-import { ActionTypes } from './constants'
+import { ActionTypes, DragTriggerTypes } from './constants'
 import DisplayActions, { DisplayActionType } from './actions'
 import {
   ILayerRaw,
+  ILayerParams,
   Layer,
   ILayerFormed,
   LayersOperationInfo,
@@ -53,7 +55,9 @@ import {
   makeSelectCurrentSelectedLayerIds,
   makeSelectCurrentOperatingLayerList,
   makeSelectCurrentOtherLayerList,
-  makeSelectClipboardLayers
+  makeSelectClipboardLayers,
+  makeSelectCurrentOperateItemParams,
+  makeSelectCurrentEditLayerOperationInfo
 } from './selectors'
 import { makeSelectFormedViews } from 'containers/View/selectors'
 import { bringToFront, sendToBottom, bringToUpper, sendToNext } from './util'
@@ -65,8 +69,16 @@ import {
 import { computeEditorBaselines, setLayersAlignment } from './components/util'
 import { DefaultDisplayParams } from './components/Setting/constants'
 import { IDisplayFormed } from '../Viz/types'
+import { IWidgetConfig } from '../Widget/components/Widget'
+import {
+  widgetConfigMigrationRecorder,
+  displayParamsMigrationRecorder
+} from 'app/utils/migrationRecorders'
 
-export function* getSlideDetail(action: DisplayActionType) {
+import { OperationInfo } from './components/Layer/types'
+import { SecondaryGraphTypes } from './components/Setting'
+import { IFormedViews } from '../View/types'
+export function* getSlideDetail (action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SLIDE_DETAIL) {
     return
   }
@@ -90,19 +102,39 @@ export function* getSlideDetail(action: DisplayActionType) {
       widgets: []
     }
     items.forEach((item: ILayerRaw) => {
-      item.params = JSON.parse(item.params)
+      const { subType } = item
+      const parsedParams: ILayerParams = JSON.parse(item.params)
+      item.params =
+        SecondaryGraphTypes.Label === subType
+          ? displayParamsMigrationRecorder(parsedParams)
+          : parsedParams
     })
     widgets.forEach((widget: IWidgetRaw) => {
-      widget.config = JSON.parse(widget.config)
+      const parsedConfig: IWidgetConfig = JSON.parse(widget.config)
+      widget.config = widgetConfigMigrationRecorder(parsedConfig, {
+        viewId: widget.viewId
+      })
     })
 
-    yield put(slideDetailLoaded(slideId, items, widgets, views))
+    const formedViews: IFormedViews = views.reduce(
+      (obj, view) => {
+        obj[view.id] = {
+          ...view,
+          model: JSON.parse(view.model || '{}'),
+          variable: JSON.parse(view.variable || '[]')
+        }
+        return obj
+      },
+      {}
+    )
+
+    yield put(slideDetailLoaded(slideId, items, widgets, formedViews))
   } catch (err) {
     yield put(loadSlideDetailFail(err))
   }
 }
 
-export function* uploadCurrentSlideCover(action: DisplayActionType) {
+export function* uploadCurrentSlideCover (action: DisplayActionType) {
   if (action.type !== ActionTypes.UPLOAD_CURRENT_SLIDE_COVER) {
     return
   }
@@ -131,7 +163,7 @@ export function* uploadCurrentSlideCover(action: DisplayActionType) {
   }
 }
 
-export function* addSlideLayers(action: DisplayActionType) {
+export function* addSlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.ADD_SLIDE_LAYERS) {
     return
   }
@@ -172,25 +204,27 @@ export function* addSlideLayers(action: DisplayActionType) {
   }
 }
 
-export function* editSlideLayers(action: DisplayActionType) {
+export function* editSlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.EDIT_SLIDE_LAYERS) {
     return
   }
 
-  const { displayId, slideId, layers } = action.payload
+  const { displayId, slideId, layers, layerParamsUnChanged } = action.payload
   const { slideLayersEdited, editSlideLayersFail } = DisplayActions
   try {
-    yield call(
-      request,
-      `${api.display}/${displayId}/slides/${slideId}/widgets`,
-      {
-        method: 'put',
-        data: layers.map<ILayerRaw>((layer) => ({
-          ...layer,
-          params: JSON.stringify(layer.params)
-        }))
-      }
-    )
+    if (!layerParamsUnChanged) {
+      yield call(
+        request,
+        `${api.display}/${displayId}/slides/${slideId}/widgets`,
+        {
+          method: 'put',
+          data: layers.map<ILayerRaw>((layer) => ({
+            ...layer,
+            params: JSON.stringify(layer.params)
+          }))
+        }
+      )
+    }
     yield put(slideLayersEdited(slideId, layers))
   } catch (err) {
     yield put(editSlideLayersFail())
@@ -198,12 +232,15 @@ export function* editSlideLayers(action: DisplayActionType) {
   }
 }
 
-export function* editSlideLayerParams(action: DisplayActionType) {
+export function* editSlideLayerParams (action: DisplayActionType) {
   if (action.type !== ActionTypes.EDIT_SLIDE_LAYER_PARAMS) {
     return
   }
   const layerList: ILayerFormed[] = yield select(makeSelectCurrentLayerList())
   const layer = layerList.find(({ id }) => id === action.payload.layerId)
+  if (!layerList.length) {
+    return
+  }
   const { id: displayId } = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
   const updateLayer = {
@@ -213,17 +250,26 @@ export function* editSlideLayerParams(action: DisplayActionType) {
       ...action.payload.changedParams
     }
   }
+
   yield put(DisplayActions.editSlideLayers(displayId, slideId, [updateLayer]))
 }
 
-export function* deleteSlideLayers(action: DisplayActionType) {
+export function* deleteSlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.DELETE_SLIDE_LAYERS) {
     return
   }
 
   const { displayId, slideId } = action.payload
   const { slideLayersDeleted, deleteSlideLayersFail } = DisplayActions
-  const selectedLayerIds: number[] = yield select(makeSelectCurrentSelectedLayerIds())
+  const selectedLayerIds: number[] = yield select(
+    makeSelectCurrentSelectedLayerIds()
+  )
+  const editedLayerInfo: OperationInfo[] = yield select(
+    makeSelectCurrentEditLayerOperationInfo()
+  )
+  if (editedLayerInfo.length) {
+    return
+  }
   if (!selectedLayerIds.length) {
     return
   }
@@ -243,18 +289,49 @@ export function* deleteSlideLayers(action: DisplayActionType) {
   }
 }
 
-export function* dragLayer(action: DisplayActionType) {
+export function* dragLayer (action: DisplayActionType) {
   if (action.type !== ActionTypes.DRAG_LAYER) {
     return
   }
-  const { deltaPosition, layerId, finish, slideSize, scale } = action.payload
+  const {
+    deltaPosition,
+    layerId,
+    finish,
+    slideSize,
+    scale,
+    eventTrigger
+  } = action.payload
 
   const movingLayers: ILayerFormed[] = yield select((state) =>
     makeSelectCurrentOperatingLayerList()(state, layerId)
   )
+  const editedLayerInfo: OperationInfo[] = yield select(
+    makeSelectCurrentEditLayerOperationInfo()
+  )
+
   if (!movingLayers.length) {
     return
   }
+  if (editedLayerInfo.length) {
+    return
+  }
+  const operateItemParams = yield select(makeSelectCurrentOperateItemParams())
+
+  const layerParamsUnChanged = operateItemParams.length === 0
+
+  const operateParamsMap = new Map()
+  operateItemParams.forEach((item) => {
+    operateParamsMap.set(item.id, item)
+  })
+
+  const updateMovingLayers = movingLayers.map((layer) => {
+    const id = layer.id
+    if (operateParamsMap.has(id)) {
+      layer.params = operateParamsMap.get(id).params
+      return { ...{}, ...layer, ...{ params: operateParamsMap.get(id).params } }
+    }
+    return layer
+  })
   const otherLayers = yield select((state) =>
     makeSelectCurrentOtherLayerList()(state, layerId)
   )
@@ -263,9 +340,10 @@ export function* dragLayer(action: DisplayActionType) {
     config: { displayParams }
   }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
-
+  const [updateMovingLayerItem] = updateMovingLayers
+  const { subType } = updateMovingLayerItem
   const baselines = computeEditorBaselines(
-    movingLayers,
+    updateMovingLayers,
     otherLayers,
     slideSize,
     (displayParams || DefaultDisplayParams).grid,
@@ -275,38 +353,55 @@ export function* dragLayer(action: DisplayActionType) {
   )
 
   const { deltaX, deltaY } = deltaPosition
+
+  const needSnapToGrid = eventTrigger === DragTriggerTypes.MouseMove
   const deltaPositionAdjusted: DeltaPosition = baselines.reduce<DeltaPosition>(
     (acc, bl) => ({
-      deltaX: acc.deltaX + bl.adjust[0],
-      deltaY: acc.deltaY + bl.adjust[1]
+      deltaX: acc.deltaX + (needSnapToGrid && bl.adjust[0]),
+      deltaY: acc.deltaY + (needSnapToGrid && bl.adjust[1])
     }),
     { deltaX, deltaY }
   )
 
-  if (finish) {
-    const updateLayers = produce(movingLayers, (draft) => {
-      draft.forEach((layer) => {
-        layer.params.positionX += deltaX
-        layer.params.positionY += deltaY
-      })
-    })
-    yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
-    yield put(DisplayActions.clearEditorBaselines())
-  } else {
-    yield put(DisplayActions.showEditorBaselines(baselines))
-  }
-
   yield put(
     DisplayActions.dragLayerAdjusted(
-      movingLayers.map(({ id }) => id),
+      updateMovingLayers.map(({ id }) => id),
       slideSize,
       deltaPositionAdjusted,
       finish
     )
   )
+
+  if (subType !== SecondaryGraphTypes.Label) {
+    yield put(DisplayActions.showEditorBaselines(baselines))
+  }
+
+  if (finish) {
+    const updateLayers = produce(updateMovingLayers, (draft) => {
+      draft.forEach((layer) => {
+        const item = operateParamsMap.get(layer.id)
+        if (item) {
+          layer.params.positionX += deltaX
+          layer.params.positionY += deltaY
+        }
+      })
+    })
+
+    yield put(
+      DisplayActions.editSlideLayers(
+        displayId,
+        slideId,
+        updateLayers,
+        layerParamsUnChanged
+      )
+    )
+
+    yield take(ActionTypes.EDIT_SLIDE_LAYERS_SUCCESS)
+    yield put(DisplayActions.clearEditorBaselines())
+  }
 }
 
-export function* resizeLayer(action: DisplayActionType) {
+export function* resizeLayer (action: DisplayActionType) {
   if (action.type !== ActionTypes.RESIZE_LAYER) {
     return
   }
@@ -327,7 +422,8 @@ export function* resizeLayer(action: DisplayActionType) {
     config: { displayParams }
   }: IDisplayFormed = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
-
+  const [resizingLayerItem] = resizingLayers
+  const { subType } = resizingLayerItem
   const baselines = computeEditorBaselines(
     resizingLayers,
     otherLayers,
@@ -357,7 +453,9 @@ export function* resizeLayer(action: DisplayActionType) {
     yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
     yield put(DisplayActions.clearEditorBaselines())
   } else {
-    yield put(DisplayActions.showEditorBaselines(baselines))
+    if (subType !== SecondaryGraphTypes.Label) {
+      yield put(DisplayActions.showEditorBaselines(baselines))
+    }
   }
   yield put(
     DisplayActions.resizeLayerAdjusted(
@@ -368,23 +466,27 @@ export function* resizeLayer(action: DisplayActionType) {
   )
 }
 
-export function* copySlideLayers(action: DisplayActionType) {
+export function* copySlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.COPY_SLIDE_LAYERS) {
     return
   }
-  const selectedLayers: ILayerFormed[] = yield select(makeSelectCurrentSelectedLayerList())
+  const selectedLayers: ILayerFormed[] = yield select(
+    makeSelectCurrentSelectedLayerList()
+  )
   if (!selectedLayers) {
     return
   }
   yield put(DisplayActions.slideLayersCopied(selectedLayers))
 }
 
-export function* pasteSlideLayers(action: DisplayActionType) {
+export function* pasteSlideLayers (action: DisplayActionType) {
   if (action.type !== ActionTypes.PASTE_SLIDE_LAYERS) {
     return
   }
 
-  const clipboardLayers: ILayerFormed[] = yield select(makeSelectClipboardLayers())
+  const clipboardLayers: ILayerFormed[] = yield select(
+    makeSelectClipboardLayers()
+  )
   if (!clipboardLayers.length) {
     return
   }
@@ -399,7 +501,7 @@ export function* pasteSlideLayers(action: DisplayActionType) {
   yield put(DisplayActions.addSlideLayers(displayId, slideId, layers))
 }
 
-export function* changeLayersStack(action: DisplayActionType) {
+export function* changeLayersStack (action: DisplayActionType) {
   if (action.type !== ActionTypes.CHANGE_LAYERS_STACK) {
     return
   }
@@ -435,7 +537,7 @@ export function* changeLayersStack(action: DisplayActionType) {
   yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
 }
 
-export function* updateLayersAlignment(action: DisplayActionType) {
+export function* updateLayersAlignment (action: DisplayActionType) {
   if (action.type !== ActionTypes.SET_LAYERS_ALIGNMENT) {
     return
   }
@@ -454,28 +556,53 @@ export function* updateLayersAlignment(action: DisplayActionType) {
   yield put(DisplayActions.editSlideLayers(displayId, slideId, updateLayers))
 }
 
-export function* getDisplayShareLink(action: DisplayActionType) {
+export function* getDisplayShareLink (action: DisplayActionType) {
   if (action.type !== ActionTypes.LOAD_DISPLAY_SHARE_LINK) {
     return
   }
 
-  const { id, authName } = action.payload
+  const { id, mode, expired, permission, roles, viewers } = action.payload.params
   const {
-    displaySecretLinkLoaded,
+    displayAuthorizedShareLinkLoaded,
     displayShareLinkLoaded,
-    loadDisplayShareLinkFail
+    loadDisplayShareLinkFail,
+    displayPasswordShareLinkLoaded
   } = DisplayActions
+
+  let requestData = null
+
+  switch (mode) {
+    case 'AUTH':
+      requestData = { mode, expired, permission, roles, viewers }
+      break
+    case 'PASSWORD':
+    case 'NORMAL':
+      requestData = { mode, expired }
+      break
+    default:
+      break
+  }
+
   try {
     const asyncData = yield call(request, {
-      method: 'get',
+      method: 'POST',
       url: `${api.display}/${id}/share`,
-      params: { username: authName }
+      data: requestData
     })
-    const shareInfo = asyncData.payload
-    if (authName) {
-      yield put(displaySecretLinkLoaded(shareInfo))
-    } else {
-      yield put(displayShareLinkLoaded(shareInfo))
+    const { token, password } = asyncData.payload
+
+    switch (mode) {
+      case 'AUTH':
+        yield put(displayAuthorizedShareLinkLoaded(token))
+        break
+      case 'PASSWORD':
+        yield put(displayPasswordShareLinkLoaded(token, password))
+        break
+      case 'NORMAL':
+        yield put(displayShareLinkLoaded(token))
+        break
+      default:
+        break
     }
   } catch (err) {
     yield put(loadDisplayShareLinkFail())
@@ -483,7 +610,7 @@ export function* getDisplayShareLink(action: DisplayActionType) {
   }
 }
 
-export function* undoOperation(action: DisplayActionType) {
+export function* undoOperation (action: DisplayActionType) {
   if (action.type !== ActionTypes.UNDO_OPERATION) {
     return
   }
@@ -494,19 +621,19 @@ export function* undoOperation(action: DisplayActionType) {
   const { undoOperationDone, undoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
-      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
-        yield call(request, `${api.display}/${displayId}/slides`, {
-          method: 'put',
-          data: [
-            {
-              ...slide,
-              displayId
-            }
-          ]
-        })
-        break
+      // case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+      //   yield call(request, `${api.display}/${displayId}/slides`, {
+      //     method: 'put',
+      //     data: [
+      //       {
+      //         ...slide,
+      //         displayId
+      //       }
+      //     ]
+      //   })
+      //   break
       case ActionTypes.ADD_SLIDE_LAYERS_SUCCESS:
-      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+      // case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
         const deleteLayerIds = lastLayers.map((l) => l.id)
         yield call(
           request,
@@ -545,7 +672,7 @@ export function* undoOperation(action: DisplayActionType) {
   }
 }
 
-export function* redoOperation(action: DisplayActionType) {
+export function* redoOperation (action: DisplayActionType) {
   if (action.type !== ActionTypes.REDO_OPERATION) {
     return
   }
@@ -556,19 +683,19 @@ export function* redoOperation(action: DisplayActionType) {
   const { redoOperationDone, redoOperationFail } = DisplayActions
   try {
     switch (lastOperationType) {
-      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
-        yield call(request, `${api.display}/${displayId}/slides`, {
-          method: 'put',
-          data: [
-            {
-              ...slide,
-              displayId
-            }
-          ]
-        })
-        break
+      // case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+      //   yield call(request, `${api.display}/${displayId}/slides`, {
+      //     method: 'put',
+      //     data: [
+      //       {
+      //         ...slide,
+      //         displayId
+      //       }
+      //     ]
+      //   })
+      //   break
       case ActionTypes.ADD_SLIDE_LAYERS_SUCCESS:
-      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+      // case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
         yield call(
           request,
           `${api.display}/${displayId}/slides/${slideId}/widgets`,
@@ -607,7 +734,7 @@ export function* redoOperation(action: DisplayActionType) {
   }
 }
 
-export default function* rootDisplaySaga() {
+export default function* rootDisplaySaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_SLIDE_DETAIL, getSlideDetail),
     takeEvery(ActionTypes.UPLOAD_CURRENT_SLIDE_COVER, uploadCurrentSlideCover),

@@ -5237,7 +5237,7 @@ function getFormattedDataRows(widgetConfigJson, dataRows) {
         // formattedDataRows.push(getFormattedDataRow(fields, dataRows.get(i)))
         formattedDataRows.push(getFormattedDataRow(fields, dataRows[i])) // @FIXME
     }
-    return formattedDataRows
+    return JSON.stringify(formattedDataRows)
 }
 // #endregion
 
@@ -5510,7 +5510,8 @@ function parseTableHeader(headerConfig, fields, queryVars) {
     return headerCells
 }
 
-function getFieldsHeader(widgetConfigJson, queryVars) {
+function getFieldsHeader(widgetConfigJson, queryVarsJson) {
+    var queryVars = JSON.parse(queryVarsJson || '[]')
     if (!widgetConfigJson) {
         return []
     }
@@ -5555,5 +5556,5 @@ function getFieldsHeader(widgetConfigJson, queryVars) {
             }
         }
     }
-    return headerCells
+    return JSON.stringify(headerCells);
 }

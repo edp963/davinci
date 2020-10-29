@@ -28,26 +28,32 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             `org_id`,
             `user_id`,
-            `role`
+            `role`,
+            `create_by`,
+            `create_time`
         </trim>
         values
         <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{orgId, jdbcType=BIGINT},
             #{userId, jdbcType=BIGINT},
-            #{role, jdbcType=SMALLINT}
+            #{role, jdbcType=SMALLINT},
+            #{createBy, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP}
         </trim>
     </insert>
 
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert ignore into rel_user_organization
-        (`org_id`,`user_id`, `role`)
-        VALUES
+        (`org_id`,`user_id`, `role`, `create_by`, `create_time`)
+        values
         <foreach collection="set" item="record" index="index" separator=",">
             (
             #{record.orgId,jdbcType=BIGINT},
             #{record.userId,jdbcType=BIGINT},
-            #{record.role,jdbcType=SMALLINT}
+            #{record.role,jdbcType=SMALLINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
             )
         </foreach>
     </insert>
@@ -65,4 +71,19 @@
             1=0
         </if>
     </delete>
+
+    <select id="selectOrgMembers" resultType="edp.davinci.dto.userDto.UserBaseInfo">
+        select DISTINCT u.id, IF(u.`name` is NULL,u.`username`,u.`name`) as username, u.`email`, u.`avatar`
+        from `user` u left join rel_user_organization ruo on u.id = ruo.user_id
+        where ruo.org_id = #{orgId}
+        <if test="ids != null and ids.size > 0">
+            and u.id in
+            <foreach collection="ids" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="ids == null or ids.size == 0">
+            and 1=0
+        </if>
+    </select>
 </mapper>

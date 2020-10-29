@@ -1,5 +1,5 @@
 
-import * as React from 'react'
+import React from 'react'
 import { Row, Col, Input, Checkbox, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from 'components/ColorPicker'

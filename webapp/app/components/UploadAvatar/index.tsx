@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import Avatar from '../Avatar'
 import { Upload, message as Message, Button } from 'antd'
 const styles = require('./UploadAvatar.less')

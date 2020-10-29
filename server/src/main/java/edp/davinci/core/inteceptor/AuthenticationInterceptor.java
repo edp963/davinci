@@ -26,6 +26,7 @@ import edp.core.annotation.AuthShare;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.model.User;
 import edp.davinci.service.UserService;
@@ -69,8 +70,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
 
-        AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
-        if (null != authShareMethoed) {
+        AuthShare authShareMethod = method.getAnnotation(AuthShare.class);
+        if (null != authShareMethod) {
             if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
                 String username = tokenUtils.getUsername(token);
                 User user = userService.getByUsername(username);
@@ -84,7 +85,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
                 log.debug("{} : Unknown token", request.getServletPath());
             }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(ErrorMsg.ERR_MSG_AUTHENTICATION);
             return false;
         }
         String username = tokenUtils.getUsername(token);
@@ -94,7 +95,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
                 log.debug("{} : token user not found", request.getServletPath());
             }
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("ERROR Permission denied");
+            response.getWriter().print(ErrorMsg.ERR_MSG_PERMISSION);
             return false;
 
         }

@@ -28,9 +28,11 @@ import { ITableConfig } from '../Config/Table'
 import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSections'
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IViewModel } from 'containers/View/types'
-import { IQueryVariableMap } from 'containers/Dashboard/Grid'
-import { getStyleConfig } from '../util'
-import ChartTypes from '../../config/chart/ChartTypes'
+import { IQueryVariableMap } from 'containers/Dashboard/types'
+import { IControl } from 'app/components/Control/types'
+import { RichTextNode } from 'app/components/RichText'
+import { IReference } from '../Workbench/Reference/types'
+import { ControlQueryMode } from 'app/components/Control/constants'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -124,7 +126,7 @@ export interface IPaginationParams {
   withPaging: boolean
 }
 
-export interface IWidgetProps {
+interface IWidgetConfigBase {
   data: object[]
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
@@ -133,7 +135,6 @@ export interface IWidgetProps {
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
-  interacting?: boolean
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -148,24 +149,32 @@ export interface IWidgetProps {
   pagination?: IPaginationParams
   editing?: boolean
   queryVariables?: IQueryVariableMap
+  references?: IReference[]
+  computed?: any[]
+}
+
+export interface IWidgetProps extends IWidgetConfigBase {
+  interacting?: boolean
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
   onPaginationChange?: (pageNo: number, pageSize: number, order?: { column: string, direction: string }) => void
-  onChartStylesChange?: (propPath: string[], value: string) => void
+  onChartStylesChange?: (propPath: string[], value: string | RichTextNode[]) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object[]
-  computed?: any[]
   selectedItems?: number[]
   onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
+  onError?: (error: Error) => void
 }
 
-export interface IWidgetConfig extends IWidgetProps {
-  controls: any[]
+export interface IWidgetConfig extends IWidgetConfigBase {
+  controls: IControl[]
+  limit: number
   cache: boolean
   expired: number
   autoLoadData: boolean
+  queryMode: ControlQueryMode
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
@@ -195,13 +204,14 @@ export class Widget extends React.Component<
   }
 
   private container = createRef<HTMLDivElement>()
+  private remeasureRenderTypes = ['rerender', 'clear', 'refresh', 'resize', 'flush']
 
   public componentDidMount () {
     this.getContainerSize()
   }
 
   public componentWillReceiveProps (nextProps: IWidgetProps) {
-    if (nextProps.renderType === 'resize') {
+    if (this.remeasureRenderTypes.includes(nextProps.renderType)) {
       this.getContainerSize()
     }
   }
@@ -223,12 +233,10 @@ export class Widget extends React.Component<
   }
 
   public render () {
-    const { loading, empty } = this.props
+    const { loading, empty, ...rest } = this.props
     const { width, height } = this.state
 
-    const widgetProps = { width, height, ...this.props }
-
-    delete widgetProps.loading
+    const widgetProps = { width, height, ...rest }
 
     let widgetContent: JSX.Element
     if (width && height) {

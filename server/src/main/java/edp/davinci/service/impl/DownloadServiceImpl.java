@@ -20,10 +20,11 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.exception.UnAuthorizedExecption;
+import edp.core.exception.UnAuthorizedException;
 import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.DownloadTaskStatus;
 import edp.davinci.core.enums.DownloadType;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.dao.DownloadRecordMapper;
 import edp.davinci.dao.UserMapper;
 import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
@@ -35,6 +36,8 @@ import edp.davinci.service.excel.MsgWrapper;
 import edp.davinci.service.excel.WidgetContext;
 import edp.davinci.service.excel.WorkBookContext;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +56,8 @@ import java.util.List;
 @Slf4j
 public class DownloadServiceImpl extends DownloadCommonService implements DownloadService {
 
+    private static final Logger downloadLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_DOWNLOAD.getName());
+
     @Autowired
     private DownloadRecordMapper downloadRecordMapper;
 
@@ -65,25 +70,25 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
     }
 
     @Override
-    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedExecption {
+    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedException {
         if (StringUtils.isEmpty(token)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         String username = tokenUtils.getUsername(token);
         if (StringUtils.isEmpty(username)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         User user = userMapper.selectByUsername(username);
         if (null == user) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         DownloadRecord record = downloadRecordMapper.getById(id);
 
         if (!record.getUserId().equals(user.getId())) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         record.setLastDownloadTime(new Date());
@@ -110,13 +115,13 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
                     .withUser(user)
                     .withResultLimit(resultLimit)
                     .withTaskKey("DownloadTask_" + id)
+                    .withCustomLogger(downloadLogger)
                     .build();
 
-            ExecutorUtil.submitWorkbookTask(workBookContext, null);
-
-            log.info("Download task submit: {}", wrapper);
+            ExecutorUtil.submitWorkbookTask(workBookContext, downloadLogger);
+            log.info("Download task submit:{}", wrapper);
         } catch (Exception e) {
-            log.error("submit download task error,e=", e);
+            log.error("Submit download task error", e);
             return false;
         }
         return true;

@@ -19,10 +19,11 @@
  */
 
 import { IScheduleVizConfigItem } from './ScheduleVizConfig/types'
+import { RichTextNode } from 'components/RichText'
 
 export * from './ScheduleVizConfig/types'
 export type JobStatus = 'new' | 'failed' | 'started' | 'stopped'
-export type JobType = 'email'
+export type JobType = 'email' | 'weChatWork'
 export type ScheduleType = 'image' | 'excel' | 'imageAndExcel'
 export type SchedulePeriodUnit =
   | 'Minute'
@@ -51,17 +52,26 @@ export interface IScheduleRaw extends IScheduleBase {
 
 export interface IScheduleMailConfig {
   subject: string
-  content: string
+  content: string | RichTextNode[]
   to: string
   cc: string
   bcc: string
   type: ScheduleType
   imageWidth: number
   contentList: IScheduleVizConfigItem[]
+  setCronExpressionManually: boolean
+}
+
+export interface IScheduleWeChatWorkConfig {
+  webHookUrl: string
+  type: string
+  imageWidth: number
+  contentList: IScheduleVizConfigItem[]
+  setCronExpressionManually: boolean
 }
 
 export interface ISchedule extends IScheduleBase {
-  config: IScheduleMailConfig
+  config: IScheduleMailConfig | IScheduleWeChatWorkConfig
 }
 
 export interface IUserInfo {

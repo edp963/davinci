@@ -17,20 +17,20 @@
  * limitations under the License.
  * >>
  */
-import * as React from 'react'
+import React from 'react'
 import { Form, Row, Col, Transfer } from 'antd'
+import { FormComponentProps } from 'antd/lib/form/Form'
 
 interface ICommonTransferProps {
-  form: any
   groupSource?: any[]
   groupTarget?: any[]
   onGroupChange?: (targets) => any
   dataSource?: any[]
-  optionTitle: () => any
-  filterOption: (inputValut: string, option: any[]) => any
+  optionTitle: (item) => any
+  adminTargetKeys: any[]
   targetKeys: any[]
   setTargetKeys: (newTargetKeys: any) => any
-  rowKeys: () => any
+  rowKeys: (item) => any
 }
 
 interface ICommonTransferState {
@@ -38,7 +38,7 @@ interface ICommonTransferState {
   targetKeys: any[]
 }
 
-export class CommonTransfer extends React.PureComponent<ICommonTransferProps, ICommonTransferState> {
+export class CommonTransfer extends React.PureComponent<ICommonTransferProps & FormComponentProps, ICommonTransferState> {
 
   constructor (props) {
     super(props)
@@ -82,7 +82,6 @@ export class CommonTransfer extends React.PureComponent<ICommonTransferProps, IC
               listStyle={{width: '210px'}}
               rowKey={this.props.rowKeys}
               dataSource={this.state.dataSource}
-              filterOption={this.props.filterOption}
               targetKeys={this.props.targetKeys}
               onChange={this.handleChange}
              // onSearch={this.handleSearch}
@@ -95,10 +94,4 @@ export class CommonTransfer extends React.PureComponent<ICommonTransferProps, IC
 }
 
 
-export default Form.create()(CommonTransfer)
-
-
-
-
-
-
+export default Form.create<ICommonTransferProps & FormComponentProps>()(CommonTransfer)

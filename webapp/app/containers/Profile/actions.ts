@@ -48,3 +48,8 @@ export function getUserProfileFail () {
   }
 }
 
+export default {
+  getUserProfile,
+  userProfileGot,
+  getUserProfileFail
+}

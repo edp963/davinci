@@ -121,7 +121,16 @@ class HistoryStack  {
         this.item = []
         this.wrap[user] = this.item
       }
-      return this.wrap[user]
+      const projectList = this.wrap[user]
+      return {
+        projectList,
+        proIdList: projectList.map((pro) => pro.id)
+      }
+    } else {
+      return {
+        projectList: [],
+        proIdList: []
+      }
     }
   }
 }

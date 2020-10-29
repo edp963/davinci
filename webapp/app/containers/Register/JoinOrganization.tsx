@@ -1,17 +1,13 @@
-import * as React from 'react'
+import React, { ChangeEvent, FormEvent } from 'react'
 import { compose } from 'redux'
-import Helmet from 'react-helmet'
-
-import { Icon } from 'antd'
-
 import { connect } from 'react-redux'
+import Helmet from 'react-helmet'
+import LoginForm from 'containers/Login/LoginForm'
 import { joinOrganization, login } from '../App/actions'
 import { createStructuredSelector } from 'reselect'
 import { makeSelectLoginLoading } from '../App/selectors'
 
-const styles = require('../Login/Login.less')
-const utilStyles = require('assets/less/util.less')
-const registerStyles = require('./register.less')
+import styles from 'containers/Login/Login.less'
 
 interface IJoinOrganizationProps {
   onJoinOrganization: (token?: string, resolve?: (res?: {id?: number}) => any, reject?: (err?: string) => any) => any
@@ -37,38 +33,17 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
     }
   }
 
-  private enterLogin: (e: KeyboardEvent) => any = null
-
-  public componentWillUnmount () {
-    this.unbindDocumentKeypress()
-  }
-
   public componentWillMount () {
     this.joinOrganization()
   }
 
-  private bindDocumentKeypress = () => {
-    this.enterLogin = (e) => {
-      if (e.keyCode === 13) {
-        this.doLogin()
-      }
-    }
-
-    document.addEventListener('keypress', this.enterLogin, false)
-  }
-
-  private unbindDocumentKeypress = () => {
-    document.removeEventListener('keypress', this.enterLogin, false)
-    this.enterLogin = null
-  }
-
-  private changeUsername = (e) => {
+  private changeUsername = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  private changePassword = (e) => {
+  private changePassword = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       password: e.target.value
     })
@@ -77,10 +52,8 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
   private joinOrganization = () => {
     const {onJoinOrganization} = this.props
     const token = this.getParamsByLocation('token')
-    console.log(token)
     if (token) {
       onJoinOrganization(token, (res) => {
-        console.log(res)
         if (res && res.id) {
           const path = `${window.location.protocol}//${window.location.host}/#/account/organization/${res.id}`
           location.replace(path)
@@ -93,7 +66,8 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
     }
   }
 
-  private doLogin = () => {
+  private doLogin = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     const {onLogin, onJoinOrganization} = this.props
     const {username, password} = this.state
     const token = this.getParamsByLocation('token')
@@ -130,40 +104,14 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
       ? (
         <div className={styles.window}>
           <Helmet title="Login - Join Organization" />
-          <div className={styles.form}>
-            <div className={styles.input}>
-              <Icon type="user"/>
-              <input
-                placeholder="用户名"
-                value={username}
-                onFocus={this.bindDocumentKeypress}
-                onBlur={this.unbindDocumentKeypress}
-                onChange={this.changeUsername}
-              />
-            </div>
-            <div className={styles.input}>
-              <Icon type="unlock"/>
-              <input
-                placeholder="密码"
-                type="password"
-                value={password}
-                onFocus={this.bindDocumentKeypress}
-                onBlur={this.unbindDocumentKeypress}
-                onChange={this.changePassword}
-              />
-            </div>
-          </div>
-          <button
-            disabled={loginLoading}
-            onClick={this.doLogin}
-          >
-            {
-              loginLoading
-                ? <Icon type="loading"/>
-                : ''
-            }
-            登 录
-          </button>
+          <LoginForm
+            username={username}
+            password={password}
+            loading={loginLoading}
+            onChangeUsername={this.changeUsername}
+            onChangePassword={this.changePassword}
+            onLogin={this.doLogin}
+          />
         </div>
       )
      : (

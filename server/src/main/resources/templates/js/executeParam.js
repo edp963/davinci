@@ -5242,7 +5242,7 @@ function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, ite
     widgetExecuteParam.filters = widgetExecuteParam.filters.concat(globalFilters.filters)
     widgetExecuteParam.filters = widgetExecuteParam.filters.map(function(filter) { return JSON.stringify(filter) })
     widgetExecuteParam.params = widgetExecuteParam.params.concat(globalFilters.params)
-    return widgetExecuteParam
+    return JSON.stringify(widgetExecuteParam)
 }
 
 function getGlobalFilters(dashboardConfig, dashboardItemId) {

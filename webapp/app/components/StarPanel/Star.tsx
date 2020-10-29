@@ -1,120 +1,55 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 import React from 'react'
-import { Modal, Row, Col } from 'antd'
-import { IStarUser } from 'containers/Projects/types'
+import { IStar, IEvent, IStarUserList } from './types'
 const styles = require('./Star.less')
-import Avatar from 'components/Avatar'
+import StarUser from './StarUser'
 
-interface IStar {
-  unStar?: (id: number) => any
-  userList?: (id: number) => any
-  starUser?: IStarUser[]
-  d?: {
-    createBy?: { avatar?: string, id?: number, username?: string}
-    isStar?: boolean
-    type?: string
-    name?: string
-    id?: number
-    description?: string
-    pic?: string
-    orgId?: number
-    visibility?: boolean
-    starNum?: number
-  }
+function stopPPG(e: IEvent) {
+  e.stopPropagation()
 }
 
-
-interface IStarState {
-  visible: boolean
-}
-export class Star extends React.PureComponent <IStar, IStarState> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      visible: false
-    }
-  }
-  private stopPPG = (e) => {
-    e.stopPropagation()
-  }
-  private show = (e) => {
-    e.stopPropagation()
-    this.setState({
-      visible: true
-    })
-  }
-  private hideModal = () => {
-    this.setState({
-      visible: false
-    })
-  }
-  public render () {
-    const {d, starUser} = this.props
-    return (
-      <div className={styles.starWrapper}>
-        <span onClick={this.stopPPG}>
-          <span className={styles.leftWrapper} onClick={this.props.unStar(d.id)}>
-          <span className={`iconfont ${d && d.isStar ? 'icon-star1' : 'icon-star'}`} style={{fontSize: '12px'}}/>&nbsp;
-            <span>{d && d.isStar ? 'Unstar' : 'star'}</span>
-          </span>
+const Star: React.FC<IStar> & {
+  StarUser: React.FC<IStarUserList>
+} = ({ proId, isStar, unStar, starNum, userList }) => {
+  return (
+    <div className={styles.starWrapper} onClick={stopPPG}>
+      <span onClick={stopPPG}>
+        <span className={styles.leftWrapper} onClick={unStar(proId)}>
+          <span
+            className={`iconfont ${isStar ? 'icon-star1' : 'icon-star'}`}
+            style={{ fontSize: '12px' }}
+          />
+          &nbsp;
+          <span>{isStar ? 'Unstar' : 'star'}</span>
         </span>
-        <span onClick={this.show}>
-          <span className={styles.starCount} onClick={this.props.userList(d.id)}>
-            {d.starNum}
-          </span>
+      </span>
+      <span>
+        <span className={styles.starCount} onClick={userList(proId)}>
+          {starNum}
         </span>
-        <Modal
-          title={null}
-          width="760"
-          visible={this.state.visible}
-          footer={null}
-          onCancel={this.hideModal}
-        >
-          <div className={styles.formWrapper}>
-            <div className={styles.header}>
-              <div className={styles.title}>
-                点赞用户
-              </div>
-            </div>
-            <div className={styles.body}>
-              <ol>
-                <Row>
-                  {
-                    starUser ? starUser.map((user: IStarUser, index) => (
-                      <Col
-                        xxl={12}
-                        xl={12}
-                        lg={12}
-                        md={24}
-                        sm={24}
-                        key={user.id}
-                      >
-                        <li className={styles.userList} key={`star${index}list`}>
-                          <div className={styles.orgHeader}>
-                            <div className={styles.avatar}>
-                              <Avatar path={user.avatar} size="small" enlarge={true}/>
-                            </div>
-                            <header className={styles.name}>
-                              <h3 className={styles.title}>
-                                {user.username}
-                                {/*{editHint}*/}
-                              </h3>
-                              <p className={styles.content}>
-                                点赞时间： {user.starTime}
-                              </p>
-                            </header>
-                          </div>
-                        </li>
-                      </Col>
-                    )) : ''
-                  }
-                </Row>
-              </ol>
-            </div>
-          </div>
-        </Modal>
-      </div>
-    )
-  }
+      </span>
+    </div>
+  )
 }
 
+Star.StarUser = StarUser
 export default Star

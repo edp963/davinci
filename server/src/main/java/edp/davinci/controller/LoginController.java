@@ -19,6 +19,7 @@
 
 package edp.davinci.controller;
 
+import edp.core.annotation.AuthIgnore;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -35,14 +36,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 
 @Api(tags = "login", basePath = Constants.BASE_API_PATH, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -63,6 +70,9 @@ public class LoginController {
 
     @Autowired
     private Environment environment;
+
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     /**
      * 登录
@@ -88,10 +98,48 @@ public class LoginController {
 
         UserLoginResult userLoginResult = new UserLoginResult(user);
         String statistic_open = environment.getProperty("statistic.enable");
-        if("true".equalsIgnoreCase(statistic_open)){
+        if ("true".equalsIgnoreCase(statistic_open)) {
             userLoginResult.setStatisticOpen(true);
         }
 
         return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(userLoginResult));
+    }
+
+    @ApiOperation(value = "get oauth2 clients")
+    @GetMapping(value = "getOauth2Clients", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @AuthIgnore
+    public ResponseEntity getOauth2Clients(HttpServletRequest request) {
+
+        if (clientRegistrationRepository == null) {
+            return ResponseEntity.ok(new ResultMap().payloads(new ArrayList(0)));
+        }
+
+        Iterable<ClientRegistration> clientRegistrations = (Iterable<ClientRegistration>) clientRegistrationRepository;
+        List<HashMap<String, String>> clients = new ArrayList<>();
+        clientRegistrations.forEach(registration -> {
+            HashMap<String, String> map = new HashMap<>();
+            map.put(registration.getClientName(), OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI + "/" + registration.getRegistrationId() + "?redirect_url=/");
+            clients.add(map);
+        });
+
+        return ResponseEntity.ok(new ResultMap().payloads(clients));
+    }
+
+    @ApiOperation(value = "External Login")
+    @AuthIgnore
+    @PostMapping(value = "externalLogin", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity externalLogin(Principal principal) {
+        if (null != principal && principal instanceof OAuth2AuthenticationToken) {
+            User user = userService.externalRegist((OAuth2AuthenticationToken) principal);
+            String token = tokenUtils.generateToken(user);
+            userService.activateUserNoLogin(token, null);
+            UserLoginResult userLoginResult = new UserLoginResult(user);
+            String statistic_open = environment.getProperty("statistic.enable");
+            if ("true".equalsIgnoreCase(statistic_open)) {
+                userLoginResult.setStatisticOpen(true);
+            }
+            return ResponseEntity.ok(new ResultMap().success(token).payload(userLoginResult));
+        }
+        return ResponseEntity.status(401).build();
     }
 }

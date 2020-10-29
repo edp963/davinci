@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
@@ -62,7 +62,7 @@ interface IChartProps {
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   selectedChart: number
-  selectedItems?: string[]
+  selectedItems?: string[] | number[]
   onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
@@ -649,10 +649,6 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
               xSum = 0
             }
           })
-          // console.log(grid)
-          // console.log(xAxis)
-          // console.log(yAxis)
-          // console.log(series)
           const { isDrilling, whichDataDrillBrushed, getDataDrillDetail } = this.props
           const brushedOptions = isDrilling === true ? {
             // brush: {

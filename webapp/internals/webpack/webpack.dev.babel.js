@@ -14,12 +14,10 @@ module.exports = require('./webpack.base.babel')({
   // Add hot reloading in development
   entry: {
     app: [
-      require.resolve('react-app-polyfill/ie11'),
       'webpack-hot-middleware/client?reload=true',
       path.join(process.cwd(), 'app/app.tsx') // Start with js/app.js
     ],
     share: [
-      require.resolve('react-app-polyfill/ie11'),
       'webpack-hot-middleware/client?reload=true',
       path.join(process.cwd(), 'share/app.tsx')
     ]
@@ -33,7 +31,9 @@ module.exports = require('./webpack.base.babel')({
 
   optimization: {
     splitChunks: {
-      chunks: 'all',
+      // chunks: 'all',
+      chunks: 'async',
+      maxAsyncRequests: 5,
       cacheGroups: {
         vendors: {
           test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker)(.[a-zA-Z0-9.\-_]+)[\\/]/,

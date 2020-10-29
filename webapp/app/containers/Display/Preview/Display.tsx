@@ -37,7 +37,7 @@ import Slide from './Slide'
 import { ViewActions } from 'containers/View/actions'
 
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IQueryConditions } from 'containers/Dashboard/Grid'
+import { IQueryConditions } from 'containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
 import { getRequestParamsByWidgetConfig } from 'containers/Viz/util'
 import DisplayActions from '../actions'

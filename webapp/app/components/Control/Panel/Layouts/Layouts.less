@@ -1,0 +1,85 @@
+@import "~assets/less/variable";
+
+.dashboardControlPanel {
+  background-color: @white;
+  padding: 4px 8px 8px;
+  margin-top: 16px;
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+
+  &.empty {
+    padding: 0;
+    margin: 0;
+    display: none;
+  }
+
+  .controls {
+    flex: 1;
+  }
+
+  .actions {
+    flex-shrink: 0;
+    padding: 6px 8px;
+
+    button {
+      // margin-top: 20px;
+      margin-left: 8px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+
+.fullscreenControlPanel {
+  background-color: @white;
+  display: flex;
+  flex-direction: column;
+
+  .actions {
+    margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+.dashboardItemControlPanel {
+  padding: 8px 16px;
+  border-bottom: 1px solid @border-color-base;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .controls {
+    flex: 1;
+  }
+
+  .actions {
+    flex-shrink: 0;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+.controlItem {
+  margin: 0;
+  .antFormItemLabelCustom(0.8571em, 1em, 4px);
+  .antFormItemStyleWithoutForm;
+}

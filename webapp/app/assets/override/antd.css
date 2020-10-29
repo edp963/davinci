@@ -32,50 +32,6 @@
 
 /***** antd *****/
 
-/* 调整因默认字体变大造成的按钮变形 */
-/* .ant-btn {
-  line-height: 22px;
-} */
-
-/* 调整 InputGroup 后缀按钮变形 */
-/* .ant-input-group-wrap .ant-btn-lg {
-  padding-top: 3px;
-  padding-bottom: 3px;
-} */
-
-/* 调整 Form 中圆形按钮大小 */
-/* .ant-form .ant-btn-circle {
-  width: 30px;
-  height: 30px;
-  padding-bottom: 0;
-} */
-
-/* 调整 ModalFooter 中按钮文字大小 */
-/* .ant-modal-footer .ant-btn-lg {
-  font-size: 14px;
-}
-
-.ant-form a {
-  line-height: 30px;
-}
-
-.ant-form-item-required:before {
-  line-height: 1;
-}
-
-.no-item-margin .ant-form-item {
-  margin-bottom: 0;
-}
-
-.small-item-margin .ant-form-item {
-  margin-bottom: 10px;
-}
-
-.small-item-margin .ant-radio-button-wrapper-checked {
-  color: #fff !important;
-  background-color: #1B98E0 !important;
-} */
-
 .ant-modal-small > .ant-modal {
   width: 400px !important;
 }
@@ -134,22 +90,6 @@
 .ant-calendar-range-picker-input {
   vertical-align: baseline;
 }
-
-/* 去掉默认动画效果 */
-/* .fade-enter,
-.fade-appear,
-.fade-leave,
-.fade-enter.fade-enter-active,
-.fade-appear.fade-appear-active,
-.fade-leave.fade-leave-active,
-.zoom-enter,
-.zoom-appear,
-.zoom-leave,
-.zoom-enter.zoom-enter-active,
-.zoom-appear.zoom-appear-active,
-.zoom-leave.zoom-leave-active {
-  animation: none;
-} */
 
 @media (max-width: 1200px) {
   .ant-modal-xlarge {

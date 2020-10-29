@@ -25,14 +25,13 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { makeSelectTitle } from './selectors'
 import { ShareDisplayActions } from './actions'
+import { makeSelectLoginLoading } from '../App/selectors'
 
 import { useInjectReducer } from 'utils/injectReducer'
 import { useInjectSaga } from 'utils/injectSaga'
 
 import reducer from './reducer'
 import saga from './sagas'
-
-import { Login } from 'share/components/Login/Loadable'
 import Reveal from './Reveal'
 
 import mainStyles from 'containers/Main/Main.less'
@@ -44,8 +43,9 @@ const ShareDisplayIndex: React.FC = () => {
   const dispatch = useDispatch()
   const location = useLocation()
 
-  const shareInfo = new URLSearchParams(location.search).get('shareInfo')
-  const [showLogin, setShowLogin] = useState(false)
+  const shareToken = new URLSearchParams(window.location.search).get(
+    'shareToken'
+  )
 
   useEffect(() => {
     sessionStorage.setItem('pathname', location.pathname + location.search)
@@ -54,23 +54,14 @@ const ShareDisplayIndex: React.FC = () => {
   const loadShareContent = useCallback(() => {
     dispatch(
       ShareDisplayActions.loadDisplay(
-        shareInfo,
-        () => {
-          console.log('share page need login...')
-        },
-        () => {
-          setShowLogin(true)
-        }
+        shareToken,
+        () => null,
+        () => null
       )
     )
   }, [])
 
   useEffect(loadShareContent, [])
-
-  const login = useCallback(() => {
-    setShowLogin(false)
-    loadShareContent()
-  }, [])
 
   const title = useSelector(makeSelectTitle())
   return (
@@ -78,7 +69,6 @@ const ShareDisplayIndex: React.FC = () => {
       <Helmet title={title} />
       <div className={mainStyles.container}>
         {title && <Reveal />}
-        {showLogin && <Login shareInfo={shareInfo} legitimateUser={login} />}
       </div>
     </>
   )

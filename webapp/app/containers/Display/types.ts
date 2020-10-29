@@ -28,9 +28,10 @@ import { ISlideFormed } from 'containers/Viz/types'
 import { ActionTypes as VizActionTypes } from 'containers/Viz/constants'
 import { ActionTypes } from './constants'
 
-import { IQueryConditions } from 'containers/Dashboard/Grid'
+import { IQueryConditions } from 'containers/Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IWidgetFormed } from 'containers/Widget/types'
+import { ISharePanel, TShareVizsType } from 'app/components/SharePanel/types'
 
 export interface ILayerInfo {
   datasource: {
@@ -47,13 +48,15 @@ export interface ILayerInfo {
 }
 
 interface IDisplayLoading {
-  shareInfo: boolean
+  shareToken: boolean
   slideLayers: boolean
 }
 
 export interface IDisplayState {
-  currentDisplayShareInfo: string
-  currentDisplaySecretInfo: string
+  currentDisplayShareToken: string
+  currentDisplayAuthorizedShareToken: string
+  currentDisplayPasswordShareToken: string
+  currentDisplayPasswordPassword: string
   currentDisplaySelectOptions: object
 
   currentSlideId: number
@@ -69,10 +72,20 @@ export interface IDisplayState {
   clipboardSlides: ISlideFormed[]
   clipboardLayers: ILayerFormed[]
 
-  lastOperationType: (keyof typeof ActionTypes) | (keyof typeof VizActionTypes)
+  lastOperationType: keyof typeof ActionTypes | keyof typeof VizActionTypes
   lastLayers: ILayerFormed[]
 
   editorBaselines: IBaseline[]
+  operateItemParams: ILayerFormed[]
+
+  sharePanel: IDisplaySharePanelState
 
   loading: IDisplayLoading
 }
+
+export interface IDisplaySharePanelState
+  extends Pick<ISharePanel, 'id' | 'type' | 'title'> {
+  visible: boolean
+}
+
+export { TShareVizsType }

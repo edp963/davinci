@@ -37,7 +37,7 @@ import {
 import ViewActions from '../../View/actions'
 import DisplayActions from '../actions'
 import { RenderType } from '../../Widget/components/Widget'
-import { IQueryConditions } from '../../Dashboard/Grid'
+import { IQueryConditions } from '../../Dashboard/types'
 import { getRequestParamsByWidgetConfig } from 'containers/Viz/util'
 import { makeSelectFormedViews } from '../../View/selectors'
 import {
@@ -51,6 +51,9 @@ import { makeSelectCurrentProject } from '../../Projects/selectors'
 import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { IWidgetFormed } from '../../Widget/types'
 import { DeltaPosition } from '../components/types'
+import { DragTriggerTypes } from '../constants'
+
+import { ILayerOperationInfo } from 'app/containers/Display/components/types'
 
 const SlideLayerList: React.FC = (props) => {
   const dispatch = useDispatch()
@@ -77,8 +80,13 @@ const SlideLayerList: React.FC = (props) => {
   )
 
   const onDrag = useCallback(
-    (layerId, deltaPosition: DeltaPosition, finish = false) => {
-      if (!deltaPosition.deltaX && !deltaPosition.deltaY) {
+    (
+      layerId,
+      deltaPosition: DeltaPosition,
+      eventTrigger: DragTriggerTypes,
+      finish = false
+    ) => {
+      if (deltaPosition.deltaX === null && deltaPosition.deltaY === null) {
         return
       }
       dispatch(
@@ -86,6 +94,7 @@ const SlideLayerList: React.FC = (props) => {
           pick(slideParams, 'width', 'height'),
           scale[0],
           deltaPosition,
+          eventTrigger,
           finish,
           layerId
         )
@@ -111,6 +120,10 @@ const SlideLayerList: React.FC = (props) => {
 
   const onSelectionChange = useCallback((layerId, selected, exclusive) => {
     dispatch(DisplayActions.selectLayer(layerId, selected, exclusive))
+  }, [])
+
+  const onEditLabelChange = useCallback((layerId: number, changedInfo: Partial<ILayerOperationInfo>) => {
+    dispatch(DisplayActions.changeLayerOperationInfo(layerId, changedInfo))
   }, [])
 
   const getWidgetViewModel = useCallback(
@@ -156,6 +169,7 @@ const SlideLayerList: React.FC = (props) => {
       editWidget,
       onDrag,
       onSelectionChange,
+      onEditLabelChange,
       onResize,
       getWidgetViewModel,
       getChartData
@@ -165,6 +179,7 @@ const SlideLayerList: React.FC = (props) => {
       editWidget,
       onDrag,
       onSelectionChange,
+      onEditLabelChange,
       onResize,
       getWidgetViewModel,
       getChartData

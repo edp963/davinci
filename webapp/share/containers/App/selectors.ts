@@ -19,8 +19,14 @@
  */
 
 import { createSelector } from 'reselect'
+import { initialState } from './reducer'
 
-const selectGlobal = (state) => state.global
+const selectGlobal = (state) => state.global || initialState
+
+const makeSelectLoginLoading = () => createSelector(
+  selectGlobal,
+  (globalState) => globalState.loading
+)
 
 const makeSelectLogged = () => createSelector(
   selectGlobal,
@@ -32,8 +38,45 @@ const makeSelectLoginUser = () => createSelector(
   (globalState) => globalState.loginUser
 )
 
+const makeSelectShareType = () => createSelector(
+  selectGlobal,
+  (globalState) => {
+    return globalState.shareType
+  }
+)
+
+const makeSelectVizType = () => createSelector(
+  selectGlobal,
+  (globalState) => {
+    return globalState.vizType
+  }
+)
+
+const makeSelectPermission = () => createSelector(
+  selectGlobal,
+  (globalState) => {
+    return globalState.download
+  }
+)
+
+const makeSelectPermissionLoading = () => createSelector(
+  selectGlobal,
+  (globalState) => {
+    return globalState.permissionLoading
+  }
+)
+
+
+
+
+
 export {
   selectGlobal,
+  makeSelectLoginLoading,
   makeSelectLogged,
-  makeSelectLoginUser
+  makeSelectLoginUser,
+  makeSelectShareType,
+  makeSelectVizType,
+  makeSelectPermission,
+  makeSelectPermissionLoading
 }

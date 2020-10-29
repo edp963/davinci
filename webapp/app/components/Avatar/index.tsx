@@ -1,74 +1,121 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
-const styles = require('./Avatar.less')
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import classnames from 'classnames'
+import styles from './Avatar.less'
 const logo = require('assets/images/profile.png')
-import { Modal } from 'antd'
+import { Modal, Spin } from 'antd'
+import { IAvatarProps, TSize, TImageState } from './types'
+import { useIntersectionObserver } from './useIntersectionObserver'
 
-interface IAvatarProps {
-  path: string
-  size?: string
-  enlarge?: boolean
-}
-interface IAvatarState {
-  formVisible: boolean
-}
-export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
-  constructor (props) {
-   super(props)
-   this.state = {
-     formVisible: false
-   }
-  }
-  private showEnlarge = () => {
-    this.setState({
-      formVisible: true
-    })
-  }
-  private hideEnlarge = () => {
-    this.setState({
-      formVisible: false
-    })
-  }
-  public render () {
-    const {path, size, enlarge} = this.props
-    const {formVisible} = this.state
-    const src = path ? path : logo
-
-    const itemClass = classnames({
-      [styles.img]: true,
-      [styles.profile]: size === 'profile',
-      [styles.large]: size === 'large',
-      [styles.default]: size === 'default',
-      [styles.small]: size === 'small',
-      [styles.isEnlarge]: enlarge
-    })
-
-    const isEnlarge = enlarge
-      ? <img className={itemClass} src={src} alt="" onClick={this.showEnlarge}/>
-      : <img className={itemClass} src={src} alt=""/>
-
-    const wrapper = classnames({
-      [styles.enlargeAvatarWrapper]: size === 'large',
-      [styles.avatarWrapper]: size === 'profile'
-    })
-
-    return (
-      <div className={wrapper}>
-        <div className={`${size === 'small' ? styles.imgWrapper : ''}`}>
-          {isEnlarge}
-        </div>
-        <Modal
-          title={null}
-          footer={null}
-          visible={formVisible}
-          onCancel={this.hideEnlarge}
-        >
-          <img src={src} alt="" className={styles.sourceSrc}/>
-        </Modal>
-      </div>
+export const Avatar: React.FC<IAvatarProps> = ({
+  path,
+  size,
+  enlarge,
+  border
+}) => {
+  const elementRef = useRef(null)
+  const [formVisible, setFormVisible] = useState(false)
+  const [inView, entry] = useIntersectionObserver(elementRef, {
+    threshold: 0,
+    rootMargin: '0%',
+    root: null
+  })
+  const [status, setStatus] = useState<TImageState>('loading')
+  const loading = useMemo(() => {
+    return size === 'profile' ? (
+      <Spin size="large" />
+    ) : (
+      <Spin size={size as TSize} />
     )
-  }
+  }, [size, status])
+
+  const showEnlarge = useCallback(() => {
+    setFormVisible(true)
+  }, [formVisible])
+
+  const hideEnlarge = useCallback(() => {
+    setFormVisible(false)
+  }, [formVisible])
+
+  const itemClass = useMemo(() => {
+    return classnames({
+      [styles.isEnlarge]: enlarge,
+      [styles.large]: size === 'large',
+      [styles.small]: size === 'small',
+      [styles.profile]: size === 'profile',
+      [styles.default]: size === 'default',
+      [styles.height0]: status === 'loading',
+      [styles.height1]: status !== 'loading'
+    })
+  }, [size, enlarge, status])
+
+  const imgContent = useMemo(() => {
+    const img = enlarge ? (
+      <img className={itemClass} ref={elementRef} onClick={showEnlarge} />
+    ) : (
+      <img className={itemClass} ref={elementRef} />
+    )
+    return (
+      <>
+        {status === 'loading' ? loading : ''}
+        {img}
+      </>
+    )
+  }, [enlarge, showEnlarge, status])
+
+  const wrapper = useMemo(() => {
+    return classnames({
+      [styles.profileWrapper]: size === 'profile',
+      [styles.defaultWrapper]: size === 'default',
+      [styles.smallWrapper]: size === 'small',
+      [styles.largeWrapper]: size === 'large',
+      [styles.border]: border
+    })
+  }, [size])
+
+  const loaded = useCallback(() => {
+    if (logo !== elementRef.current.src) {
+      setStatus('loaded')
+    }
+  }, [status])
+
+  const loadFail = useCallback(() => {
+    elementRef.current.src = logo
+    setStatus('loadFail')
+  }, [status])
+
+  useEffect(() => {
+    if (!inView) {
+      return
+    }
+    if (!elementRef.current.src) {
+      elementRef.current.src = path
+    }
+    elementRef.current.addEventListener('load', loaded, false)
+    elementRef.current.addEventListener('error', loadFail, false)
+
+    return () => {
+      elementRef.current.removeEventListener('load', loaded)
+      elementRef.current.removeEventListener('error', loadFail)
+    }
+  }, [inView, status])
+
+  const modalSrc = useMemo(() => {
+    return status === 'loaded' ? path : logo
+  }, [path, status])
+
+  return (
+    <div className={wrapper}>
+      {imgContent}
+      <Modal
+        title={null}
+        footer={null}
+        visible={formVisible}
+        onCancel={hideEnlarge}
+      >
+        <img src={modalSrc} className={styles.sourceSrc} />
+      </Modal>
+    </div>
+  )
 }
 
 export default Avatar
-

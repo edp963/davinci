@@ -1,12 +1,13 @@
 import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 
 import { ActionTypes } from './constants'
-import { ScheduleActions, ScheduleActionType, loadVizsFail, vizsLoaded } from './actions'
+import { ScheduleActions, ScheduleActionType } from './actions'
 import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 import { message } from 'antd'
 import { IScheduleRaw, ISchedule } from './components/types'
+import { scheduleConfigMigrationRecorder } from 'app/utils/migrationRecorders'
 
 export function* getSchedules (action: ScheduleActionType) {
   if (action.type !== ActionTypes.LOAD_SCHEDULES) { return }
@@ -28,7 +29,7 @@ export function* getScheduleDetail (action: ScheduleActionType) {
   try {
     const asyncData = yield call(request, `${api.schedule}/${action.payload.scheduleId}`)
     const schedule = asyncData.payload
-    schedule.config = JSON.parse(schedule.config)
+    schedule.config = scheduleConfigMigrationRecorder(JSON.parse(schedule.config))
     yield put(ScheduleActions.scheduleDetailLoaded(schedule))
   } catch (err) {
     yield put(ScheduleActions.loadScheduleDetailFail())
@@ -98,6 +99,21 @@ export function* changeScheduleStatus (action: ScheduleActionType) {
     yield put(ScheduleActions.scheduleStatusChanged(result))
   } catch (err) {
     yield put(ScheduleActions.changeSchedulesStatusFail())
+    errorHandler(err)
+  }
+}
+
+export function* executeScheduleImmediately (action: ScheduleActionType) {
+  if (action.type !== ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY) { return }
+
+  const { id, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'post',
+      url: `${api.schedule}/execute/${id}`
+    })
+    resolve()
+  } catch (err) {
     errorHandler(err)
   }
 }
@@ -190,9 +206,9 @@ export function* getVizsData (action) {
       isTitle: true,
       children: portals
     }]
-    yield put(vizsLoaded(result))
+    yield put(ScheduleActions.vizsLoaded(result))
   } catch (err) {
-    yield put(loadVizsFail())
+    yield put(ScheduleActions.loadVizsFail())
     message.error('获取失败')
   }
 
@@ -257,6 +273,7 @@ export default function* rootScheduleSaga () {
     takeEvery(ActionTypes.ADD_SCHEDULE, addSchedule),
     takeEvery(ActionTypes.DELETE_SCHEDULE, deleteSchedule),
     takeEvery(ActionTypes.CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
+    takeEvery(ActionTypes.EXECUTE_SCHEDULE_IMMEDIATELY, executeScheduleImmediately),
     takeEvery(ActionTypes.EDIT_SCHEDULE, editSchedule),
     takeLatest(ActionTypes.LOAD_SUGGEST_MAILS, getSuggestMails),
     takeEvery(ActionTypes.LOAD_VIZS, getVizsData)

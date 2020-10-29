@@ -58,7 +58,7 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}/userfiles
+                ${project.parent.basedir}
             </directory>
             <outputDirectory>userfiles</outputDirectory>
             <excludes>
@@ -67,13 +67,21 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}/logs
+                ${project.parent.basedir}
             </directory>
-            <outputDirectory>logs</outputDirectory>
-            <includes>
-                <include>sys</include>
-                <include>user</include>
-            </includes>
+            <outputDirectory>logs/sys</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>
+                ${project.parent.basedir}
+            </directory>
+            <outputDirectory>logs/user</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>
@@ -81,13 +89,6 @@
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
         </fileSet>
-        <!--<fileSet>-->
-            <!--<directory>-->
-                <!--${project.parent.basedir}/swagger-ui-->
-            <!--</directory>-->
-            <!--<outputDirectory>swagger-ui</outputDirectory>-->
-        <!--</fileSet>-->
-
     </fileSets>
 
     <dependencySets>
@@ -99,11 +100,4 @@
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
     </dependencySets>
-
-    <!--<files>
-        <file>
-            <source>${project.parent.basedir}/server/target/davinci-server_2.11-${project.parent.version}-jar-with-dependencies.jar</source>
-            <outputDirectory>plugin</outputDirectory>
-        </file>
-    </files>-->
 </assembly>

@@ -18,390 +18,519 @@
  * >>
  */
 
+import axios from 'axios'
+import { ActionTypes } from './constants'
+import { returnType } from 'utils/redux'
 import {
-  LOAD_DASHBOARD_DETAIL,
-  LOAD_DASHBOARD_DETAIL_SUCCESS,
-  LOAD_DASHBOARD_DETAIL_FAILURE,
-  ADD_DASHBOARD_ITEMS,
-  ADD_DASHBOARD_ITEMS_SUCCESS,
-  ADD_DASHBOARD_ITEMS_FAILURE,
-  EDIT_DASHBOARD_ITEM,
-  EDIT_DASHBOARD_ITEM_SUCCESS,
-  EDIT_DASHBOARD_ITEM_FAILURE,
-  EDIT_DASHBOARD_ITEMS,
-  EDIT_DASHBOARD_ITEMS_SUCCESS,
-  EDIT_DASHBOARD_ITEMS_FAILURE,
-  DELETE_DASHBOARD_ITEM,
-  DELETE_DASHBOARD_ITEM_SUCCESS,
-  DELETE_DASHBOARD_ITEM_FAILURE,
-  CLEAR_CURRENT_DASHBOARD,
-  LOAD_DASHBOARD_SHARE_LINK,
-  LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
-  LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
-  LOAD_DASHBOARD_SHARE_LINK_FAILURE,
-  LOAD_WIDGET_SHARE_LINK,
-  LOAD_WIDGET_SHARE_LINK_SUCCESS,
-  LOAD_WIDGET_SECRET_LINK_SUCCESS,
-  LOAD_WIDGET_SHARE_LINK_FAILURE,
-  LOAD_WIDGET_CSV,
-  LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE,
-  RENDER_DASHBOARDITEM,
-  RESIZE_DASHBOARDITEM,
-  RESIZE_ALL_DASHBOARDITEM,
-  DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY,
-  DRILL_PATH_DASHBOARDITEM,
-  DELETE_DRILL_PATH_HISTORY,
-  DRILL_PATH_SETTING,
-  SELECT_DASHBOARD_ITEM_CHART,
-  SET_SELECT_OPTIONS,
-  SET_CONTROL_FORM_VALUES,
-  MONITORED_SYNC_DATA_ACTION,
-  MONITORED_SEARCH_DATA_ACTION,
-  MONITORED_LINKAGE_DATA_ACTION
-} from './constants'
+  IDashboard,
+  IDashboardItem,
+  IQueryConditions,
+  IDataRequestParams,
+  IDataDownloadStatistic
+} from './types'
+import { IWidgetFormed } from '../Widget/types'
+import { IFormedViews, IViewQueryResponse } from '../View/types'
+import { RenderType } from '../Widget/components/Widget'
+import { ControlPanelTypes } from 'app/components/Control/constants'
+import { DownloadTypes } from '../App/constants'
+import { IShareTokenParams } from 'app/components/SharePanel/types'
+const CancelToken = axios.CancelToken
 
-export function addDashboardItems (portalId, items, resolve) {
-  return {
-    type: ADD_DASHBOARD_ITEMS,
-    payload: {
-      portalId,
-      items,
-      resolve
+export const DashboardActions = {
+  addDashboardItems(
+    portalId: number,
+    items: Array<Omit<IDashboardItem, 'id' | 'config'>>,
+    resolve: (items: IDashboardItem[]) => void
+  ) {
+    return {
+      type: ActionTypes.ADD_DASHBOARD_ITEMS,
+      payload: {
+        portalId,
+        items,
+        resolve
+      }
+    }
+  },
+
+  deleteDashboardItem(id, resolve) {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD_ITEM,
+      payload: {
+        id,
+        resolve
+      }
+    }
+  },
+
+  clearCurrentDashboard() {
+    return {
+      type: ActionTypes.CLEAR_CURRENT_DASHBOARD
+    }
+  },
+
+  loadDashboardItemData(
+    renderType: RenderType,
+    itemId: number,
+    queryConditions?: Partial<IQueryConditions>
+  ) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_ITEM_DATA,
+      payload: {
+        renderType,
+        itemId,
+        queryConditions,
+        cancelTokenSource: CancelToken.source()
+      }
+    }
+  },
+
+  dashboardItemDataLoaded(
+    renderType: RenderType,
+    itemId: number,
+    requestParams: IDataRequestParams,
+    result: IViewQueryResponse,
+    statistic
+  ) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_ITEM_DATA_SUCCESS,
+      payload: {
+        renderType,
+        itemId,
+        requestParams,
+        result
+      },
+      statistic
+    }
+  },
+
+  loadDashboardItemDataFail(itemId: number, errorMessage: string) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_ITEM_DATA_FAILURE,
+      payload: {
+        itemId,
+        errorMessage
+      }
+    }
+  },
+
+  loadBatchDataWithControlValues(
+    type: ControlPanelTypes,
+    relatedItems: number[],
+    formValues?: object,
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.LOAD_BATCH_DATA_WITH_CONTROL_VALUES,
+      payload: {
+        type,
+        relatedItems,
+        formValues,
+        itemId,
+        cancelTokenSource: CancelToken.source()
+      }
+    }
+  },
+
+  initiateDownloadTask(type: DownloadTypes, id?: number, itemId?: number) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK,
+      payload: {
+        type,
+        id,
+        itemId
+      }
+    }
+  },
+
+  DownloadTaskInitiated(
+    type: DownloadTypes,
+    statistic: IDataDownloadStatistic[],
+    itemId?: number
+  ) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_SUCCESS,
+      payload: {
+        type,
+        itemId
+      },
+      statistic
+    }
+  },
+
+  initiateDownloadTaskFail(error, type: DownloadTypes, itemId?: number) {
+    return {
+      type: ActionTypes.INITIATE_DOWNLOAD_TASK_FAILURE,
+      payload: {
+        error,
+        type,
+        itemId
+      }
+    }
+  },
+
+  loadDashboardDetail(portalId, dashboardId) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_DETAIL,
+      payload: {
+        portalId,
+        dashboardId
+      }
+    }
+  },
+
+  dashboardDetailLoaded(
+    dashboard: IDashboard,
+    items: IDashboardItem[],
+    widgets: IWidgetFormed[],
+    formedViews: IFormedViews
+  ) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS,
+      payload: {
+        dashboard,
+        items,
+        widgets,
+        formedViews
+      }
+    }
+  },
+
+  loadDashboardDetailFail() {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_DETAIL_FAILURE
+    }
+  },
+
+  dashboardItemsAdded(
+    items: IDashboardItem[],
+    widgets: IWidgetFormed[],
+    formedViews: IFormedViews
+  ) {
+    return {
+      type: ActionTypes.ADD_DASHBOARD_ITEMS_SUCCESS,
+      payload: {
+        items,
+        widgets,
+        formedViews
+      }
+    }
+  },
+
+  addDashboardItemsFail() {
+    return {
+      type: ActionTypes.ADD_DASHBOARD_ITEMS_FAILURE
+    }
+  },
+
+  editDashboardItem(portalId, item, resolve) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEM,
+      payload: {
+        portalId,
+        item,
+        resolve
+      }
+    }
+  },
+
+  dashboardItemEdited(result) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEM_SUCCESS,
+      payload: {
+        result
+      }
+    }
+  },
+
+  editDashboardItemFail() {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEM_FAILURE
+    }
+  },
+
+  editDashboardItems(portalId, items) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEMS,
+      payload: {
+        portalId,
+        items
+      }
+    }
+  },
+
+  dashboardItemsEdited(items) {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEMS_SUCCESS,
+      payload: {
+        items
+      }
+    }
+  },
+
+  editDashboardItemsFail() {
+    return {
+      type: ActionTypes.EDIT_DASHBOARD_ITEMS_FAILURE
+    }
+  },
+
+  dashboardItemDeleted(id) {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD_ITEM_SUCCESS,
+      payload: {
+        id
+      }
+    }
+  },
+
+  deleteDashboardItemFail() {
+    return {
+      type: ActionTypes.DELETE_DASHBOARD_ITEM_FAILURE
+    }
+  },
+
+  loadDashboardShareLink(params: IShareTokenParams) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK,
+      payload: {
+        params
+      }
+    }
+  },
+
+  dashboardShareLinkLoaded(shareToken) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
+      payload: {
+        shareToken
+      }
+    }
+  },
+
+  dashboardAuthorizedShareLinkLoaded(authorizedShareToken) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_AUTHORIZED_SHARE_LINK_SUCCESS,
+      payload: {
+        authorizedShareToken
+      }
+    }
+  },
+
+  dashboardPasswordShareLinkLoaded(passwordShareToken, password) {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_PASSWORD_SHARE_LINK_SUCCESS,
+      payload: {
+        passwordShareToken,
+        password
+      }
+    }
+  },
+
+  loadDashboardShareLinkFail() {
+    return {
+      type: ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE
+    }
+  },
+
+  loadWidgetShareLink(params: IShareTokenParams) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_SHARE_LINK,
+      payload: {
+        params
+      }
+    }
+  },
+
+  widgetShareLinkLoaded(shareToken, itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_SHARE_LINK_SUCCESS,
+      payload: {
+        shareToken,
+        itemId
+      }
+    }
+  },
+
+  widgetAuthorizedShareLinkLoaded(authorizedShareToken, itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS,
+      payload: {
+        authorizedShareToken,
+        itemId
+      }
+    }
+  },
+
+  widgetPasswordShareLinkLoaded(passwordShareToken, password, itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_PASSWORD_SHARE_LINK_SUCCESS,
+      payload: {
+        passwordShareToken,
+        password,
+        itemId
+      }
+    }
+  },
+
+  loadWidgetShareLinkFail(itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_SHARE_LINK_FAILURE,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  openSharePanel(id, type, title, itemId?) {
+    return {
+      type: ActionTypes.OPEN_SHARE_PANEL,
+      payload: {
+        id,
+        type,
+        title,
+        itemId
+      }
+    }
+  },
+
+  closeSharePanel() {
+    return {
+      type: ActionTypes.CLOSE_SHARE_PANEL
+    }
+  },
+
+  loadWidgetCsv(itemId, widgetId, requestParams) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV,
+      payload: {
+        itemId,
+        widgetId,
+        requestParams
+      }
+    }
+  },
+
+  widgetCsvLoaded(itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV_SUCCESS,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  loadWidgetCsvFail(itemId) {
+    return {
+      type: ActionTypes.LOAD_WIDGET_CSV_FAILURE,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  renderDashboardItem(itemId) {
+    return {
+      type: ActionTypes.RENDER_DASHBOARDITEM,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  resizeDashboardItem(itemId) {
+    return {
+      type: ActionTypes.RESIZE_DASHBOARDITEM,
+      payload: {
+        itemId
+      }
+    }
+  },
+
+  resizeAllDashboardItem() {
+    return {
+      type: ActionTypes.RESIZE_ALL_DASHBOARDITEM
+    }
+  },
+
+  renderChartError(itemId: number, error: Error) {
+    return {
+      type: ActionTypes.RENDER_CHART_ERROR,
+      payload: {
+        itemId,
+        error
+      }
+    }
+  },
+
+  drillDashboardItem(itemId, drillHistory) {
+    return {
+      type: ActionTypes.DRILL_DASHBOARDITEM,
+      payload: {
+        itemId,
+        drillHistory
+      }
+    }
+  },
+
+  deleteDrillHistory(itemId, index) {
+    return {
+      type: ActionTypes.DELETE_DRILL_HISTORY,
+      payload: {
+        itemId,
+        index
+      }
+    }
+  },
+
+  drillPathsetting(itemId, history) {
+    return {
+      type: ActionTypes.DRILL_PATH_SETTING,
+      payload: {
+        itemId,
+        history
+      }
+    }
+  },
+
+  selectDashboardItemChart(itemId, renderType, selectedItems) {
+    return {
+      type: ActionTypes.SELECT_DASHBOARD_ITEM_CHART,
+      payload: {
+        itemId,
+        renderType,
+        selectedItems
+      }
+    }
+  },
+
+  monitoredSyncDataAction() {
+    return {
+      type: ActionTypes.MONITORED_SYNC_DATA_ACTION
+    }
+  },
+
+  monitoredSearchDataAction() {
+    return {
+      type: ActionTypes.MONITORED_SEARCH_DATA_ACTION
+    }
+  },
+
+  monitoredLinkageDataAction() {
+    return {
+      type: ActionTypes.MONITORED_LINKAGE_DATA_ACTION
+    }
+  },
+
+  setFullScreenPanelItemId(itemId) {
+    return {
+      type: ActionTypes.SET_FULL_SCREEN_PANEL_ITEM_ID,
+      payload: {
+        itemId
+      }
     }
   }
 }
 
-export function deleteDashboardItem (id, resolve) {
-  return {
-    type: DELETE_DASHBOARD_ITEM,
-    payload: {
-      id,
-      resolve
-    }
-  }
-}
+const mockAction = returnType(DashboardActions)
+export type DashboardActionType = typeof mockAction
 
-export function clearCurrentDashboard () {
-  return {
-    type: CLEAR_CURRENT_DASHBOARD
-  }
-}
-
-export function loadDashboardDetail (projectId, portalId, dashboardId) {
-  return {
-    type: LOAD_DASHBOARD_DETAIL,
-    payload: {
-      projectId,
-      portalId,
-      dashboardId
-    }
-  }
-}
-
-export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, views) {
-  return {
-    type: LOAD_DASHBOARD_DETAIL_SUCCESS,
-    payload: {
-      dashboardId,
-      dashboardDetail,
-      widgets,
-      views
-    }
-  }
-}
-
-export function loadDashboardDetailFail () {
-  return {
-    type: LOAD_DASHBOARD_DETAIL_FAILURE
-  }
-}
-
-export function dashboardItemsAdded (result) {
-  return {
-    type: ADD_DASHBOARD_ITEMS_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function addDashboardItemsFail () {
-  return {
-    type: ADD_DASHBOARD_ITEMS_FAILURE
-  }
-}
-
-export function editDashboardItem (portalId, item, resolve) {
-  return {
-    type: EDIT_DASHBOARD_ITEM,
-    payload: {
-      portalId,
-      item,
-      resolve
-    }
-  }
-}
-
-export function dashboardItemEdited (result) {
-  return {
-    type: EDIT_DASHBOARD_ITEM_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function editDashboardItemFail () {
-  return {
-    type: EDIT_DASHBOARD_ITEM_FAILURE
-  }
-}
-
-export function editDashboardItems (portalId, items) {
-  return {
-    type: EDIT_DASHBOARD_ITEMS,
-    payload: {
-      portalId,
-      items
-    }
-  }
-}
-
-export function dashboardItemsEdited (items) {
-  return {
-    type: EDIT_DASHBOARD_ITEMS_SUCCESS,
-    payload: {
-      items
-    }
-  }
-}
-
-export function editDashboardItemsFail () {
-  return {
-    type: EDIT_DASHBOARD_ITEMS_FAILURE
-  }
-}
-
-export function dashboardItemDeleted (id) {
-  return {
-    type: DELETE_DASHBOARD_ITEM_SUCCESS,
-    payload: {
-      id
-    }
-  }
-}
-
-export function deleteDashboardItemFail () {
-  return {
-    type: DELETE_DASHBOARD_ITEM_FAILURE
-  }
-}
-
-export function loadDashboardShareLink (id, authName) {
-  return {
-    type: LOAD_DASHBOARD_SHARE_LINK,
-    payload: {
-      id,
-      authName
-    }
-  }
-}
-
-export function dashboardShareLinkLoaded (shareInfo) {
-  return {
-    type: LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
-    payload: {
-      shareInfo
-    }
-  }
-}
-
-export function dashboardSecretLinkLoaded (secretInfo) {
-  return {
-    type: LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
-    payload: {
-      secretInfo
-    }
-  }
-}
-
-export function loadDashboardShareLinkFail () {
-  return {
-    type: LOAD_DASHBOARD_SHARE_LINK_FAILURE
-  }
-}
-
-export function loadWidgetShareLink (id, itemId, authName, resolve) {
-  return {
-    type: LOAD_WIDGET_SHARE_LINK,
-    payload: {
-      id,
-      itemId,
-      authName,
-      resolve
-    }
-  }
-}
-
-export function widgetShareLinkLoaded (shareInfo, itemId) {
-  return {
-    type: LOAD_WIDGET_SHARE_LINK_SUCCESS,
-    payload: {
-      shareInfo,
-      itemId
-    }
-  }
-}
-
-export function widgetSecretLinkLoaded (shareInfo, itemId) {
-  return {
-    type: LOAD_WIDGET_SECRET_LINK_SUCCESS,
-    payload: {
-      shareInfo,
-      itemId
-    }
-  }
-}
-
-export function loadWidgetShareLinkFail (itemId) {
-  return {
-    type: LOAD_WIDGET_SHARE_LINK_FAILURE,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function loadWidgetCsv (itemId, widgetId, requestParams) {
-  return {
-    type: LOAD_WIDGET_CSV,
-    payload: {
-      itemId,
-      widgetId,
-      requestParams
-    }
-  }
-}
-
-export function widgetCsvLoaded (itemId) {
-  return {
-    type: LOAD_WIDGET_CSV_SUCCESS,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function loadWidgetCsvFail (itemId) {
-  return {
-    type: LOAD_WIDGET_CSV_FAILURE,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function renderDashboardItem (itemId) {
-  return {
-    type: RENDER_DASHBOARDITEM,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function resizeDashboardItem (itemId) {
-  return {
-    type: RESIZE_DASHBOARDITEM,
-    payload: {
-      itemId
-    }
-  }
-}
-
-export function resizeAllDashboardItem () {
-  return {
-    type: RESIZE_ALL_DASHBOARDITEM
-  }
-}
-
-export function drillDashboardItem (itemId, drillHistory) {
-  return {
-    type: DRILL_DASHBOARDITEM,
-    payload: {
-      itemId,
-      drillHistory
-    }
-  }
-}
-
-export function deleteDrillHistory (itemId, index) {
-  return {
-    type: DELETE_DRILL_HISTORY,
-    payload: {
-      itemId,
-      index
-    }
-  }
-}
-
-export function drillPathsetting (itemId, history) {
-  return {
-    type: DRILL_PATH_SETTING,
-    payload: {
-      itemId,
-      history
-    }
-  }
-}
-
-export function selectDashboardItemChart (itemId, renderType, selectedItems) {
-  return {
-    type: SELECT_DASHBOARD_ITEM_CHART,
-    payload: {
-      itemId,
-      renderType,
-      selectedItems
-    }
-  }
-}
-
-export function setSelectOptions (controlKey, options, itemId?) {
-  return {
-    type: SET_SELECT_OPTIONS,
-    payload: {
-      controlKey,
-      options,
-      itemId
-    }
-  }
-}
-
-export function setControlFormValues (formValues) {
-  return {
-    type: SET_CONTROL_FORM_VALUES,
-    payload: {
-      formValues
-    }
-  }
-}
-
-export function monitoredSyncDataAction () {
-  return {
-    type: MONITORED_SYNC_DATA_ACTION
-  }
-}
-
-export function monitoredSearchDataAction () {
-  return {
-    type: MONITORED_SEARCH_DATA_ACTION
-  }
-}
-
-export function monitoredLinkageDataAction () {
-  return {
-    type: MONITORED_LINKAGE_DATA_ACTION
-  }
-}
+export default DashboardActions

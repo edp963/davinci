@@ -20,14 +20,16 @@
 package edp.davinci.dto.viewDto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NotNull(message = "request parameter cannot be null")
-public class DistinctParam {
+public class DistinctParam  extends ConcurrencyStrategy{
     @NotEmpty(message = "distinct column cannot be EMPTY")
     private List<String> columns;
 

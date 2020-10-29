@@ -36,24 +36,31 @@ import {
   LOAD_DOWNLOAD_LIST_SUCCESS,
   LOAD_DOWNLOAD_LIST_FAILURE,
   DOWNLOAD_FILE_SUCCESS,
-  UPDATE_PROFILE_SUCCESS
+  UPDATE_PROFILE_SUCCESS,
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+  DownloadStatus,
+  GET_SERVER_CONFIGURATIONS_SUCCESS
 } from './constants'
-import { DownloadStatus } from './types'
-
 
 const initialState = {
+  externalAuthProviders: null,
   logged: null,
   loginUser: null,
   loginLoading: false,
   navigator: true,
   downloadListLoading: false,
   downloadList: null,
-  downloadListInfo: null
+  downloadListInfo: null,
+  version: '',
+  oauth2Enabled: false
 }
 
 const appReducer = (state = initialState, action) =>
   produce(state, (draft) => {
     switch (action.type) {
+      case GET_EXTERNAL_AUTH_PROVIDERS_SUCESS:
+        draft.externalAuthProviders = action.payload.externalAuthProviders
+        break
       case LOGIN:
         draft.loginLoading = true
         break
@@ -69,6 +76,11 @@ const appReducer = (state = initialState, action) =>
         draft.logged = true
         draft.loginUser = action.payload.user
         break
+      case GET_SERVER_CONFIGURATIONS_SUCCESS:
+        draft.version = action.payload.configurations.version
+        draft.oauth2Enabled =
+          action.payload.configurations.security.oauth2.enable
+        break
       case LOGOUT:
         draft.logged = false
         draft.loginUser = null
@@ -78,7 +90,13 @@ const appReducer = (state = initialState, action) =>
         break
       case UPDATE_PROFILE_SUCCESS:
         const { id, name, department, description } = action.payload.user
-        draft.loginUser = { ...draft.loginUser, id, name, department, description }
+        draft.loginUser = {
+          ...draft.loginUser,
+          id,
+          name,
+          department,
+          description
+        }
         break
       case SHOW_NAVIGATOR:
         draft.navigator = true
@@ -103,9 +121,10 @@ const appReducer = (state = initialState, action) =>
         draft.downloadListLoading = false
         break
       case DOWNLOAD_FILE_SUCCESS:
-        draft.downloadList.find(({ id }) => action.payload.id === id).status = DownloadStatus.Downloaded
+        draft.downloadList.find(({ id }) => action.payload.id === id).status =
+          DownloadStatus.Downloaded
         break
     }
   })
-
+export { initialState as appInitialState }
 export default appReducer

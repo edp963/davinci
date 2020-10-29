@@ -30,6 +30,8 @@ public class MemDashboardWidget extends RecordInfo<MemDashboardWidget> {
     @Min(value = 1L, message = "Invalid id")
     private Long id;
 
+    private String alias;
+
     @Min(value = 1L, message = "Invalid dashboard id")
     private Long dashboardId;
 

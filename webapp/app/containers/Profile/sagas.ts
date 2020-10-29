@@ -30,7 +30,7 @@ import request from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-export function* getUserProfile (action): IterableIterator<any> {
+export function* getUserProfile (action) {
   const { id } = action.payload
 
   try {
@@ -47,7 +47,7 @@ export function* getUserProfile (action): IterableIterator<any> {
 }
 
 
-export default function* rootGroupSaga (): IterableIterator<any> {
+export default function* rootGroupSaga () {
   yield all([
     takeLatest(GET_USER_PROFILE, getUserProfile as any)
   ])

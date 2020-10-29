@@ -18,26 +18,34 @@
  * >>
  */
 
-import { call, put, all, takeLatest, throttle, takeEvery } from 'redux-saga/effects'
-
+import {
+  call,
+  put,
+  all,
+  takeLatest,
+  throttle,
+  takeEvery
+} from 'redux-saga/effects'
 import { message } from 'antd'
 import {
   LOGIN,
   LOGOUT,
-  GET_LOGIN_USER,
   CHECK_NAME,
   ACTIVE,
+  GET_SERVER_CONFIGURATIONS,
   UPDATE_PROFILE,
   CHANGE_USER_PASSWORD,
   JOIN_ORGANIZATION,
   LOAD_DOWNLOAD_LIST,
   DOWNLOAD_FILE,
-  INITIATE_DOWNLOAD_TASK
+  GET_EXTERNAL_AUTH_PROVIDERS,
+  TRY_EXTERNAL_AUTH,
+  GET_CAPTCHA_FOR_RESET_PASSWORD,
+  RESET_PASSWORD_UNLOGGED,
+  GET_USER_BY_TOKEN
 } from './constants'
 import {
-  logged,
   loginError,
-  getLoginUserError,
   activeSuccess,
   activeError,
   joinOrganizationSuccess,
@@ -50,14 +58,80 @@ import {
   loadDownloadListFail,
   fileDownloaded,
   downloadFileFail,
-  DownloadTaskInitiated,
-  initiateDownloadTaskFail
+  gotExternalAuthProviders,
+  getCaptchaforResetPasswordSuccess,
+  getCaptchaforResetPasswordError,
+  resetPasswordUnloggedSuccess,
+  resetPasswordUnloggedFail,
+  serverConfigurationsGetted,
+  getServerConfigurationsFail,
+  getUserByTokenFail,
+  getUserByTokenSuccess
 } from './actions'
-import request, { removeToken, getToken } from 'utils/request'
-import api from 'utils/api'
+import request, {
+  removeToken,
+  getToken,
+  setTokenExpired,
+  IDavinciResponse
+} from 'utils/request'
 import { errorHandler } from 'utils/util'
+import api from 'utils/api'
 
-export function* login (action): IterableIterator<any> {
+import { IReduxActionStruct } from 'utils/types'
+import {
+  IResetPasswordParams,
+  IGetgetCaptchaParams
+} from '../FindPassword/types'
+import { IServerConfigurations } from './types'
+
+export function* getExternalAuthProviders() {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: api.externalAuthProviders
+    })
+    const providers = asyncData.payload
+    yield put(gotExternalAuthProviders(providers))
+    return providers
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export function* getServerConfigurations(action) {
+  try {
+    const result: IDavinciResponse<IServerConfigurations> = yield call(
+      request,
+      {
+        method: 'get',
+        url: api.configurations
+      }
+    )
+    const configurations = result.payload
+    setTokenExpired(configurations.jwtToken.timeout)
+    yield put(serverConfigurationsGetted(configurations))
+  } catch (err) {
+    yield put(getServerConfigurationsFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* tryExternalAuth(action) {
+  const { resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: api.tryExternalAuth
+    })
+    const loginUser = asyncData.payload
+    localStorage.setItem('loginUser', JSON.stringify(loginUser))
+    resolve()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+export function* login(action) {
   const { username, password, resolve } = action.payload
 
   try {
@@ -79,7 +153,7 @@ export function* login (action): IterableIterator<any> {
   }
 }
 
-export function* logout (): IterableIterator<any> {
+export function* logout() {
   try {
     removeToken()
     localStorage.removeItem('loginUser')
@@ -88,8 +162,8 @@ export function* logout (): IterableIterator<any> {
   }
 }
 
-export function* activeUser (action): IterableIterator<any> {
-  const {token, resolve} = action.payload
+export function* activeUser(action) {
+  const { token, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -117,20 +191,7 @@ export function* activeUser (action): IterableIterator<any> {
   }
 }
 
-export function* getLoginUser (action): IterableIterator<any> {
-  try {
-    const asyncData = yield call(request, `${api.user}/token`)
-    const loginUser = asyncData.payload
-    yield put(logged(loginUser))
-    localStorage.setItem('loginUser', JSON.stringify(loginUser))
-    action.payload.resolve()
-  } catch (err) {
-    yield put(getLoginUserError())
-    errorHandler(err)
-  }
-}
-
-export function* checkName (action): IterableIterator<any> {
+export function* checkName(action) {
   const { id, name, type, params, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, `${api.checkName}/${type}`, {
@@ -141,15 +202,21 @@ export function* checkName (action): IterableIterator<any> {
         name
       }
     })
-    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
-    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    const msg =
+      asyncData && asyncData.header && asyncData.header.msg
+        ? asyncData.header.msg
+        : ''
+    const code =
+      asyncData && asyncData.header && asyncData.header.code
+        ? asyncData.header.code
+        : ''
     resolve(msg)
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* checkNameUnique (action): IterableIterator<any> {
+export function* checkNameUnique(action) {
   const { pathname, data, resolve, reject } = action.payload
   try {
     if (!data.name) {
@@ -160,16 +227,22 @@ export function* checkNameUnique (action): IterableIterator<any> {
       url: `${api.checkNameUnique}/${pathname}`,
       params: data
     })
-    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
-    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    const msg =
+      asyncData && asyncData.header && asyncData.header.msg
+        ? asyncData.header.msg
+        : ''
+    const code =
+      asyncData && asyncData.header && asyncData.header.code
+        ? asyncData.header.code
+        : ''
     resolve(msg)
   } catch (err) {
     errorHandler(err)
   }
 }
 
-export function* updateProfile (action): IterableIterator<any> {
-  const {  id, name, description, department, resolve } = action.payload
+export function* updateProfile(action) {
+  const { id, name, description, department, resolve } = action.payload
 
   try {
     const asyncData = yield call(request, {
@@ -181,10 +254,13 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
-    const updateUserProfile = {id, name, department, description}
+    const updateUserProfile = { id, name, department, description }
     yield put(updateProfileSuccess(updateUserProfile))
-    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser')) 
-    localStorage.setItem('loginUser', JSON.stringify({...prevLoginUser, ...updateUserProfile}))  
+    const prevLoginUser = JSON.parse(localStorage.getItem('loginUser'))
+    localStorage.setItem(
+      'loginUser',
+      JSON.stringify({ ...prevLoginUser, ...updateUserProfile })
+    )
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
@@ -192,8 +268,55 @@ export function* updateProfile (action): IterableIterator<any> {
   }
 }
 
-export function* changeUserPassword ({ payload }) {
-  const {user} = payload
+export function* getCaptchaForResetPassword(
+  action: IReduxActionStruct<IGetgetCaptchaParams>
+) {
+  const { type, ticket, resolve } = action.payload
+
+  try {
+    const httpResponse = yield call(request, {
+      method: 'post',
+      url: `${api.user}/forget/password/${type}`,
+      data: {
+        ticket
+      }
+    })
+
+    const { payload } = httpResponse
+    yield put(getCaptchaforResetPasswordSuccess(payload))
+    resolve(payload)
+  } catch (err) {
+    yield put(getCaptchaforResetPasswordError(err))
+    errorHandler(err)
+  }
+}
+
+export function* resetPasswordUnlogged(
+  action: IReduxActionStruct<IResetPasswordParams>
+) {
+  const { ticket, type, token, resolve, checkCode, password } = action.payload
+
+  try {
+    const httpResponse = yield call(request, {
+      method: 'post',
+      url: `${api.user}/reset/password/${type}/${token}`,
+      data: {
+        ticket,
+        checkCode,
+        password
+      }
+    })
+    const { header } = httpResponse
+    yield put(resetPasswordUnloggedSuccess(header))
+    resolve(header)
+  } catch (err) {
+    yield put(resetPasswordUnloggedFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* changeUserPassword({ payload }) {
+  const { user } = payload
   try {
     const result = yield call(request, {
       method: 'put',
@@ -208,8 +331,8 @@ export function* changeUserPassword ({ payload }) {
   }
 }
 
-export function* joinOrganization (action): IterableIterator<any> {
-  const {token, resolve, reject} = action.payload
+export function* joinOrganization(action) {
+  const { token, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -247,7 +370,7 @@ export function* joinOrganization (action): IterableIterator<any> {
   }
 }
 
-export function* getDownloadList (): IterableIterator<any> {
+export function* getDownloadList() {
   try {
     const result = yield call(request, `${api.download}/page`)
     yield put(downloadListLoaded(result.payload))
@@ -257,7 +380,7 @@ export function* getDownloadList (): IterableIterator<any> {
   }
 }
 
-export function* downloadFile (action): IterableIterator<any> {
+export function* downloadFile(action) {
   const { id } = action.payload
   try {
     location.href = `${api.download}/record/file/${id}/${getToken()}`
@@ -268,56 +391,38 @@ export function* downloadFile (action): IterableIterator<any> {
   }
 }
 
-export function* initiateDownloadTask (action): IterableIterator<any> {
-  const { id, type, itemId } = action.payload
+export function* getUserByToken(action) {
+  const { token } = action.payload
   try {
-    const downloadParams = action.payload.downloadParams.map((params) => {
-      const {
-        id,
-        filters,
-        tempFilters,
-        linkageFilters,
-        globalFilters,
-        variables,
-        linkageVariables,
-        globalVariables,
-        ...rest
-      } = params
-      return {
-        id,
-        param: {
-          ...rest,
-          filters: filters.concat(tempFilters).concat(linkageFilters).concat(globalFilters),
-          params: variables.concat(linkageVariables).concat(globalVariables)
-        }
-      }
-    })
-    yield call(request, {
-      method: 'POST',
-      url: `${api.download}/submit/${type}/${id}`,
-      data: downloadParams
-    })
-    message.success('下载任务创建成功！')
-    yield put(DownloadTaskInitiated(type, itemId, downloadParams))
+    const result = yield call(request, `${api.user}/check/${token}`)
+    const loginUser = result.payload
+    yield put(getUserByTokenSuccess(loginUser))
+    localStorage.setItem('loginUser', JSON.stringify(loginUser))
   } catch (err) {
-    yield put(initiateDownloadTaskFail(err))
+    yield put(getUserByTokenFail(err))
     errorHandler(err)
   }
 }
 
-export default function* rootGroupSaga (): IterableIterator<any> {
+export default function* rootGroupSaga() {
   yield all([
-    throttle(1000, CHECK_NAME, checkNameUnique as any),
-    takeLatest(GET_LOGIN_USER, getLoginUser as any),
-    takeLatest(ACTIVE, activeUser as any),
-    takeLatest(LOGIN, login as any),
-    takeLatest(LOGOUT, logout),
-    takeLatest(UPDATE_PROFILE, updateProfile as any),
-    takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
-    takeLatest(JOIN_ORGANIZATION, joinOrganization as any),
+    throttle(1000, CHECK_NAME, checkNameUnique),
+    takeEvery(ACTIVE, activeUser),
+    takeLatest(GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders),
+    takeEvery(TRY_EXTERNAL_AUTH, tryExternalAuth),
+    takeEvery(LOGIN, login),
+    takeEvery(LOGOUT, logout),
+    takeEvery(UPDATE_PROFILE, updateProfile),
+    takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any),
+    takeEvery(
+      GET_CAPTCHA_FOR_RESET_PASSWORD,
+      getCaptchaForResetPassword as any
+    ),
+    takeEvery(RESET_PASSWORD_UNLOGGED, resetPasswordUnlogged  as any),
+    takeEvery(GET_USER_BY_TOKEN, getUserByToken),
+    takeEvery(JOIN_ORGANIZATION, joinOrganization),
     takeLatest(LOAD_DOWNLOAD_LIST, getDownloadList),
     takeLatest(DOWNLOAD_FILE, downloadFile),
-    takeEvery(INITIATE_DOWNLOAD_TASK, initiateDownloadTask)
+    takeLatest(GET_SERVER_CONFIGURATIONS, getServerConfigurations)
   ])
 }
-

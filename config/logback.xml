@@ -31,6 +31,7 @@
     <property name="SQL" value="sql"/>
     <property name="SCHEDULE" value="schedule"/>
     <property name="OPT" value="opt"/>
+    <property name="DOWNLOAD" value="download"/>
 
     <property name="LOG_HOME_PATH" value="${DAVINCI3_HOME}/logs"/>
 
@@ -46,8 +47,10 @@
     <property name="BUSINESS_SCHEDULE_LOG_PATTERN"
               value="${BUSINESS_SCHEDULE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
 
-    <appender name="SYS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <property name="BUSINESS_DOWNLOAD_LOG_PATTERN"
+              value="${BUSINESS_DOWNLOAD_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} --- %file:%line : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
 
+    <appender name="SYS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>${LOG_HOME_PATH}/${SYS}/${APP_NAME}.%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>30</MaxHistory>
@@ -61,12 +64,6 @@
 
 
     <appender name="BUSINESS_SQL_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>${LOG_HOME_PATH}/${USER}/${SQL}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>10</MaxHistory>
@@ -80,13 +77,6 @@
 
 
     <appender name="BUSINESS_OPERATION_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
-
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>${LOG_HOME_PATH}/${USER}/${OPT}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>10</MaxHistory>
@@ -100,13 +90,6 @@
 
 
     <appender name="BUSINESS_SCHEDULE_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
-
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>${LOG_HOME_PATH}/${USER}/${SCHEDULE}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>10</MaxHistory>
@@ -115,6 +98,18 @@
         <encoder>
             <charset>UTF-8</charset>
             <pattern>${BUSINESS_SCHEDULE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="BUSINESS_DOWNLOAD_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME_PATH}/${USER}/${DOWNLOAD}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${BUSINESS_DOWNLOAD_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
@@ -127,6 +122,9 @@
     </logger>
     <logger name="BUSINESS_SCHEDULE" additivity="false" level="INFO">
         <appender-ref ref="BUSINESS_SCHEDULE_LOG_APPENDER"/>
+    </logger>
+    <logger name="BUSINESS_DOWNLOAD" additivity="false" level="INFO">
+        <appender-ref ref="BUSINESS_DOWNLOAD_LOG_APPENDER"/>
     </logger>
 
 
