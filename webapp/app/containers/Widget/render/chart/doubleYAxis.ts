@@ -32,7 +32,7 @@ import {
 import { getFormattedValue } from 'containers/Widget/components/Config/Format'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
-import DoubleY from './helper'
+import { getMetricsExtendMinAndMax, formatDecimal } from './helper'
 export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
@@ -139,15 +139,6 @@ export default function (chartProps: IChartProps, drillOptions) {
     }
   }
 
-  let leftMax
-  let leftMin
-  let rightMax
-  let rightMin
-  [leftMin, leftMax, rightMin, rightMax] = computeMetricsMinAndMax(
-    [metrics, secondaryMetrics],
-    data,
-    stack
-  )
   const xAxisSplitLineConfig = {
     showLine: showVerticalLine,
     lineColor: verticalLineColor,
@@ -157,18 +148,15 @@ export default function (chartProps: IChartProps, drillOptions) {
   const allMetrics = secondaryMetrics
     ? [].concat(metrics).concat(secondaryMetrics)
     : metrics
-
-  const leftY = new DoubleY([leftMin, leftMax], yAxisSplitNumber - 2)
-  const rightY = new DoubleY([rightMin, rightMax], yAxisSplitNumber - 2)
-  let { interval: leftInterval, extent: leftExtent } = leftY.computeExtendInterval()
-  let { interval: rightInterval, extent: rightExtent } = rightY.computeExtendInterval()
-  const [leftExtentMin, leftExtentMax] = leftExtent
-  const [rightExtentMin, rightExtentMax] = rightExtent
-  if (rightInterval < leftInterval) {
-    leftInterval = (leftExtentMax - leftExtentMin) / ((rightExtentMax - rightExtentMin) / rightInterval)
-  } else {
-    rightInterval = (rightExtentMax - rightExtentMin) / ((leftExtentMax - leftExtentMin) / leftInterval)
-  }
+  const { leftY, rightY } = getMetricsExtendMinAndMax(
+    metrics,
+    secondaryMetrics,
+    data,
+    stack,
+    yAxisSplitNumber
+  )
+  const [leftExtentMin, leftExtentMax, leftInterval] = leftY
+  const [rightExtentMin, rightExtentMax, rightInterval] = rightY
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -211,7 +199,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         showTitleAndUnit: true,
         name: getYAxisName(secondaryMetrics),
         nameLocation: 'middle',
-        nameGap: 45,
+        nameGap: 50,
         nameRotate: 90,
         nameTextStyle: {
           color: '#666',
@@ -230,7 +218,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         showTitleAndUnit: true,
         name: getYAxisName(metrics),
         nameLocation: 'middle',
-        nameGap: 45,
+        nameGap: 50,
         nameRotate: 90,
         nameTextStyle: {
           color: '#666',
@@ -311,44 +299,7 @@ export function getYAxisName(metrics) {
     .map((m) => (m.field.alias ? m.field.alias : decodeMetricName(m.name)))
     .join(` / `)
 }
-export function formatDecimal(num, decimal) {
-  num = num.toString()
-  const index = num.indexOf('.')
-  if (index !== -1) {
-    num = num.substring(0, decimal + index + 1)
-  } else {
-    num = num.substring(0)
-  }
-  return parseFloat(num).toFixed(decimal)
-}
 
-export function computeMetricsMinAndMax(metrics, data, stack) {
-  const metricsSource = metrics.map((metrics) =>
-    ['min', 'max'].map((item) => {
-      return { fn: item, data: metrics }
-    })
-  )
-  return metricsSource.flat().map((item) => {
-    if (stack) {
-      return item.data.reduce(
-        (num, m) =>
-          num +
-          Math[item.fn](
-            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
-          ),
-        0
-      )
-    } else {
-      return Math[item.fn](
-        ...item.data.map((m) =>
-          Math[item.fn](
-            ...data.map((d) => d[`${m.agg}(${decodeMetricName(m.name)})`])
-          )
-        )
-      )
-    }
-  })
-}
 export function getDoubleYAxis(doubleYAxis) {
   const {
     inverse,
