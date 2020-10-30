@@ -52,8 +52,9 @@ public enum DataTypeEnum {
 
     HANA("sap", "sap hana", "com.sap.db.jdbc.Driver", "", "", "'", "'"),
 
-    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'");
+    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'"),
 
+    TDENGINE("TAOS", "TAOS", "com.taosdata.jdbc.TSDBDriver", "'", "'", "\"", "\"");
 
     private String feature;
     private String desc;

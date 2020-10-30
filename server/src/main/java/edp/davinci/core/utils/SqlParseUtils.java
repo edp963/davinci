@@ -411,7 +411,7 @@ public class SqlParseUtils {
                             case NOTEQUALSTO:
                                 expBuilder
                                         .append(left).append(SPACE)
-                                        .append(SqlOperatorEnum.NoTIN.getValue()).append(SPACE)
+                                        .append(SqlOperatorEnum.NOTIN.getValue()).append(SPACE)
                                         .append(collect.stream().collect(Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_END)));
                                 break;
 
