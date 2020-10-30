@@ -102,7 +102,7 @@ public class LdapServiceImpl implements LdapService {
 						LdapPerson person = new LdapPerson();
 						person.setName(attributes.get("cn").get().toString());
 						person.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
-						person.setEmail(userDn);
+						person.setEmail(attributes.get("mail").get().toString());
 						return person;
 					});
 

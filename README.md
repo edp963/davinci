@@ -53,10 +53,10 @@ Davinci is oriented towards product managers, business people, data engineers, d
   * Integration of LDAP sign-in
   
 ## Latest Release
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.9/davinci-assembly_3.0.1-0.3.1-SNAPSHOT-dist-beta.9.zip)
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-rc/davinci-assembly_0.3.1-0.3.1-SNAPSHOT-dist-rc.zip)
 
 ## Get Help
-The fastest way to get response from our developers is to send email to our mail list edp_support@groups.163.com, and welcome to join our WeChat group for online discussion.
+The fastest way to get response from our developers is to join our WeChat group for online discussion.
 
 [![](https://github.com/edp963/edp-resource/raw/master/WeChat.jpg)](https://github.com/edp963/edp-resource/raw/master/WeChat.jpg)
 
