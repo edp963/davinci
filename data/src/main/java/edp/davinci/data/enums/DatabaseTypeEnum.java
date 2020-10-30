@@ -51,7 +51,9 @@ public enum DatabaseTypeEnum {
 
     HANA("sap", "sap hana", "com.sap.db.jdbc.Driver", "", "", "'", "'"),
 
-    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'");
+    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'"),
+
+    TDENGINE("TAOS", "TAOS", "com.taosdata.jdbc.TSDBDriver", "'", "'", "\"", "\"");
 
     private String feature;
     private String desc;
@@ -80,7 +82,7 @@ public enum DatabaseTypeEnum {
         }
         return null;
     }
-    
+
     public static DatabaseTypeEnum featureOf(String feature) {
         for (DatabaseTypeEnum databaseTypeEnum : values()) {
             if (databaseTypeEnum.getFeature().equals(feature)) {
