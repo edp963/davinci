@@ -20,16 +20,15 @@
 package edp.davinci.server.controller;
 
 
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.share.ShareEntity;
 import edp.davinci.server.dto.share.ShareResult;
-import edp.davinci.server.dto.view.ViewExecuteParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
 import io.swagger.annotations.Api;

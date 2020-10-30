@@ -20,6 +20,7 @@
 package edp.davinci.server.service.impl;
 
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.CronJob;
@@ -33,7 +34,11 @@ import edp.davinci.server.dao.DisplaySlideExtendMapper;
 import edp.davinci.server.dto.cronjob.CronJobConfig;
 import edp.davinci.server.dto.cronjob.CronJobContent;
 import edp.davinci.server.dto.dashboard.DashboardTree;
+import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.enums.ShareDataPermission;
+import edp.davinci.server.enums.ShareMode;
+import edp.davinci.server.enums.ShareType;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.ServerUtils;
 import org.slf4j.Logger;
@@ -279,10 +284,10 @@ public class BaseScheduleService {
         }
 
         rootChildren.sort(Comparator.comparing(DashboardTree::getIndex));
-        root.setChilds(rootChildren);
+        root.setChildren(rootChildren);
 
         for (DashboardTree child : rootChildren) {
-            child.setChilds(getChildren(dashboardsMap, child));
+            child.setChildren(getChildren(dashboardsMap, child));
         }
     }
 
@@ -297,7 +302,7 @@ public class BaseScheduleService {
         List<DashboardTree> list = new ArrayList<>();
         for (Dashboard dashboard : children) {
             DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
-            treeNode.setChilds(getChildren(dashboardsMap, treeNode));
+            treeNode.setChildren(getChildren(dashboardsMap, treeNode));
             list.add(treeNode);
         }
         list.sort(Comparator.comparing(DashboardTree::getIndex));
@@ -311,7 +316,7 @@ public class BaseScheduleService {
                 .withMode(ShareMode.NORMAL)
                 .withEntityId(contentId)
                 .withSharerId(userId)
-                .withExpired(DateUtils.add(DateUtils.currentDate(), Calendar.DATE, 1))
+                .withExpired(DateUtils.add(DateUtils.getNow(), Calendar.DATE, 1))
                 .withPermission(ShareDataPermission.SHARER)
                 .build();
 

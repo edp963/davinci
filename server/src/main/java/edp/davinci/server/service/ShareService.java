@@ -47,7 +47,7 @@ public interface ShareService {
 
     Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException;
 
-    List<Map<String, Object>> getDistinctValue(Long viewId, WidgetDistinctParam param, User user);
+    List<Map<String, Object>> getDistinctValue(WidgetDistinctParam param, User user);
 
     void formatShareParam(Long projectId, ShareEntity entity);
 

@@ -14,28 +14,4 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *  >>
- *
  */
-
-package edp.davinci.server.dto.share;
-
-import edp.davinci.core.dao.entity.MemDashboardWidget;
-import lombok.Data;
-
-import java.util.List;
-import java.util.Set;
-
-@Data
-public class ShareDashboard {
-    private Long id;
-
-    private String name;
-
-    private String config;
-
-    private Set<SimpleShareWidget> widgets;
-
-    private List<MemDashboardWidget> relations;
-
-    private Set<ShareView> views;
-}

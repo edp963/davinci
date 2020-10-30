@@ -36,8 +36,6 @@ import java.util.List;
 
 public interface DisplayService extends CheckEntityService {
 
-    Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
-
     List<Display> getDisplayListByProject(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedException, ServerException;

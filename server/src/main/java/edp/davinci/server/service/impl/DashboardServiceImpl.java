@@ -19,22 +19,29 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.*;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
+import edp.davinci.server.dto.dashboard.*;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.role.VizVisibility;
 import edp.davinci.server.dto.share.ShareEntity;
 import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.dto.view.SimpleView;
 import edp.davinci.server.enums.*;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedException;
+import edp.davinci.server.service.DashboardService;
+import edp.davinci.server.service.ShareService;
+import edp.davinci.server.util.BaseLock;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -42,36 +49,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.Dashboard;
-import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.core.dao.entity.MemDashboardWidget;
-import edp.davinci.core.dao.entity.RelRoleDashboard;
-import edp.davinci.core.dao.entity.RelRoleDashboardWidget;
-import edp.davinci.core.dao.entity.Role;
-import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.ViewExtendMapper;
-import edp.davinci.server.dao.WidgetExtendMapper;
-import edp.davinci.server.dto.dashboard.DashboardCreate;
-import edp.davinci.server.dto.dashboard.DashboardDTO;
-import edp.davinci.server.dto.dashboard.DashboardWithMem;
-import edp.davinci.server.dto.dashboard.DashboardWithPortal;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetCreate;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetDTO;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.role.VizVisibility;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.View;
-import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.server.service.DashboardService;
-import edp.davinci.server.service.ShareService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.COMMA;
 
 @Slf4j
 @Service("dashboardService")
@@ -86,10 +67,10 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
-    private ViewExtendMapper viewMapper;
+    private ViewExtendMapper viewExtendMapper;
 
     @Autowired
-    private WidgetExtendMapper widgetMapper;
+    private WidgetExtendMapper widgetExtendMapper;
 
     @Autowired
     private ShareService shareService;
@@ -242,17 +223,37 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         }
 
         Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
-        Set<View> views = new HashSet<>();
-        if (!CollectionUtils.isEmpty(widgetIds)) {
-            views = viewMapper.selectByWidgetIds(widgetIds);
+        // widget views
+        Set<SimpleView> simpleViews = CollectionUtils.isEmpty(widgetIds) ? new HashSet<>() : viewExtendMapper.selectSimpleByWidgetIds(widgetIds);
+
+        // global controller views
+        Map<String, Object> dashboardConfig = JSONUtils.toObject(dashboard.getConfig(), Map.class);
+        if (!CollectionUtils.isEmpty(dashboardConfig)) {
+            setControllerViews(simpleViews, (List<Map<String, Object>>) dashboardConfig.get("filters"));
         }
+
+        // widget controller views
+        memDashboardWidgets.forEach(mw -> {
+            Map<String, Object> widgetConfigMap = JSONUtils.toObject(widgetExtendMapper.selectByPrimaryKey(mw.getWidgetId()).getConfig(), Map.class);
+            if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                setControllerViews(simpleViews, (List<Map<String, Object>>)widgetConfigMap.get("controls"));
+            }
+        });
 
         DashboardWithMem dashboardWithMem = new DashboardWithMem();
         BeanUtils.copyProperties(dashboard, dashboardWithMem);
-        dashboardWithMem.setWidgets(memDashboardWidgets);
-        dashboardWithMem.setViews(views);
+        dashboardWithMem.setRelations(memDashboardWidgets);
+        dashboardWithMem.setViews(simpleViews);
 
         return dashboardWithMem;
+    }
+
+    private void setControllerViews(Set<SimpleView> views, List<Map<String, Object>> list) {
+        if (!CollectionUtils.isEmpty(list)) {
+            list.stream().filter(m -> m.containsKey("valueViewId")).collect(Collectors.toList()).forEach(m -> {
+                views.add(viewExtendMapper.getSimpleViewById(Long.parseLong(String.valueOf(m.get("valueViewId")))));
+            });
+        }
     }
 
     /**
@@ -522,7 +523,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
 	private void checkWidgets(Long projectId, Set<Long> ids) {
-		List<Widget> widgets = widgetMapper.getByIds(ids);
+		List<Widget> widgets = widgetExtendMapper.getByIds(ids);
 		if (null == widgets || widgets.size() != ids.size()) {
 			throw new ServerException("Invalid widget id");
 		}
@@ -663,7 +664,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		List<MemDashboardWidgetDTO> dtoList = Arrays.asList(memDashboardWidgets);
 		Set<Long> dashboardIds = dashboardExtendMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getDashboardId).collect(Collectors.toSet()));
-		Set<Long> widgetIds = widgetMapper
+		Set<Long> widgetIds = widgetExtendMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getWidgetId).collect(Collectors.toSet()));
 		String before = dtoList.toString();
 		List<MemDashboardWidget> memDashboardWidgetList = new ArrayList<>(dtoList.size());
@@ -789,6 +790,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
                 .withShareEntity(shareEntity)
                 .withEntityId(dashboardId)
                 .withSharerId(user.getId())
+                .withExpired(shareEntity.getExpired())
                 .build();
 
         return shareFactor.toShareResult(TOKEN_SECRET);

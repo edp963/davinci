@@ -19,29 +19,12 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.server.commons.Constants.DEFAULT_COPY_SUFFIX;
-import edp.davinci.server.commons.ErrorMsg;
-
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import edp.davinci.server.dto.share.ShareEntity;
-import edp.davinci.server.dto.share.ShareFactor;
-import edp.davinci.server.dto.share.ShareResult;
-import edp.davinci.server.enums.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Display;
 import edp.davinci.core.dao.entity.RelRoleDisplay;
 import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDisplaySlideWidgetExtendMapper;
@@ -51,18 +34,36 @@ import edp.davinci.server.dto.display.DisplayUpdate;
 import edp.davinci.server.dto.display.DisplayWithProject;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.dto.role.VizVisibility;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.DisplaySlideService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static edp.davinci.server.commons.Constants.DEFAULT_COPY_SUFFIX;
 
 @Slf4j
 @Service("displayService")
@@ -315,26 +316,6 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 			optLogger.info("Update display({}) limit role({}) access, create by user({})", display.getId(),
 					roles.stream().map(r -> r.getId()).collect(Collectors.toList()), user.getId());
 		}
-    }
-
-    public Display getDisplay(Long displayId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
-        Display display = displayExtendMapper.selectByPrimaryKey(displayId);
-        if (display == null) {
-            throw new NotFoundException("Display is not found");
-        }
-
-        if (!checkReadPermission(entity, display.getProjectId(), user)) {
-            return null;
-        }
-        ProjectPermission projectPermission = getProjectPermission(display.getProjectId(), user);
-        List<Long> disableList = getDisableVizs(user.getId(), display.getProjectId(), Arrays.asList(displayId), VizEnum.DISPLAY);
-        boolean disable = !projectPermission.isProjectMaintainer() && disableList.contains(display.getId());
-        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission()
-                && !display.getPublish();
-        if (disable || noPublish) {
-            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
-        }
-        return display;
     }
 
 	/**

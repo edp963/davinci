@@ -75,7 +75,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     private OrganizationExtendMapper organizationExtendMapper;
 
     @Autowired
-    private RelUserOrganizationExtendMapper relUserOrganizationMapper;
+    private RelUserOrganizationExtendMapper relUserOrganizationExtendMapper;
 
     @Autowired
     public RelProjectAdminExtendMapper relProjectAdminExtendMapper;
@@ -269,7 +269,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     }
     
 	private void checkOwner(Organization organization, Long userId, Long orgId, String operation) {
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(userId, orgId);
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(userId, orgId);
 
         if (rel != null && organization.getAllowCreateProject()) {
             return;
@@ -304,7 +304,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         //当前用户在即将移交的组织下才能移交
-        RelUserOrganization ucRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        RelUserOrganization ucRel = relUserOrganizationExtendMapper.getRel(user.getId(), organization.getId());
         if (null == ucRel) {
             log.error("User({}) must be a member of the organization({}) that is about to be transfer", user.getId(), orgId);
             throw new ServerException("You must be a member of the organization " + organization.getName() + " that is about to be transfer");
@@ -341,7 +341,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         boolean isTransfer = true;
         //移交回原组织
         if (project.getInitialOrgId().equals(orgId)) {
-            RelUserOrganization projectCreatorRuo = relUserOrganizationMapper.getRel(project.getUserId(), orgId);
+            RelUserOrganization projectCreatorRuo = relUserOrganizationExtendMapper.getRel(project.getUserId(), orgId);
             if (null != projectCreatorRuo) {
                 isTransfer = false;
             }
@@ -620,7 +620,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
             throw new NotFoundException("Project is not found");
         }
 
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        RelUserOrganization rel = relUserOrganizationExtendMapper.getRel(user.getId(), projectDetail.getOrgId());
         RelProjectAdmin relProjectAdmin = relProjectAdminExtendMapper.getByProjectAndUser(projectId, user.getId());
         boolean isCreator = projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer();
         boolean notOwner = !isCreator && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole());
@@ -852,7 +852,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         // project所在org的owner
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        RelUserOrganization orgRel = relUserOrganizationExtendMapper.getRel(user.getId(), projectDetail.getOrgId());
         if (null == orgRel) {
             return false;
         }

@@ -23,12 +23,9 @@ import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.LogNameEnum;
-
 import edp.davinci.server.util.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.openqa.selenium.*;
 import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -42,11 +39,11 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -56,6 +53,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
 
 @Component
 public class ScreenshotUtils {
@@ -169,14 +168,14 @@ public class ScreenshotUtils {
             for (LogEntry entry : logEntries) {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) timeout, " + entry.getLevel() + ":" + entry.getMessage());
             }
-            scheduleLogger.error(e.getMessage(), e);
+            scheduleLogger.error(e.toString(), e);
 
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) interrupted, " + entry.getLevel() + ":" + entry.getMessage());
             }
-            scheduleLogger.error(e.getMessage(), e);
+            scheduleLogger.error(e.toString(), e);
 
         } finally {
         	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
@@ -212,7 +211,7 @@ public class ScreenshotUtils {
 
     private WebDriver generateChromeDriver() throws ExecutionException {
         if (!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)) {
-            scheduleLogger.info("user RemoteWebDriver ({})", REMOTE_WEBDRIVER_URL);
+            scheduleLogger.info("User RemoteWebDriver({})", REMOTE_WEBDRIVER_URL);
             try {
                 return new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
             } catch (MalformedURLException ex) {

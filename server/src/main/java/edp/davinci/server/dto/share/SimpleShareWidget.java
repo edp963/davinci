@@ -16,7 +16,7 @@
  *  >>
  */
 
-package edp.davinci.dto.shareDto;
+package edp.davinci.server.dto.share;
 
 import lombok.Data;
 

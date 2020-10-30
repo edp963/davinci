@@ -25,19 +25,19 @@ import edp.davinci.core.dao.entity.*;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dao.DashboardPortalExtendMapper;
-import edp.davinci.server.dao.RelRoleUserExtendMapper;
-import edp.davinci.server.dao.UserExtendMapper;
-import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.share.ShareInfo;
-import edp.davinci.server.enums.*;
+import edp.davinci.server.enums.ShareDataPermission;
+import edp.davinci.server.enums.ShareMode;
+import edp.davinci.server.enums.ShareOperation;
+import edp.davinci.server.enums.ShareType;
 import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.server.service.*;
-
+import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -70,16 +70,19 @@ public class ShareAuthAspect {
     private RelRoleUserExtendMapper relRoleUserExtendMapper;
 
     @Autowired
-    private WidgetService widgetService;
+    private ViewExtendMapper viewExtendMapper;
 
     @Autowired
-    private DashboardService dashboardService;
+    private WidgetExtendMapper widgetExtendMapper;
+
+    @Autowired
+    private DashboardExtendMapper dashboardExtendMapper;
 
     @Autowired
     private DashboardPortalExtendMapper dashboardPortalExtendMapper;
 
     @Autowired
-    private DisplayService displayService;
+    private DisplayExtendMapper displayExtendMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -106,11 +109,6 @@ public class ShareAuthAspect {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        ShareFactor shareFactor = ShareFactor.parseShareFactor(token, TOKEN_SECRET);
-        if (shareFactor.getType() == null) {
-            shareFactor.setType(shareType);
-        }
-
         User user = null;
         for (Object arg : args) {
             if (arg instanceof User) {
@@ -121,33 +119,25 @@ public class ShareAuthAspect {
             }
         }
 
+        ShareFactor shareFactor = ShareFactor.parseShareFactor(token, TOKEN_SECRET);
+        if (shareFactor.getType() == null) {
+            shareFactor.setType(shareType);
+        }
+
+        verifyShareType(shareType, shareFactor);
+
+        verifyExpire(shareFactor);
+
         try {
             // 兼容老版本，token信息转换为新版本信息
             adaptShareInfo(token, shareFactor, user);
-            // 下载接口数据参数语义不唯一，在业务中判断
-            if (ShareOperation.DOWNLOAD != shareOperation) {
-                if (ShareOperation.PERMISSION == shareOperation) {
-                    // 获取兼容模式下的分享类型
-                    String type = (String) args[2];
-                    if (CheckEntityEnum.WIDGET.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.WIDGET);
-                    } else if (CheckEntityEnum.DASHBOARD.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.DASHBOARD);
-                    } else if (CheckEntityEnum.DISPLAY.getSource().equals(type.toLowerCase())) {
-                        shareFactor.setType(ShareType.DISPLAY);
-                    } else {
-                        throw new ServerException("Unknown share type");
-                    }
-                } else {
-                    shareFactor.setType(shareType == ShareType.DATA ? ShareType.WIDGET : shareType);
-                }
-            }
+            convertShareType(shareType, shareOperation, shareFactor, args);
 
             if (shareType != ShareType.LOGIN) {
                 // 校验token权限
                 verifyToken(shareOperation, shareFactor, user, args);
                 // 校验数据权限
-                verifyDataPermission(shareOperation, shareType, shareFactor, user);
+                verifyPermission(shareOperation, shareType, shareFactor, user);
             }
 
             // thread local share factor
@@ -160,8 +150,59 @@ public class ShareAuthAspect {
         }
     }
 
+    private void convertShareType(ShareType shareType, ShareOperation shareOperation, ShareFactor shareFactor, Object[] args) {
+
+        if (ShareOperation.DOWNLOAD == shareOperation) {
+            return;
+        }
+
+        if (ShareOperation.LOAD_DATA == shareOperation && shareType == ShareType.DATA) {
+            shareFactor.setType(ShareType.WIDGET);
+            return;
+        }
+
+        if (ShareOperation.LOAD_DISTINCT_DATA == shareOperation && shareType == ShareType.DATA) {
+            shareFactor.setType(ShareType.VIEW);
+            return;
+        }
+    }
+
     /**
-     * 校验Token 是否合法
+     * 校验分享的viz类型
+     *
+     * @param shareType
+     * @param shareFactor
+     */
+    private void verifyShareType(ShareType shareType, ShareFactor shareFactor) {
+        switch (shareType) {
+            case WIDGET:
+            case DASHBOARD:
+            case DISPLAY:
+                if (!shareType.equals(shareFactor.getType())) {
+                    throw new UnAuthorizedException("Invalid share type");
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 校验Token是否过期
+     *
+     * @param shareFactor
+     */
+    private void verifyExpire(ShareFactor shareFactor) {
+        if (shareFactor.getMode() != ShareMode.COMPATIBLE && shareFactor.getExpired() != null) {
+            long now = System.currentTimeMillis();
+            if (now > shareFactor.getExpired().getTime()) {
+                throw new UnAuthorizedException("Share token expired");
+            }
+        }
+    }
+
+    /**
+     * 校验Token是否合法
      *
      * @param operation
      * @param shareFactor
@@ -207,7 +248,7 @@ public class ShareAuthAspect {
      * @param viewer
      */
     @Transactional
-    protected void verifyDataPermission(ShareOperation shareOperation, ShareType shareType, ShareFactor shareFactor, User viewer)
+    protected void verifyPermission(ShareOperation shareOperation, ShareType shareType, ShareFactor shareFactor, User viewer)
             throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException {
         User sharer = userExtendMapper.selectByPrimaryKey(shareFactor.getSharerId());
         if (sharer == null) {
@@ -215,24 +256,30 @@ public class ShareAuthAspect {
         }
         User user = shareFactor.getPermission() == ShareDataPermission.SHARER ? sharer : viewer;
         shareFactor.setUser(user);
-        if (shareOperation == ShareOperation.READ || shareOperation == ShareOperation.PERMISSION) {
-            parseEntityAndProject(shareFactor, user);
-        } else if (shareOperation == ShareOperation.LOAD_DATA) {
-            if (shareFactor.getType() != ShareType.WIDGET) {
-                throw new ForbiddenException(ErrorMsg.ERR_INVALID_DATA_TOKEN);
-            }
-            Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
-            ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
-            if (!projectService.allowGetData(projectDetail, user)) {
-                throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
-            }
-            shareFactor.setShareEntity(widget);
-        } else {
-            // 下载权限数据权限在业务中判断
-            if (shareType != ShareType.DATA) {
+        switch (shareOperation) {
+            case READ:
+            case PERMISSION:
                 parseEntityAndProject(shareFactor, user);
-            }
-            return;
+                break;
+            case LOAD_DATA:
+            case LOAD_DISTINCT_DATA:
+                if (shareFactor.getType() == ShareType.VIEW) {
+                    shareFactor.setShareEntity(viewExtendMapper.selectByPrimaryKey(shareFactor.getEntityId()));
+                    break;
+                }
+
+                if (shareFactor.getType() == ShareType.WIDGET) {
+                    shareFactor.setShareEntity(widgetExtendMapper.selectByPrimaryKey(shareFactor.getEntityId()));
+                    break;
+                }
+
+                throw new ForbiddenException(ErrorMsg.ERR_INVALID_DATA_TOKEN);
+
+            default:
+                if (shareType != ShareType.DATA) {
+                    parseEntityAndProject(shareFactor, user);
+                }
+                break;
         }
     }
 
@@ -242,18 +289,23 @@ public class ShareAuthAspect {
             case RECORD:
             case FILE:
             case WIDGET:
-                Widget widget = widgetService.getWidget(shareFactor.getEntityId(), user);
+                Widget widget = widgetExtendMapper.selectByPrimaryKey(shareFactor.getEntityId());
                 shareFactor.setProjectDetail(projectService.getProjectDetail(widget.getProjectId(), user, false));
                 shareFactor.setShareEntity(widget);
                 break;
+            case VIEW:
+                View view = viewExtendMapper.selectByPrimaryKey(shareFactor.getEntityId());
+                shareFactor.setProjectDetail(projectService.getProjectDetail(view.getProjectId(), user, false));
+                shareFactor.setShareEntity(view);
+                break;
             case DASHBOARD:
-                Dashboard dashboard = dashboardService.getDashboard(shareFactor.getEntityId(), user);
+                Dashboard dashboard = dashboardExtendMapper.selectByPrimaryKey(shareFactor.getEntityId());
                 DashboardPortal portal = dashboardPortalExtendMapper.selectByPrimaryKey(dashboard.getDashboardPortalId());
                 shareFactor.setProjectDetail(projectService.getProjectDetail(portal.getProjectId(), user, false));
                 shareFactor.setShareEntity(dashboard);
                 break;
             case DISPLAY:
-                Display display = displayService.getDisplay(shareFactor.getEntityId(), user);
+                Display display = displayExtendMapper.selectByPrimaryKey(shareFactor.getEntityId());
                 shareFactor.setProjectDetail(projectService.getProjectDetail(display.getProjectId(), user, false));
                 shareFactor.setShareEntity(display);
                 break;
@@ -274,6 +326,7 @@ public class ShareAuthAspect {
         if (shareFactor.getMode() != ShareMode.COMPATIBLE) {
             return;
         }
+
         ShareInfo shareInfo = shareService.getShareInfo(token, user);
         shareService.verifyShareUser(user, shareInfo);
         // 新老版本字段定义不同
@@ -281,6 +334,8 @@ public class ShareAuthAspect {
         shareFactor.setEntityId(shareInfo.getShareId());
         shareFactor.setPermission(ShareDataPermission.SHARER);
         shareFactor.setMode(ShareMode.NORMAL);
+        // 只兼容老版本的dashboard分享
+        shareFactor.setType(ShareType.DASHBOARD);
 
         // 授权模式
         if (!StringUtils.isEmpty(shareInfo.getSharedUserName())) {

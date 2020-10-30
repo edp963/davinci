@@ -19,21 +19,24 @@
 
 package edp.davinci.server.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.server.commons.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import edp.davinci.server.annotation.AuthIgnore;
-import edp.davinci.server.commons.Constants;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @ApiIgnore
 @Controller
 public class HomeController {
 
-    @Value("${davinci.version:}")
-    private String version;
+    @Autowired
+    private Environment environment;
 
     @RequestMapping("swagger")
     public String swagger() {
@@ -50,10 +53,23 @@ public class HomeController {
         return "share";
     }
 
-    @RequestMapping(Constants.BASE_API_PATH + "/version")
+    @RequestMapping(Constants.BASE_API_PATH + "/configurations")
     @AuthIgnore
     @ResponseBody
-    public String version() {
-        return version;
+    public Map<String, Object> configurations() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put("version", environment.getProperty("davinci.version"));
+        configs.put("jwtToken", new HashMap<String, Object>() {{
+            put("timeout", environment.getProperty("jwtToken.timeout"));
+        }});
+        configs.put("security", new HashMap<String, Object>() {{
+            put("oauth2", new HashMap<String, Object>() {{
+                put("enable", Boolean.valueOf(environment.getProperty("security.oauth2.enable")));
+            }});
+        }});
+
+        return new HashMap<String, Object>() {{
+            put("payload", configs);
+        }};
     }
 }

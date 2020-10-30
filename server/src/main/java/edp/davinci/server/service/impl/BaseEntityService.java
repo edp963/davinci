@@ -19,21 +19,21 @@
 
 package edp.davinci.server.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import static edp.davinci.commons.Constants.*;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dto.project.ProjectPermission;
 import edp.davinci.server.enums.CheckEntityEnum;
 import edp.davinci.server.enums.LockType;
 import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
 import edp.davinci.server.util.LockFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import static edp.davinci.commons.Constants.AT_SIGN;
 
 @Slf4j
 @Component

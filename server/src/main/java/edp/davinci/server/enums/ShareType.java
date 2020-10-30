@@ -21,31 +21,35 @@ package edp.davinci.server.enums;
 import lombok.Getter;
 
 public enum ShareType {
-    WIDGET(0),
-    DASHBOARD(1),
-    DISPLAY(2),
+    VIEW(0),
+    WIDGET(1),
+    DASHBOARD(2),
+    DISPLAY(3),
 
     /**
      * 数据
      */
-    DATA(3),
+    DATA(4),
 
     /**
      * 记录
      */
-    RECORD(4),
+    RECORD(5),
 
     /**
      * 文件
      */
-    FILE(5),
+    FILE(6),
 
     /**
      * 登录
      */
-    LOGIN(6),
+    LOGIN(7),
 
-    PERMISSION(7);
+    /**
+     * 权限
+     */
+    PERMISSION(8);
 
     @Getter
     private int type;

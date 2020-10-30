@@ -372,7 +372,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             alertUnAuthorized(entity, user, "delete");
         }
 
-        if (!CollectionUtils.isEmpty(widgetMapper.getWidgetsByWiew(id))) {
+        if (!CollectionUtils.isEmpty(widgetMapper.getWidgetsByView(id))) {
             throw new ServerException(
                     "The current view has been referenced, please delete the reference and then operate");
         }
@@ -784,10 +784,11 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             List<AuthParamValue> paramValues = JSONUtils.toObjectArray(r.getRowAuth(), AuthParamValue.class);
             authVars.forEach((v) -> {
                 List<Object> defaultValues = v.getDefaultValues();
+                Optional<AuthParamValue> optional = paramValues.stream().filter(paramValue -> paramValue.getName().equals(v.getName()))
+                        .findFirst();
                 if (defaultValues == null) {
                     v.setDefaultValues(new ArrayList<>());
-                    paramValues.stream().filter(paramValue -> paramValue.getName().equals(v.getName()))
-                            .findFirst().ifPresent(paramValue -> {
+                    optional.ifPresent(paramValue -> {
                         if (paramValue.isEnable()) {
                             if (CollectionUtils.isEmpty(paramValue.getValues())) {
                                 v.setDefaultValues(Arrays.asList(new String[]{NO_AUTH_PERMISSION}));
@@ -799,23 +800,24 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     return;
                 }
 
-                paramValues.stream().filter(paramValue -> paramValue.getName().equals(v.getName()))
-                        .findFirst().ifPresent(paramValue -> {
+                optional.ifPresent(paramValue -> {
                     if (paramValue.isEnable()) {
                         if (!CollectionUtils.isEmpty(paramValue.getValues())) {
                             boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
                             boolean disable = defaultValues.size() == 0;
                             if (denied) {
                                 v.setDefaultValues(paramValue.getValues());
-                                return;
                             } else if (!disable) {
                                 defaultValues.addAll(paramValue.getValues());
-                                return;
                             }
                         }
-                        return;
+                    } else {
+                        v.setDefaultValues(new ArrayList<>());
                     }
+                    return;
                 });
+
+                v.setDefaultValues(new ArrayList<>());
             });
         });
 

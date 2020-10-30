@@ -18,31 +18,30 @@
 
 package edp.davinci.server.dto.dashboard;
 
+import edp.davinci.commons.util.CollectionUtils;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import edp.davinci.commons.util.CollectionUtils;
-
 @Data
 public class DashboardTree {
     private Long id;
     private int index;
-    private List<DashboardTree> childs;
+    private List<DashboardTree> children;
 
     public DashboardTree(Long id, int index) {
         this.id = id;
         this.index = index;
     }
 
-    public DashboardTree(Long id, List<DashboardTree> childs) {
+    public DashboardTree(Long id, List<DashboardTree> children) {
         this.id = id;
-        this.childs = childs;
+        this.children = children;
     }
 
     public List<DashboardTree> traversalLeaf() {
-        if (CollectionUtils.isEmpty(childs)) {
+        if (CollectionUtils.isEmpty(children)) {
             return null;
         }
         List<DashboardTree> leafList = new ArrayList<>();
@@ -51,14 +50,14 @@ public class DashboardTree {
     }
 
     private void traversalLeaf(DashboardTree node, List<DashboardTree> list) {
-        if (CollectionUtils.isEmpty(childs)) {
+        if (CollectionUtils.isEmpty(children)) {
             return;
         }
-        if (CollectionUtils.isEmpty(node.getChilds())) {
+        if (CollectionUtils.isEmpty(node.getChildren())) {
             list.add(node);
             return;
         }
-        for (DashboardTree child : node.getChilds()) {
+        for (DashboardTree child : node.getChildren()) {
             traversalLeaf(child, list);
         }
     }
