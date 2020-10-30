@@ -474,7 +474,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
         if (dataTypeEnum != DataTypeEnum.MYSQL) {
-            log.info("Unsupported data source， {}", source.getJdbcUrl());
+            log.info("Unsupported data source, {}", source.getJdbcUrl());
             throw new ServerException("Unsupported data source: " + source.getJdbcUrl());
         }
 

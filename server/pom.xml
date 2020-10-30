@@ -486,7 +486,14 @@
 		<!--<artifactId>kylin-jdbc</artifactId> -->
 		<!--<version>2.3.0</version> -->
 		<!--</dependency> -->
-		
+
+        <!--TDengine -->
+        <!--<dependency> -->
+        <!--<groupId>com.taosdata.jdbc</groupId> -->
+        <!--<artifactId>taos-jdbcdriver</artifactId> -->
+        <!--<version>1.0.3</version> -->
+        <!--</dependency> -->
+
 	</dependencies>
 
 	<build>
