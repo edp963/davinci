@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { GetDerivedStateFromProps } from 'react'
 import Avatar from '../Avatar'
 import { Upload, message as Message, Button } from 'antd'
 const styles = require('./UploadAvatar.less')
@@ -18,17 +18,15 @@ interface IUploadAvatarState {
   currentPath: string
 }
 
-export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploadAvatarState> {
-  constructor (props) {
+export class UploadAvatar extends React.PureComponent<
+  IUploadAvatarProps,
+  IUploadAvatarState
+> {
+  constructor(props) {
     super(props)
     this.state = {
       currentPath: ''
     }
-  }
-  private  getBase64 = (img, callback) => {
-    const reader = new FileReader()
-    reader.addEventListener('load', () => callback(reader.result))
-    reader.readAsDataURL(img)
   }
   private beforeUpload = (file) => {
     const re = /image\/(png|jpg|jpeg|gif)/
@@ -36,18 +34,15 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
     if (!isJPG) {
       Message.error('You can only upload JPG file!')
     }
-    const isLt2M = file.size / 1024 / 1024
-    if (!isLt2M) {
+    const isLt1MB = file.size / 1024 / 1024 > 1
+    if (isLt1MB) {
       Message.error('Image must smaller than 1MB!')
     }
-    return !!(isJPG && isLt2M)
+    return !!(isJPG && !isLt1MB)
   }
   private handleChange = (info) => {
     const { xhrParams } = this.props
     if (info.file.status === 'done') {
-      this.getBase64(info.file.originFileObj, (path) => {
-        this.setState({currentPath: path})
-      })
       const response = info.file.response
       if (response && response.header && response.header.code >= 200) {
         const avatar = response.payload.avatar
@@ -59,23 +54,21 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
       }
     }
   }
-  public componentWillReceiveProps (nextProps) {
-    const {path} = nextProps
+
+  public static getDerivedStateFromProps: GetDerivedStateFromProps<
+    IUploadAvatarProps,
+    IUploadAvatarState
+  > = (nextProps, prevState) => {
+    const { path } = nextProps
     if (path && path.length) {
-      this.setState({
-        currentPath: path
-      })
+      return { currentPath: path }
     }
   }
-  public render () {
+
+  public render() {
     const { type, xhrParams } = this.props
     const { currentPath } = this.state
-    const TOKEN = {Authorization: getToken()}
-    const avatar = currentPath
-                              ? currentPath.indexOf('data:') >= 0
-                                  ? currentPath
-                                  : `${currentPath}`
-                              : ''
+    const TOKEN = { Authorization: getToken() }
     let action = ''
     if (type === 'profile') {
       if (xhrParams && xhrParams.id) {
@@ -85,15 +78,10 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
       if (xhrParams && xhrParams.id) {
         action = `${api.organizations}/${xhrParams.id}/avatar`
       }
-    } else if (type === 'team') {
-      if (xhrParams && xhrParams.id) {
-        action = `${api.teams}/${xhrParams.id}/avatar`
-      }
     }
-
     return (
       <div className={styles.avatar}>
-        <Avatar path={avatar} size="large" enlarge={true}/>
+        <Avatar path={currentPath} size="large" enlarge={true} />
         <div className={styles.uploadAvatar}>
           <div className={styles.uploadTitle}>上传新图像</div>
           <Upload
@@ -114,4 +102,3 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
 }
 
 export default UploadAvatar
-
