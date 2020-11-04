@@ -29,11 +29,12 @@ module.exports = function addDevMiddlewares(app, webpackConfig) {
     const jsonConfig = fs.readFileSync(configFilePath)
     const { proxies } = JSON.parse(jsonConfig)
     proxyTarget = proxies.find((proxy) => proxy.enabled).target
-  } else {
-    fs.writeFileSync(configFilePath, JSON.stringify({ proxies: [{ target: proxyTarget, enabled: true }] }))
   }
 
-  app.use(['/api/v3', '/image'], proxy({ target: proxyTarget, changeOrigin: true }))
+  app.use(
+    ['/api/v3', '/image'],
+    proxy({ target: proxyTarget, changeOrigin: true })
+  )
   app.use(middleware)
   app.use(webpackHotMiddleware(compiler))
 
@@ -42,12 +43,15 @@ module.exports = function addDevMiddlewares(app, webpackConfig) {
   const fsMemory = middleware.fileSystem
 
   app.get('*', (req, res) => {
-    fsMemory.readFile(path.join(compiler.outputPath, 'index.html'), (err, file) => {
-      if (err) {
-        res.sendStatus(404)
-      } else {
-        res.send(file.toString())
+    fsMemory.readFile(
+      path.join(compiler.outputPath, 'index.html'),
+      (err, file) => {
+        if (err) {
+          res.sendStatus(404)
+        } else {
+          res.send(file.toString())
+        }
       }
-    })
+    )
   })
 }
