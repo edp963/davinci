@@ -140,7 +140,7 @@ public class TokenUtils {
                             SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException e) {
-            log.warn(e.getMessage(), e);
+            log.warn(e.toString(), e);
             return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())

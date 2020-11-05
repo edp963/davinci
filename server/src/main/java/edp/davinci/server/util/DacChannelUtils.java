@@ -96,7 +96,7 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
         }
 
         return null;
@@ -121,7 +121,7 @@ public class DacChannelUtils {
                 return (List) resultMap.get(PAYLOAD);
             }
         } catch (RestClientException e) {
-        	log.error(e.getMessage(), e);
+        	log.error(e.toString(), e);
         }
 
         return null;
@@ -147,7 +147,7 @@ public class DacChannelUtils {
                     return (List<Object>) resultMap.get(PAYLOAD);
                 }
             } catch (RestClientException e) {
-				log.error(e.getMessage(), e);
+				log.error(e.toString(), e);
             }
         }
         return null;

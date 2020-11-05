@@ -20,10 +20,12 @@
 package edp.davinci.server.service.impl;
 
 import com.google.common.collect.Lists;
-
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.core.dao.entity.Dashboard;
 import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.dao.DashboardExtendMapper;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
@@ -34,20 +36,17 @@ import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.enums.DownloadType;
 import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.service.ProjectService;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static edp.davinci.commons.Constants.*;
-
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.UNDERLINE;
 
 @Component
 @Slf4j
@@ -148,7 +147,7 @@ public class DownloadCommonService {
                 fileName = dashboard.getName();
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported downloadType:" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported download type:" + downloadType.name());
         }
         return fileName + UNDERLINE + DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis());
     }
@@ -198,7 +197,7 @@ public class DownloadCommonService {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
-                log.info("User({}) have not permisson to download the {}({})", user.getUsername(), type, id);
+                log.error("User({}) have not permission to download the {}({})", user.getUsername(), type, id);
                 throw new UnAuthorizedException("You have not permission to download the " + type);
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));

@@ -380,7 +380,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			b = testConnection(config, user);
 
 		} catch (SourceException e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			throw new ServerException(e.getMessage());
 		}
 
@@ -423,7 +423,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 				}
 			}
 		} catch (SourceException e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			throw new ServerException(e.getMessage());
 		}
 	}

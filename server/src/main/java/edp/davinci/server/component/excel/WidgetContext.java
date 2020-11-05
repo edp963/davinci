@@ -53,20 +53,20 @@ public class WidgetContext implements Serializable {
         this.widget = widget;
         this.dashboard = dashboard;
         this.memDashboardWidget = memDashboardWidget;
-        if (null != queryParam) {
-            this.queryParam = queryParam;
-            this.hasQueryParam = true;
-        }
+        this.queryParam = queryParam;
     }
 
     public WidgetContext(Widget widget, boolean isMaintainer, WidgetQueryParam queryParam) {
         this.widget = widget;
         this.isMaintainer = isMaintainer;
         this.queryParam = queryParam;
-        this.hasQueryParam = true;
     }
 
     public WidgetContext() {
 
+    }
+
+    public boolean hasQueryParam() {
+        return this.queryParam != null;
     }
 }

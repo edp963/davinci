@@ -275,49 +275,49 @@ if (!Array.prototype.reduce) {
 // https://tc39.github.io/ecma262/#sec-array.prototype.find
 if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
-      value: function(predicate) {
-        // 1. Let O be ? ToObject(this value).
-        if (this == null) {
-          throw TypeError('"this" is null or not defined');
-        }
+        value: function(predicate) {
+            // 1. Let O be ? ToObject(this value).
+            if (this == null) {
+                throw TypeError('"this" is null or not defined');
+            }
 
-        var o = Object(this);
+            var o = Object(this);
 
-        // 2. Let len be ? ToLength(? Get(O, "length")).
-        var len = o.length >>> 0;
+            // 2. Let len be ? ToLength(? Get(O, "length")).
+            var len = o.length >>> 0;
 
-        // 3. If IsCallable(predicate) is false, throw a TypeError exception.
-        if (typeof predicate !== 'function') {
-          throw TypeError('predicate must be a function');
-        }
+            // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+            if (typeof predicate !== 'function') {
+                throw TypeError('predicate must be a function');
+            }
 
-        // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
-        var thisArg = arguments[1];
+            // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+            var thisArg = arguments[1];
 
-        // 5. Let k be 0.
-        var k = 0;
+            // 5. Let k be 0.
+            var k = 0;
 
-        // 6. Repeat, while k < len
-        while (k < len) {
-          // a. Let Pk be ! ToString(k).
-          // b. Let kValue be ? Get(O, Pk).
-          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
-          // d. If testResult is true, return kValue.
-          var kValue = o[k];
-          if (predicate.call(thisArg, kValue, k, o)) {
-            return kValue;
-          }
-          // e. Increase k by 1.
-          k++;
-        }
+            // 6. Repeat, while k < len
+            while (k < len) {
+                // a. Let Pk be ! ToString(k).
+                // b. Let kValue be ? Get(O, Pk).
+                // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+                // d. If testResult is true, return kValue.
+                var kValue = o[k];
+                if (predicate.call(thisArg, kValue, k, o)) {
+                    return kValue;
+                }
+                // e. Increase k by 1.
+                k++;
+            }
 
-        // 7. Return undefined.
-        return undefined;
-      },
-      configurable: true,
-      writable: true
+            // 7. Return undefined.
+            return undefined;
+        },
+        configurable: true,
+        writable: true
     });
-  }
+}
 
 if (!Array.isArray) {
     Array.isArray = function(arg) {
@@ -5187,10 +5187,10 @@ function getVariableParams(control, fields, value, variables) {
                         return {
                             name: fieldsVariable.name,
                             value: value
-                              .map(function(val) {
-                                  return getValidVariableValue(val, fieldsVariable.valueType);
-                              })
-                              .join(',')
+                                .map(function(val) {
+                                    return getValidVariableValue(val, fieldsVariable.valueType);
+                                })
+                                .join(',')
                         };
                     });
                 }
@@ -5221,11 +5221,11 @@ function getVariableParams(control, fields, value, variables) {
                     return {
                         name: fieldsVariable.name,
                         value: value
-                          .split(',')
-                          .map(function(v) {
-                              return "'" + v + "'"
-                          })
-                          .join(',')
+                            .split(',')
+                            .map(function(v) {
+                                return "'" + v + "'"
+                            })
+                            .join(',')
                     };
                 });
             } else {
@@ -5271,13 +5271,13 @@ function getVariableParams(control, fields, value, variables) {
 function getCustomOptionVariableParams(control, viewId, value, variables) {
     var customOptions = control.customOptions;
     var params = [];
-  
+
     if (
-      value === void 0 ||
-      value === null ||
-      (typeof value === 'string' && !value.trim())
+        value === void 0 ||
+        value === null ||
+        (typeof value === 'string' && !value.trim())
     ) {
-      return params;
+        return params;
     }
 
     [].concat(value).forEach(function(val) {
@@ -5296,10 +5296,10 @@ function getCustomOptionVariableParams(control, viewId, value, variables) {
                 )
             )
         }
-      })
-  
+    })
+
     return params
-  }
+}
 
 function getFilterParams(control, fields, value, models) {
     var moment = global.moment
@@ -5425,12 +5425,12 @@ function transformRelativeDateValue(val) {
         valueType = val.valueType;
 
     return valueType === RelativeDateValueType.Prev
-      ? moment()
-          .subtract(value, type + 's')
-          .startOf(type)
-      : moment()
-          .add(value, type + 's')
-          .startOf(type)
+        ? moment()
+            .subtract(value, type + 's')
+            .startOf(type)
+        : moment()
+            .add(value, type + 's')
+            .startOf(type)
 }
 
 // #endregion
@@ -5453,9 +5453,9 @@ function beta9FieldsTransform(fields, controlType, interactionType, customOption
             type = fields.type,
             optionsFromColumn = fields.optionsFromColumn,
             column = fields.column;
-  
+
         var valueInfo = {}
-  
+
         if (controlType === ControlTypes.Select) {
             if (interactionType === ControlFieldTypes.Variable && optionsFromColumn) {
                 valueInfo = {
@@ -5473,7 +5473,7 @@ function beta9FieldsTransform(fields, controlType, interactionType, customOption
                 }
             }
         }
-    
+
         return {
             relatedView: {
                 fieldType: interactionType,
@@ -5607,13 +5607,13 @@ function beta9DefaultValueTransform(type, dynamicDefaultValue, defaultValue) {
             defaultValue: void 0
         }
     }
-  }
+}
 
 function controlMigration(control, opts) {
     var type = control.type,
         cache = control.cache,
         expired = control.expired;
-    
+
     if (type === ControlTypes.Select && (cache === void 0 || expired === void 0)) {
         control = Object.assign({}, control, {
             cache: false,
@@ -5726,21 +5726,21 @@ function dashboardConfigMigration(config, options) {
         }),
         linkages: config.linkages || [],
         queryMode:
-          config.queryMode === void 0
-            ? ControlQueryMode.Immediately
-            : config.queryMode
+            config.queryMode === void 0
+                ? ControlQueryMode.Immediately
+                : config.queryMode
     })
 }
 
 function beta6DimensionFix(dimension) {
     var sort = dimension.sort
     if (typeof sort === 'string') {
-      var sortConfig = {
-        sortType: sort
-      }
-      return Object.assign({}, dimension, {
-        sort: sortConfig
-      })
+        var sortConfig = {
+            sortType: sort
+        }
+        return Object.assign({}, dimension, {
+            sort: sortConfig
+        })
     }
     return dimension
 }
@@ -5754,10 +5754,10 @@ function widgetConfigMigration(config, options) {
         var defaultBarConfig = {
             barChart: false,
             border: {
-              color: '#000',
-              width: 0,
-              type: 'solid',
-              radius: 0
+                color: '#000',
+                width: 0,
+                type: 'solid',
+                radius: 0
             },
             gap: 30,
             width: null,
@@ -5828,9 +5828,9 @@ function widgetConfigMigration(config, options) {
             return controlMigration(control, options)
         }),
         queryMode:
-          config.queryMode === void 0
-            ? ControlQueryMode.Manually
-            : config.queryMode,
+            config.queryMode === void 0
+                ? ControlQueryMode.Manually
+                : config.queryMode,
         limit: config.limit === void 0 ? null : config.limit
     })
 }
@@ -5977,7 +5977,7 @@ function getLocalControlInitialValues(widgetConfig, formedViews) {
         }
     })
     return initialValues;
-  }
+}
 
 function getWidgetExecuteParam(widgetConfig) {
     var _widgetConfig = widgetConfig;
@@ -6082,11 +6082,11 @@ function getWidgetExecuteParam(widgetConfig) {
 function getFormedViews(views) {
     return views.reduce(function(obj, view) {
         obj[view.id] = Object.assign({}, view, {
-          model: JSON.parse(view.model || '{}'),
-          variable: JSON.parse(view.variable || '[]')
+            model: JSON.parse(view.model || '{}'),
+            variable: JSON.parse(view.variable || '[]')
         })
         return obj
-      }, {})
+    }, {})
 }
 
 // // @TEST dashboard filters

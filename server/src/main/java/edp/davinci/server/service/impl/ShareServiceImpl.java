@@ -49,8 +49,8 @@ import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.service.UserService;
 import edp.davinci.server.service.ViewService;
-import edp.davinci.server.util.ServerUtils;
 import edp.davinci.server.util.TokenUtils;
+import edp.davinci.server.util.VizUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,9 +100,6 @@ public class ShareServiceImpl implements ShareService {
 
     @Autowired
     private RoleExtendMapper roleExtendMapper;
-
-    @Autowired
-    private ServerUtils serverUtils;
 
     @Autowired
     private ProjectExtendMapper projectExtendMapper;
@@ -160,7 +157,7 @@ public class ShareServiceImpl implements ShareService {
         Set<SimpleView> simpleViews = new HashSet<>();
         Map<String, Object> widgetConfigMap = JSONUtils.toObject(simpleShareWidget.getConfig(), Map.class);
         if (!CollectionUtils.isEmpty(widgetConfigMap)) {
-            setControllerViews(simpleViews, (List<Map<String, Object>>) widgetConfigMap.get("controls"));
+            simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
         }
 
         simpleViews.add(viewExtendMapper.getSimpleViewById(simpleShareWidget.getViewId()));
@@ -220,7 +217,7 @@ public class ShareServiceImpl implements ShareService {
             widgetFactor.freshWidgetDataToken(w, TOKEN_SECRET);
             Map<String, Object> widgetConfigMap = JSONUtils.toObject(widgetExtendMapper.getShareWidgetById(w.getId()).getConfig(), Map.class);
             if (!CollectionUtils.isEmpty(widgetConfigMap)) {
-                setControllerViews(simpleViews, (List<Map<String, Object>>) widgetConfigMap.get("controls"));
+                simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
             }
         });
         shareDisplay.setWidgets(widgets);
@@ -265,28 +262,20 @@ public class ShareServiceImpl implements ShareService {
         // global controller views
         Map<String, Object> dashboardConfig = JSONUtils.toObject(dashboard.getConfig(), Map.class);
         if (!CollectionUtils.isEmpty(dashboardConfig)) {
-            setControllerViews(simpleViews, (List<Map<String, Object>>) dashboardConfig.get("filters"));
+            simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) dashboardConfig.get("filters")));
         }
 
         // widget controller views
         memDashboardWidgets.forEach(mw -> {
             Map<String, Object> widgetConfigMap = JSONUtils.toObject(widgetExtendMapper.getShareWidgetById(mw.getWidgetId()).getConfig(), Map.class);
             if (!CollectionUtils.isEmpty(widgetConfigMap)) {
-                setControllerViews(simpleViews, (List<Map<String, Object>>) widgetConfigMap.get("controls"));
+                simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
             }
         });
 
         shareDashboard.setViews(generateShareViews(simpleViews, viewFactor));
 
         return shareDashboard;
-    }
-
-    private void setControllerViews(Set<SimpleView> simpleViews, List<Map<String, Object>> list) {
-        if (!CollectionUtils.isEmpty(list)) {
-            list.stream().filter(m -> m.containsKey("valueViewId")).collect(Collectors.toList()).forEach(m -> {
-                simpleViews.add(viewExtendMapper.getSimpleViewById(Long.parseLong(String.valueOf(m.get("valueViewId")))));
-            });
-        }
     }
 
     private Set<ShareView> generateShareViews(Set<SimpleView> simpleViews, ShareFactor viewFactor) {

@@ -19,54 +19,29 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import edp.davinci.server.commons.ErrorMsg;
-import edp.davinci.server.dto.share.ShareEntity;
-import edp.davinci.server.dto.share.ShareFactor;
-import edp.davinci.server.dto.share.ShareResult;
-import edp.davinci.server.enums.*;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.DateUtils;
+import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.dao.entity.Widget;
+import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleViewExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dao.WidgetExtendMapper;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.dto.view.SimpleView;
 import edp.davinci.server.dto.view.ViewWithProjectAndSource;
 import edp.davinci.server.dto.view.ViewWithSource;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
+import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
@@ -76,12 +51,26 @@ import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.service.ShareService;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CsvUtils;
-import edp.davinci.server.util.ExcelUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ServerUtils;
+import edp.davinci.server.util.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
 
 
 @Service("widgetService")
@@ -100,9 +89,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Autowired
     private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
-
-    @Autowired
-    private RelRoleViewExtendMapper relRoleViewExtendMapper;
 
     @Autowired
     private ShareService shareService;
@@ -442,7 +428,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         }
 
         if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
-            throw new ServerException("Unknow file format");
+            throw new ServerException("Unknown file format");
         }
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
@@ -464,7 +450,19 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != queryParamMap && queryParamMap.containsKey(widget.getId())) {
                         queryParam = queryParamMap.get(widget.getId());
                     } else {
-                        queryParam = getWidgetQueryParam(null, widget.getConfig(), null);
+
+                        Set<SimpleView> simpleViews = new HashSet<>();
+
+                        // widget controller view
+                        Map<String, Object> widgetConfigMap = JSONUtils.toObject(widget.getConfig(), Map.class);
+                        if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                            simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
+                        }
+
+                        // widget view
+                        simpleViews.add(viewExtendMapper.getSimpleViewById(widget.getViewId()));
+
+                        queryParam = getWidgetQueryParam(null, widget.getConfig(), simpleViews, null);
                     }
 
                     PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer,

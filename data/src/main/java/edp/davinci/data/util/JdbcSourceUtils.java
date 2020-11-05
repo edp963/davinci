@@ -120,7 +120,7 @@ public class JdbcSourceUtils {
 
     public static String getDatabase(String url) {
         String dataSourceName = null;
-        url = url.replaceAll(NEW_LINE, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
+        url = url.replaceAll(NEW_LINE, EMPTY).replaceAll(SPACE, EMPTY).trim();
         Matcher matcher = JDBC_URL_PATTERN.matcher(url);
         if (matcher.find()) {
             dataSourceName = matcher.group().split(COLON)[1];

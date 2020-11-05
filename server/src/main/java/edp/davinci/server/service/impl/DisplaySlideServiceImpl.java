@@ -740,7 +740,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 				jsonMap.put("slideParams", slideParams);
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			throw new ServerException("Display slide background upload error");
 		}
 
@@ -816,7 +816,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			}
 			jsonMap.put(key, background);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			throw new ServerException("Display slide sub widget backgroundImage upload error");
 		}
 

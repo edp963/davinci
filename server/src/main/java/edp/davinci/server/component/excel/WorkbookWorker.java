@@ -19,34 +19,36 @@
 
 package edp.davinci.server.component.excel;
 
-import java.io.FileOutputStream;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
-
-import edp.davinci.commons.util.StringUtils;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-
 import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.config.SpringContextHolder;
+import edp.davinci.server.dao.ViewExtendMapper;
 import edp.davinci.server.dto.cronjob.MsgMailExcel;
+import edp.davinci.server.dto.view.SimpleView;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.FileTypeEnum;
 import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.util.ExcelUtils;
 import edp.davinci.server.util.FileUtils;
 import edp.davinci.server.util.ScriptUtils;
-import lombok.extern.slf4j.Slf4j;
+import edp.davinci.server.util.VizUtils;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
+
+import java.io.FileOutputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -182,15 +184,41 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     private List<SheetContext> buildSheetContextList() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
         for (WidgetContext widgetContext : workBookContext.getWidgets()) {
+
+            Widget widget = widgetContext.getWidget();
+            Dashboard dashboard = widgetContext.getDashboard();
+            MemDashboardWidget memDashboardWidget = widgetContext.getMemDashboardWidget();
+
             WidgetQueryParam queryParam = null;
-            if (widgetContext.isHasQueryParam() && null != widgetContext.getQueryParam()) {
+            if (widgetContext.hasQueryParam()) {
                 queryParam = widgetContext.getQueryParam();
             } else {
+
+                Set<SimpleView> simpleViews = new HashSet<>();
+
+                // global controller view
+                if (dashboard != null) {
+                    Map<String, Object> dashboardConfig = JSONUtils.toObject(dashboard.getConfig(), Map.class);
+                    if (!CollectionUtils.isEmpty(dashboardConfig)) {
+                        simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) dashboardConfig.get("filters")));
+                    }
+                }
+
+                // widget controller view
+                Map<String, Object> widgetConfigMap = JSONUtils.toObject(widget.getConfig(), Map.class);
+                if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                    simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
+                }
+
+                // widget view
+                simpleViews.add(((ViewExtendMapper) SpringContextHolder.getBean(ViewExtendMapper.class)).getSimpleViewById(widget.getViewId()));
+
+
                 queryParam = ScriptUtils.getWidgetQueryParam(
-                        widgetContext.getDashboard() != null ? widgetContext.getDashboard().getConfig() : null,
-                        widgetContext.getWidget().getConfig(),
-                        widgetContext.getMemDashboardWidget() != null ? widgetContext.getMemDashboardWidget().getId()
-                                : null);
+                        dashboard != null ? dashboard.getConfig() : null,
+                        widget.getConfig(),
+                        simpleViews,
+                        memDashboardWidget != null ? memDashboardWidget.getId() : null);
             }
 
             // data for excel do not use cache
@@ -206,13 +234,14 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .contain(Boolean.FALSE)
                     .isTable(isTable)
                     .excelHeaders(excelHeaders)
-                    .dashboardId(null != widgetContext.getDashboard() ? widgetContext.getDashboard().getId() : null)
-                    .widgetId(widgetContext.getWidget().getId())
-                    .name(widgetContext.getWidget().getName())
+                    .dashboardId(null != dashboard ? dashboard.getId() : null)
+                    .widgetId(widget.getId())
+                    .viewId(widget.getViewId())
+                    .name(memDashboardWidget == null || StringUtils.isEmpty(memDashboardWidget.getAlias())
+                            ? widget.getName() : memDashboardWidget.getAlias())
                     .wrapper(workBookContext.getWrapper())
                     .taskKey(workBookContext.getTaskKey())
                     .customLogger(workBookContext.getCustomLogger())
-                    .viewId(widgetContext.getWidget().getViewId())
                     .user(workBookContext.getUser())
                     .queryParam(queryParam)
                     .build();

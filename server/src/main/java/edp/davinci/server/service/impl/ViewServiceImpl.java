@@ -89,7 +89,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
     private SourceExtendMapper sourceExtendMapper;
 
     @Autowired
-    private WidgetExtendMapper widgetMapper;
+    private WidgetExtendMapper widgetExtendMapper;
 
     @Autowired
     private RelRoleViewExtendMapper relRoleViewExtendMapper;
@@ -372,7 +372,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             alertUnAuthorized(entity, user, "delete");
         }
 
-        if (!CollectionUtils.isEmpty(widgetMapper.getWidgetsByView(id))) {
+        if (!CollectionUtils.isEmpty(widgetExtendMapper.getWidgetsByView(id))) {
             throw new ServerException(
                     "The current view has been referenced, please delete the reference and then operate");
         }
@@ -453,7 +453,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
 
@@ -800,24 +800,26 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     return;
                 }
 
-                optional.ifPresent(paramValue -> {
-                    if (paramValue.isEnable()) {
-                        if (!CollectionUtils.isEmpty(paramValue.getValues())) {
-                            boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
-                            boolean disable = defaultValues.size() == 0;
-                            if (denied) {
-                                v.setDefaultValues(paramValue.getValues());
-                            } else if (!disable) {
-                                defaultValues.addAll(paramValue.getValues());
-                            }
-                        }
-                    } else {
-                        v.setDefaultValues(new ArrayList<>());
-                    }
+                if (!optional.isPresent()) {
+                    v.setDefaultValues(new ArrayList<>());
                     return;
-                });
+                }
 
-                v.setDefaultValues(new ArrayList<>());
+                AuthParamValue paramValue = optional.get();
+                if (paramValue.isEnable()) {
+                    if (!CollectionUtils.isEmpty(paramValue.getValues())) {
+                        boolean denied = defaultValues.size() == 1 && defaultValues.get(0).equals(NO_AUTH_PERMISSION);
+                        boolean disable = defaultValues.size() == 0;
+                        if (denied) {
+                            v.setDefaultValues(paramValue.getValues());
+                        } else if (!disable) {
+                            defaultValues.addAll(paramValue.getValues());
+                        }
+                    }
+                } else {
+                    v.setDefaultValues(new ArrayList<>());
+                }
+
             });
         });
 
@@ -848,7 +850,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         try {
             return (PagingWithQueryColumns) redisUtils.get(key);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
         }
 
         return null;
@@ -1011,14 +1013,36 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         Set<String> columns = new HashSet<>();
         boolean isFullAuth = false;
         for (RelRoleView r : roleViewList) {
-            if (!StringUtils.isEmpty(r.getColumnAuth())) {
-                columns.addAll(JSONUtils.toObjectArray(r.getColumnAuth(), String.class));
-            } else {
+            if (StringUtils.isEmpty(r.getColumnAuth())) {
                 isFullAuth = true;
                 break;
             }
+
+            List<String> authColumns = JSONUtils.toObjectArray(r.getColumnAuth(), String.class);
+            if (CollectionUtils.isEmpty(authColumns)) {
+                isFullAuth = true;
+                break;
+            }
+
+            columns.addAll(authColumns);
         }
-        return isFullAuth ? null : columns;
+
+        if (isFullAuth) {
+            return null;
+        }
+
+        for (RelRoleView r : roleViewList) {
+            List<String> authColumns = JSONUtils.toObjectArray(r.getColumnAuth(), String.class);
+            Iterator<String> iterator = columns.iterator();
+            while (iterator.hasNext()) {
+                String column = iterator.next();
+                if (!authColumns.contains(column)) {
+                    iterator.remove();
+                }
+            }
+        }
+
+        return columns.isEmpty() ? null : columns;
     }
 
     private void insertRelRoleView(String sqlVariable, List<RelRoleViewDTO> roles, User user, View view) {

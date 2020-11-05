@@ -112,7 +112,7 @@ public class LdapServiceImpl implements LdapService {
 				ldapPerson = search.get(0);
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 		} finally {
 			if (null != ctx) {
 				LdapUtils.closeContext(ctx);

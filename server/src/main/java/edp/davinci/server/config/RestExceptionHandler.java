@@ -53,7 +53,7 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap serverExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 

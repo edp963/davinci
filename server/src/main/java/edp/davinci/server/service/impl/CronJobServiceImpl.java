@@ -160,7 +160,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJob.setStartDate(DateUtils.toDate(cronJobBaseInfo.getStartDate()));
 			cronJob.setEndDate(DateUtils.toDate(cronJobBaseInfo.getEndDate()));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 		}
 
 		try {
@@ -298,7 +298,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJobExtendMapper.update(cronJob);
 			return cronJob;
 		} catch (SchedulerException e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 			cronJob.setUpdateTime(new Date());
 			cronJobExtendMapper.update(cronJob);
@@ -334,7 +334,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			cronJob.setUpdateTime(new Date());
 			cronJobExtendMapper.update(cronJob);
 		} catch (ServerException e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 			cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 			cronJobExtendMapper.update(cronJob);
 		}

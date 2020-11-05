@@ -375,7 +375,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         try {
             avatar = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException("Display avatar upload error");
         }
 

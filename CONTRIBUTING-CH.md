@@ -88,10 +88,10 @@ npm run build
   ├── patch                    # 数据库补丁
     ├── 0.4                      # 0.4版本
       ├── 001_beta0.sql            # 已发布补丁（命名规则：“序列_版本”）
+      └── beta.sql                 # 当期未发布补丁（固定名称）
   ├── davinci.sql              # 完整系统数据库脚本（包含所有补丁）
   ├── initdb.bat               # 针对 Windows 环境的初始化数据库批处理脚本
   ├── initdb.sh                # 针对 Linux、Mac 环境的初始化数据库 Shell 脚本
-  ├── phantom.js               # 截图脚本（未来版本将不再使用）
   ├── restart-server.sh        # 针对 Linux、Mac 环境的重启服务脚本
   ├── run-server.bat           # 针对 Windows 环境的服务启停核心脚本                     
   ├── start-server.bat         # 针对 Windows 环境的服务启动脚本
@@ -104,7 +104,7 @@ npm run build
 ```
 ├── config                          # 用户配置目录
   ├── application.yml.example         # 应用配置模板
-  ├── datasource_driver.yml.example   # 自定义数据源配置模板
+  ├── database_driver.yml.example     # 自定义数据源配置模板
   └── logback.xml                     # 日志配置
 ``` 
 

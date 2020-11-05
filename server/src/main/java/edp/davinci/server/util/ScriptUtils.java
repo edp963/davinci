@@ -19,20 +19,19 @@
 
 package edp.davinci.server.util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.data.pojo.Param;
 import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.view.SimpleView;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.model.ExcelHeader;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class ScriptUtils {
     private final static String LANGUAGE = "js";
@@ -47,12 +46,10 @@ public class ScriptUtils {
 
         private Value getFieldsHeader;
         private Value getDashboardItemExecuteParam;
-        private Value getFormattedDataRows;
 
         ScriptEnum() {
             try {
                 getFieldsHeader = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FIELDS_HEADER);
-                getFormattedDataRows = createScriptEngine(Constants.FORMAT_CELL_VALUE_JS, FUNC_FORMATTED_DATA_ROWS);
                 getDashboardItemExecuteParam = createScriptEngine(Constants.FORMAT_QUERY_PARAM_JS, FUNC_DASHBOARD_ITEM_EXECUTE_PARAM);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -69,11 +66,11 @@ public class ScriptUtils {
     }
 
 
-    public static synchronized WidgetQueryParam getWidgetQueryParam(String dashboardConfig, String widgetConfig,
-            Long releationId) {
+    public static synchronized WidgetQueryParam getWidgetQueryParam(String dashboardConfig, String widgetConfig, Set<SimpleView> views,
+                                                                    Long relationId) {
 
         Value fun = ScriptEnum.INSTANCE.getDashboardItemExecuteParam;
-        Value result = fun.execute(dashboardConfig, widgetConfig, releationId);
+        Value result = fun.execute(dashboardConfig, widgetConfig, JSONUtils.toString(views), relationId);
         WidgetQueryParam queryParam = JSONUtils.toObject(result.asString(), WidgetQueryParam.class);
         return queryParam;
     }
@@ -84,17 +81,5 @@ public class ScriptUtils {
         Value result = fun.execute(json, JSONUtils.toString(params));
         List<ExcelHeader> excelHeaders = JSONUtils.toObjectArray(result.toString(), ExcelHeader.class);
         return excelHeaders;
-    }
-
-    public static synchronized List<Map<String, Object>> formatCellValue(String json, List<Map<String, Object>> params) {
-
-        Value js = ScriptEnum.INSTANCE.getFormattedDataRows;
-        Value result = js.execute(json, JSONUtils.toString(params));
-        List<Map> resultMaps = JSONUtils.toObjectArray(result.toString(), Map.class);
-        List<Map<String, Object>> values = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(resultMaps)) {
-            resultMaps.forEach(v -> values.add((Map<String, Object>) v));
-        }
-        return values;
     }
 }
