@@ -40,13 +40,9 @@ import edp.davinci.dto.cronJobDto.ExcelContent;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
 import edp.davinci.dto.dashboardDto.DashboardWithPortal;
 import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.dto.widgetDto.WidgetWithVizId;
-import edp.davinci.model.CronJob;
-import edp.davinci.model.Display;
-import edp.davinci.model.User;
-import edp.davinci.model.Widget;
+import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.excel.ExecutorUtil;
 import edp.davinci.service.excel.MsgWrapper;
@@ -69,7 +65,6 @@ import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.AT_SYMBOL;
 import static edp.core.consts.Consts.EMPTY;
-import static edp.davinci.common.utils.ScriptUtils.getViewExecuteParam;
 
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl extends BaseScheduleService implements ScheduleService {
@@ -83,13 +78,16 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
     private MailUtils mailUtils;
 
     @Autowired
-    private WidgetMapper widgetMapper;
-
-    @Autowired
     private UserMapper userMapper;
 
     @Autowired
+    private WidgetMapper widgetMapper;
+
+    @Autowired
     private DashboardMapper dashboardMapper;
+
+    @Autowired
+    private MemDashboardWidgetMapper memDashboardWidgetMapper;
 
     @Autowired
     private DisplayMapper displayMapper;
@@ -234,13 +232,13 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
                         if (CollectionUtils.isEmpty(widgets)) {
                             continue;
                         }
+
                         List<WidgetContext> widgetContexts = new ArrayList<>();
                         widgets.forEach(widget -> {
-                            ViewExecuteParam viewExecuteParam = getViewExecuteParam(null, widget.getConfig(), null);
-                            widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                            widgetContexts.add(new WidgetContext(widget, isMaintainer, null));
                         });
 
-                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                        WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuilder()
                                 .withWidgets(widgetContexts)
                                 .withUser(user)
                                 .withResultLimit(resultLimit)
@@ -266,15 +264,20 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 
                 List<WidgetWithRelationDashboardId> widgets = widgetMapper.getByDashboard(cronJobContent.getId());
                 if (!CollectionUtils.isEmpty(widgets)) {
+
+                    List<MemDashboardWidget> mdws = memDashboardWidgetMapper.getByDashboardId(dashboard.getId());
+                    Map<Long, MemDashboardWidget> mdwMap = mdws.stream().collect(Collectors.toMap(o -> o.getWidgetId(), o -> o, (oldV, newV) -> oldV));
+
                     List<WidgetContext> widgetContexts = new ArrayList<>();
                     widgets.forEach(w -> {
                         Widget widget = new Widget();
                         BeanUtils.copyProperties(w, widget);
-                        ViewExecuteParam viewExecuteParam = getViewExecuteParam(dashboard.getConfig(), widget.getConfig(), w.getRelationId());
-                        widgetContexts.add(new WidgetContext(widget, isMaintainer, viewExecuteParam));
+                        WidgetContext context = new WidgetContext(widget, dashboard, mdwMap.get(widget.getId()), null);
+                        context.setIsMaintainer(isMaintainer);
+                        widgetContexts.add(context);
                     });
 
-                    WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+                    WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuilder()
                             .withWidgets(widgetContexts)
                             .withUser(user)
                             .withResultLimit(resultLimit)
@@ -330,5 +333,4 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
         scheduleLogger.info("CronJob({}) fetched excel contents, count:{}", jobId, excelContents.size());
         return excelContents.isEmpty() ? null : excelContents;
     }
-
 }

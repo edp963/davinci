@@ -69,7 +69,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
             shareDownloadRecordMapper.insertSelective(record);
 
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
-            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuilder()
                     .withWrapper(wrapper)
                     .withWidgets(widgetList)
                     .withUser(shareFactor.getUser())

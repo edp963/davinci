@@ -64,7 +64,7 @@ public class WorkBookContext implements Serializable {
         
         }
 
-        public static WorkBookContextBuilder newBuildder() {
+        public static WorkBookContextBuilder newBuilder() {
             return new WorkBookContextBuilder();
         }
 

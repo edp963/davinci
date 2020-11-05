@@ -147,7 +147,7 @@ public class DownloadCommonService {
                 fileName = dashboard.getName();
                 break;
             default:
-                throw new IllegalArgumentException("unsupported DownloadType=" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported download type:" + downloadType.name());
         }
         return fileName + UNDERLINE + DateUtils.toyyyyMMddHHmmss(System.currentTimeMillis());
     }
@@ -184,17 +184,17 @@ public class DownloadCommonService {
                 }
                 break;
             default:
-                throw new IllegalArgumentException("unsupported DownloadType=" + downloadType.name());
+                throw new IllegalArgumentException("Unsupported download type:" + downloadType.name());
         }
         if (CollectionUtils.isEmpty(widgetList)) {
-            throw new IllegalArgumentException("there is no widget to download");
+            throw new IllegalArgumentException("There is no widget to download");
         }
         for (WidgetContext context : widgetList) {
             ProjectDetail projectDetail = projectService.getProjectDetail(context.getWidget().getProjectId(), user, false);
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
             //校验权限
             if (!projectPermission.getDownloadPermission()) {
-                log.info("user {} have not permission to download the widget {}", user.getUsername(), id);
+                log.error("User({}) have not permission to download the widget({})", user.getUsername(), id);
                 throw new UnAuthorizedException(ErrorMsg.ERR_MSG_PERMISSION);
             }
             context.setIsMaintainer(projectService.isMaintainer(projectDetail, user));

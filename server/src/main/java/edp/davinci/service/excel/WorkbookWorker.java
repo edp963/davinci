@@ -19,6 +19,7 @@
 
 package edp.davinci.service.excel;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import edp.core.utils.CollectionUtils;
@@ -30,10 +31,15 @@ import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.model.ExcelHeader;
 import edp.davinci.core.utils.ExcelUtils;
+import edp.davinci.core.utils.VizUtils;
 import edp.davinci.dao.ViewMapper;
 import edp.davinci.dto.cronJobDto.MsgMailExcel;
+import edp.davinci.dto.viewDto.SimpleView;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.model.Dashboard;
+import edp.davinci.model.MemDashboardWidget;
+import edp.davinci.model.Widget;
 import edp.davinci.service.ViewService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -42,7 +48,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.io.FileOutputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -192,14 +201,40 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
     private List<SheetContext> buildSheetContextList() throws Exception {
         List<SheetContext> sheetContextList = Lists.newArrayList();
         for (WidgetContext context : context.getWidgets()) {
+
+            Widget widget = context.getWidget();
+            Dashboard dashboard = context.getDashboard();
+            MemDashboardWidget memDashboardWidget = context.getMemDashboardWidget();
+
             ViewExecuteParam executeParam = null;
-            if (context.isHasExecuteParam() && null != context.getExecuteParam()) {
+            if (context.hasExecuteParam()) {
                 executeParam = context.getExecuteParam();
             } else {
+
+                Set<SimpleView> simpleViews = new HashSet<>();
+
+                // global controller view
+                if (dashboard != null) {
+                    Map<String, Object> dashboardConfig = JSON.parseObject(dashboard.getConfig(), Map.class);
+                    if (!CollectionUtils.isEmpty(dashboardConfig)) {
+                        simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) dashboardConfig.get("filters")));
+                    }
+                }
+
+                // widget controller view
+                Map<String, Object> widgetConfigMap = JSON.parseObject(widget.getConfig(), Map.class);
+                if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                    simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
+                }
+
+                // widget view
+                simpleViews.add(((ViewMapper) SpringContextHolder.getBean(ViewMapper.class)).getSimpleViewById(widget.getViewId()));
+
                 executeParam = ScriptUtils.getViewExecuteParam(
-                        context.getDashboard() != null ? context.getDashboard().getConfig() : null,
-                        context.getWidget().getConfig(),
-                        context.getMemDashboardWidget() != null ? context.getMemDashboardWidget().getId() : null);
+                        dashboard != null ? dashboard.getConfig() : null,
+                        widget.getConfig(),
+                        simpleViews,
+                        memDashboardWidget != null ? memDashboardWidget.getId() : null);
             }
 
             ViewWithProjectAndSource viewWithProjectAndSource = ((ViewMapper) SpringContextHolder.getBean(ViewMapper.class)).getViewWithProjectAndSourceById(context.getWidget().getViewId());
@@ -225,10 +260,10 @@ public class WorkbookWorker<T> extends MsgNotifier implements Callable {
                     .withSqlUtils(sqlUtils)
                     .withIsTable(isTable)
                     .withExcelHeaders(excelHeaders)
-                    .withDashboardId(null != context.getDashboard() ? context.getDashboard().getId() : null)
-                    .withWidgetId(context.getWidget().getId())
-                    .withName(context.getMemDashboardWidget() == null || StringUtils.isEmpty(context.getMemDashboardWidget().getAlias())
-                            ? context.getWidget().getName() : context.getMemDashboardWidget().getAlias())
+                    .withDashboardId(dashboard != null ? dashboard.getId() : null)
+                    .withWidgetId(widget.getId())
+                    .withName(memDashboardWidget == null || StringUtils.isEmpty(memDashboardWidget.getAlias())
+                            ? widget.getName() : memDashboardWidget.getAlias())
                     .withWrapper(this.context.getWrapper())
                     .withResultLimit(this.context.getResultLimit())
                     .withTaskKey(this.context.getTaskKey())

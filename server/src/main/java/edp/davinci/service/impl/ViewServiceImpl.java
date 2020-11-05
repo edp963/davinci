@@ -840,20 +840,43 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
 
 
     private Set<String> getExcludeColumnsViaOneView(List<RelRoleView> roleViewList) {
-        if (!CollectionUtils.isEmpty(roleViewList)) {
-            Set<String> columns = new HashSet<>();
-            boolean isFullAuth = false;
-            for (RelRoleView r : roleViewList) {
-                if (!StringUtils.isEmpty(r.getColumnAuth())) {
-                    columns.addAll(JSONObject.parseArray(r.getColumnAuth(), String.class));
-                } else {
-                    isFullAuth = true;
-                    break;
+        if (CollectionUtils.isEmpty(roleViewList)) {
+            return null;
+        }
+
+        Set<String> columns = new HashSet<>();
+        boolean isFullAuth = false;
+        for (RelRoleView r : roleViewList) {
+            if (StringUtils.isEmpty(r.getColumnAuth())) {
+                isFullAuth = true;
+                break;
+            }
+
+            List<String> authColumns = JSONObject.parseArray(r.getColumnAuth(), String.class);
+            if (CollectionUtils.isEmpty(authColumns)) {
+                isFullAuth = true;
+                break;
+            }
+
+            columns.addAll(authColumns);
+        }
+
+        if (isFullAuth) {
+            return null;
+        }
+
+        for (RelRoleView r : roleViewList) {
+            List<String> authColumns = JSONObject.parseArray(r.getColumnAuth(), String.class);
+            Iterator<String> iterator = columns.iterator();
+            while (iterator.hasNext()) {
+                String column = iterator.next();
+                if (!authColumns.contains(column)) {
+                    iterator.remove();
                 }
             }
-            return isFullAuth ? null : columns;
         }
-        return null;
+
+        return columns.isEmpty() ? null : columns;
     }
 
 

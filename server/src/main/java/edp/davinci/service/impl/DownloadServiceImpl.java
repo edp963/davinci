@@ -109,7 +109,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
             downloadRecordMapper.insert(record);
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.DOWNLOAD, record.getId());
 
-            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuildder()
+            WorkBookContext workBookContext = WorkBookContext.WorkBookContextBuilder.newBuilder()
                     .withWrapper(wrapper)
                     .withWidgets(widgetList)
                     .withUser(user)
