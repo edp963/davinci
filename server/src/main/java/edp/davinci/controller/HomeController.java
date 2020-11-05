@@ -64,7 +64,7 @@ public class HomeController {
         }});
         configs.put("security", new HashMap<String, Object>() {{
             put("oauth2", new HashMap<String, Object>() {{
-                put("enable", Boolean.valueOf(environment.getProperty("security.oauth2.enable")));
+                put("enable", Boolean.valueOf(environment.getProperty("spring.security.oauth2.enable")));
             }});
         }});
 
