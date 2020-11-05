@@ -32,30 +32,40 @@ const pivotlibs = widgetlibs['pivot']
 const chartlibs = widgetlibs['chart']
 import { uuid } from 'utils/util'
 
-export function getAggregatorLocale (agg) {
+export function getAggregatorLocale(agg) {
   switch (agg) {
-    case 'sum': return '总计'
-    case 'avg': return '平均数'
-    case 'count': return '计数'
-    case 'COUNTDISTINCT': return '去重计数'
-    case 'max': return '最大值'
-    case 'min': return '最小值'
-    case 'median': return '中位数'
-    case 'percentile': return '百分位'
-    case 'stddev': return '标准偏差'
-    case 'var': return '方差'
+    case 'sum':
+      return '总计'
+    case 'avg':
+      return '平均数'
+    case 'count':
+      return '计数'
+    case 'COUNTDISTINCT':
+      return '去重计数'
+    case 'max':
+      return '最大值'
+    case 'min':
+      return '最小值'
+    case 'median':
+      return '中位数'
+    case 'percentile':
+      return '百分位'
+    case 'stddev':
+      return '标准偏差'
+    case 'var':
+      return '方差'
   }
 }
 
-export function encodeMetricName (name) {
+export function encodeMetricName(name) {
   return `${name}${DEFAULT_SPLITER}${uuid(8, 16)}`
 }
 
-export function decodeMetricName (encodedName) {
+export function decodeMetricName(encodedName) {
   return encodedName.split(DEFAULT_SPLITER)[0]
 }
 
-export function spanSize (arr, i, j) {
+export function spanSize(arr, i, j) {
   if (i !== 0) {
     let noDraw = true
     for (let x = 0; x <= j; x += 1) {
@@ -84,15 +94,15 @@ export function spanSize (arr, i, j) {
   return len
 }
 
-export function naturalSort (a, b): number {
+export function naturalSort(a, b): number {
   const rx = /(\d+)|(\D+)/g
   const rd = /\d/
   const rz = /^0/
 
-  if ((b != null) && (a == null)) {
+  if (b != null && a == null) {
     return -1
   }
-  if ((a != null) && (b == null)) {
+  if (a != null && b == null) {
     return 1
   }
   if (typeof a === 'number' && isNaN(a)) {
@@ -130,9 +140,7 @@ export function naturalSort (a, b): number {
     return 0
   }
   if (!(rd.test(sa) && rd.test(sb))) {
-    return (sa > sb
-      ? 1
-      : -1)
+    return sa > sb ? 1 : -1
   }
   const ra = sa.match(rx)
   const rb = sb.match(rx)
@@ -143,9 +151,7 @@ export function naturalSort (a, b): number {
       if (rd.test(a1) && rd.test(b1)) {
         return Number(a1.replace(rz, '.0')) - Number(b1.replace(rz, '.0'))
       } else {
-        return (a1 > b1
-          ? 1
-          : -1)
+        return a1 > b1 ? 1 : -1
       }
     }
   }
@@ -173,32 +179,61 @@ export const getPivotContentTextWidth = (
   fontSize: string = DEFAULT_FONT_SIZE,
   fontFamily: string = DEFAULT_FONT_FAMILY
 ): number => {
-  return Math.min(getTextWidth(text, fontWeight, fontSize, fontFamily), PIVOT_MAX_CONTENT_WIDTH)
+  return Math.min(
+    getTextWidth(text, fontWeight, fontSize, fontFamily),
+    PIVOT_MAX_CONTENT_WIDTH
+  )
 }
 
-export function getPivotCellWidth (width: number): number {
+export function getPivotCellWidth(width: number): number {
   return width + PIVOT_CELL_PADDING * 2 + PIVOT_CELL_BORDER * 2
 }
 
-export function getPivotCellHeight (height?: number): number {
-  return (height || PIVOT_LINE_HEIGHT) + PIVOT_CELL_PADDING * 2 + PIVOT_CELL_BORDER
+export function getPivotCellHeight(height?: number): number {
+  return (
+    (height || PIVOT_LINE_HEIGHT) + PIVOT_CELL_PADDING * 2 + PIVOT_CELL_BORDER
+  )
 }
 
-export const getTableBodyWidth = (direction: DimetionType, containerWidth, rowHeaderWidths) => {
+export const getTableBodyWidth = (
+  direction: DimetionType,
+  containerWidth,
+  rowHeaderWidths
+) => {
   const title = rowHeaderWidths.length && PIVOT_TITLE_SIZE
-  const rowHeaderWidthSum = direction === 'row'
-    ? rowHeaderWidths.slice(0, rowHeaderWidths.length - 1).reduce((sum, r) => sum + getPivotCellWidth(r), 0)
-    : rowHeaderWidths.reduce((sum, r) => sum + getPivotCellWidth(r), 0)
-  return containerWidth - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
+  const rowHeaderWidthSum =
+    direction === 'row'
+      ? rowHeaderWidths
+          .slice(0, rowHeaderWidths.length - 1)
+          .reduce((sum, r) => sum + getPivotCellWidth(r), 0)
+      : rowHeaderWidths.reduce((sum, r) => sum + getPivotCellWidth(r), 0)
+  return (
+    containerWidth -
+    PIVOT_BORDER * 2 -
+    rowHeaderWidthSum -
+    PIVOT_YAXIS_SIZE -
+    title
+  )
 }
 
-export const getTableBodyHeight = (direction: DimetionType, containerHeight, columnHeaderCount) => {
+export const getTableBodyHeight = (
+  direction: DimetionType,
+  containerHeight,
+  columnHeaderCount
+) => {
   const title = columnHeaderCount && PIVOT_TITLE_SIZE
-  const realColumnHeaderCount = direction === 'col' ? Math.max(columnHeaderCount - 1, 0) : columnHeaderCount
-  return containerHeight - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
+  const realColumnHeaderCount =
+    direction === 'col' ? Math.max(columnHeaderCount - 1, 0) : columnHeaderCount
+  return (
+    containerHeight -
+    PIVOT_BORDER * 2 -
+    realColumnHeaderCount * getPivotCellHeight() -
+    PIVOT_XAXIS_SIZE -
+    title
+  )
 }
 
-export function getChartElementSize (
+export function getChartElementSize(
   direction: DimetionType,
   tableBodySideLength: number[],
   chartElementCountArr: number[],
@@ -216,12 +251,14 @@ export function getChartElementSize (
   }
 
   const sizePerElement = side / chartElementCount
-  const limit = multiCoordinate ? PIVOT_CHART_METRIC_AXIS_MIN_SIZE : PIVOT_CHART_ELEMENT_MIN_WIDTH
+  const limit = multiCoordinate
+    ? PIVOT_CHART_METRIC_AXIS_MIN_SIZE
+    : PIVOT_CHART_ELEMENT_MIN_WIDTH
 
   return Math.max(Math.floor(sizePerElement), limit)
 }
 
-export function shouldTableBodyCollapsed (
+export function shouldTableBodyCollapsed(
   direction: DimetionType,
   elementSize: number,
   tableBodyHeight: number,
@@ -230,17 +267,35 @@ export function shouldTableBodyCollapsed (
   return direction === 'row' && tableBodyHeight > rowKeyLength * elementSize
 }
 
-export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, metricCount: number): number {
-  const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+export function getChartUnitMetricWidth(
+  tableBodyWidth,
+  colKeyCount: number,
+  metricCount: number
+): number {
+  const realContainerWidth = Math.max(
+    tableBodyWidth,
+    colKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE
+  )
   return realContainerWidth / colKeyCount / metricCount
 }
 
-export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, metricCount: number): number {
-  const realContainerHeight = Math.max(tableBodyHeight, rowKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+export function getChartUnitMetricHeight(
+  tableBodyHeight,
+  rowKeyCount: number,
+  metricCount: number
+): number {
+  const realContainerHeight = Math.max(
+    tableBodyHeight,
+    rowKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE
+  )
   return realContainerHeight / rowKeyCount / metricCount
 }
 
-export function checkChartEnable (dimensionCount: number, metricCount: number, charts: IChartInfo | IChartInfo[]): boolean {
+export function checkChartEnable(
+  dimensionCount: number,
+  metricCount: number,
+  charts: IChartInfo | IChartInfo[]
+): boolean {
   const chartArr = Array.isArray(charts) ? charts : [charts]
 
   const enabled = chartArr.every(({ rules }) => {
@@ -269,64 +324,108 @@ export function checkChartEnable (dimensionCount: number, metricCount: number, c
   return enabled
 }
 
-export function getAxisInterval (max, splitNumber) {
+export function getAxisInterval(max, splitNumber) {
   const roughInterval = Math.floor(max / splitNumber)
-  const divisor = Math.pow(10, (`${roughInterval}`.length - 1))
+  const divisor = Math.pow(10, `${roughInterval}`.length - 1)
   return (Math.floor(roughInterval / divisor) + 1) * divisor
 }
 
-export function getChartPieces (total, lines) {
+export function getChartPieces(total, lines) {
   if (lines === 1) {
     return lines
   }
   const eachLine = total / lines
-  const pct = Math.abs(eachLine - PIVOT_CHART_POINT_LIMIT) / PIVOT_CHART_POINT_LIMIT
+  const pct =
+    Math.abs(eachLine - PIVOT_CHART_POINT_LIMIT) / PIVOT_CHART_POINT_LIMIT
   return pct < 0.2
     ? lines
     : eachLine > PIVOT_CHART_POINT_LIMIT
-      ? lines
-      : getChartPieces(total, Math.round(lines / 2))
-
+    ? lines
+    : getChartPieces(total, Math.round(lines / 2))
 }
 
-export function metricAxisLabelFormatter (value) {
-  if (value >= Math.pow(10, 12)) {
-    return `${precision(value / Math.pow(10, 12))}T`
-  } else if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
-    return `${precision(value / Math.pow(10, 9))}B`
-  } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
-    return `${precision(value / Math.pow(10, 6))}M`
-  } else if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
-    return `${precision(value / Math.pow(10, 3))}K`
-  } else {
-    return value
+export function metricAxisLabelFormatter(value) {
+  const positive = value >= 0
+  if (!positive) {
+    value = -value
   }
 
-  function precision (num) {
+  let endValue
+  const orderLessKilo = (value) => {
+    if (value < Math.pow(10, 3)) {
+      endValue = value
+    }
+  }
+  const orderKilo = (value) => {
+    if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
+      endValue = `${precision(value / Math.pow(10, 3))}K`
+    }
+  }
+  const orderMillion = (value) => {
+    if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
+      endValue = `${precision(value / Math.pow(10, 6))}M`
+    }
+  }
+  const orderBillion = (value) => {
+    if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
+      endValue = `${precision(value / Math.pow(10, 9))}B`
+    }
+  }
+  const orderTrillion = (value) => {
+    if (value >= Math.pow(10, 12)) {
+      endValue = `${precision(value / Math.pow(10, 12))}T`
+    }
+  }
+
+  const orderFn = (...fns) => (value) =>
+    fns.reduce((pre, fn) => fn.call(this, value), 0)
+
+  orderFn(
+    orderLessKilo,
+    orderKilo,
+    orderMillion,
+    orderBillion,
+    orderTrillion
+  )(value)
+  return positive ? endValue : `-${endValue}`
+
+  function precision(num) {
     return num >= 10 ? Math.floor(num) : num.toFixed(1)
   }
 }
 
-export function getPivot (): IChartInfo {
+export function getPivot(): IChartInfo {
   return pivotlibs.find((p) => p.id === PivotTypes.PivotTable)
 }
 
-export function getTable (): IChartInfo {
+export function getTable(): IChartInfo {
   return chartlibs.find((c) => c.id === ChartTypes.Table)
 }
 
-export function getPivotModeSelectedCharts (items: IDataParamSource[]): IChartInfo[] {
+export function getPivotModeSelectedCharts(
+  items: IDataParamSource[]
+): IChartInfo[] {
   return items.length ? items.map((i) => i.chart) : [getPivot()]
 }
 
-export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
+export function getStyleConfig(chartStyles: IChartStyles): IChartStyles {
   return {
     ...chartStyles,
-    pivot: chartStyles.pivot || {...getPivot().style['pivot']}  // FIXME 兼容0.3.0-beta 数据库
+    pivot: chartStyles.pivot || { ...getPivot().style['pivot'] } // FIXME 兼容0.3.0-beta 数据库
   }
 }
 
-export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis) {
+export function getAxisData(
+  type: 'x' | 'y',
+  rowKeys,
+  colKeys,
+  rowTree,
+  colTree,
+  tree,
+  metrics,
+  drawingData,
+  dimetionAxis
+) {
   const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
   const data: IChartLine[] = []
   const chartLine: IChartUnit[] = []
@@ -375,8 +474,10 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
           key: keys[keys.length - 1],
           value: records[0]
         })
-        if (keys.length === 1 && i === renderKeys.length - 1 ||
-            keys[keys.length - 2] !== nextKeys[nextKeys.length - 2]) {
+        if (
+          (keys.length === 1 && i === renderKeys.length - 1) ||
+          keys[keys.length - 2] !== nextKeys[nextKeys.length - 2]
+        ) {
           const unitLength = lastUnit.records.length * elementSize
           axisLength += unitLength
           lastUnit.width = unitLength
@@ -392,10 +493,12 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
         axisLength += unitMetricSide
         chartLine.push({
           width: unitMetricSide,
-          records: [{
-            key: keys[keys.length - 1],
-            value: records[0]
-          }],
+          records: [
+            {
+              key: keys[keys.length - 1],
+              value: records[0]
+            }
+          ],
           ended: true
         })
         if (i === renderKeys.length - 1) {
@@ -410,20 +513,31 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
     if (dimetionAxis !== renderDimetionAxis) {
       data.push({
         key: uuid(8, 16),
-        data: [{
-          width: unitMetricSide,
-          records: [{
-            key: '',
-            value: sndKeys.length ? Object.values(sndTree)[0] : tree[0] ? tree[0][0] : []
-          }],
-          ended: true
-        }]
+        data: [
+          {
+            width: unitMetricSide,
+            records: [
+              {
+                key: '',
+                value: sndKeys.length
+                  ? Object.values(sndTree)[0]
+                  : tree[0]
+                  ? tree[0][0]
+                  : []
+              }
+            ],
+            ended: true
+          }
+        ]
       })
       axisLength = unitMetricSide
     }
   }
 
-  axisLength = dimetionAxis === renderDimetionAxis ? axisLength : axisLength * metrics.length
+  axisLength =
+    dimetionAxis === renderDimetionAxis
+      ? axisLength
+      : axisLength * metrics.length
 
   return {
     data: axisDataCutting(type, dimetionAxis, metrics, axisLength, data),
@@ -431,7 +545,13 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
   }
 }
 
-export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLength, data) {
+export function axisDataCutting(
+  type: 'x' | 'y',
+  dimetionAxis,
+  metrics,
+  axisLength,
+  data
+) {
   if (axisLength > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
     const result = []
     data.forEach((line) => {
@@ -445,9 +565,11 @@ export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLen
         data: [blockLine]
       }
       line.data.forEach((unit, index) => {
-        const unitWidth = type === 'x' && dimetionAxis === 'row' || type === 'y' && dimetionAxis === 'col'
-          ? unit.width * metrics.length
-          : unit.width
+        const unitWidth =
+          (type === 'x' && dimetionAxis === 'row') ||
+          (type === 'y' && dimetionAxis === 'col')
+            ? unit.width * metrics.length
+            : unit.width
         if (block.length + unitWidth > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
           block.key = `${index}${block.data.map((d) => d.key).join(',')}`
           result.push(block)
@@ -471,19 +593,24 @@ export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLen
     })
     return result
   } else {
-    return [{
-      key: 'block',
-      data,
-      length: axisLength
-    }]
+    return [
+      {
+        key: 'block',
+        data,
+        length: axisLength
+      }
+    ]
   }
 }
 
-export function getXaxisLabel (elementSize) {
+export function getXaxisLabel(elementSize) {
   return function (label) {
     const originLabel = label
     const ellipsis = '…'
-    const limit = elementSize > PIVOT_XAXIS_ROTATE_LIMIT ? elementSize : PIVOT_XAXIS_SIZE - PIVOT_XAXIS_TICK_SIZE
+    const limit =
+      elementSize > PIVOT_XAXIS_ROTATE_LIMIT
+        ? elementSize
+        : PIVOT_XAXIS_SIZE - PIVOT_XAXIS_TICK_SIZE
     while (getTextWidth(label) > limit) {
       label = label.substring(0, label.length - 1)
     }
@@ -493,7 +620,7 @@ export function getXaxisLabel (elementSize) {
   }
 }
 
-export function getTooltipPosition (point, params, dom, rect, size) {
+export function getTooltipPosition(point, params, dom, rect, size) {
   const [x, y] = point
   const { contentSize, viewSize } = size
   const [cx, cy] = contentSize
@@ -501,13 +628,25 @@ export function getTooltipPosition (point, params, dom, rect, size) {
 
   const distanceXToMouse = 10
   return [
-    x + cx + distanceXToMouse > vx ? x - distanceXToMouse - cx : x + distanceXToMouse,
+    x + cx + distanceXToMouse > vx
+      ? x - distanceXToMouse - cx
+      : x + distanceXToMouse,
     // Math.min(x, vx - cx),
     Math.min(y, vy - cy)
   ]
 }
 
-export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip) {
+export function getPivotTooltipLabel(
+  seriesData,
+  cols,
+  rows,
+  metrics,
+  color,
+  label,
+  size,
+  scatterXAxis,
+  tip
+) {
   let dimetionColumns = cols.concat(rows)
   let metricColumns = [...metrics]
   if (color) {
@@ -539,7 +678,11 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
+    if (
+      !arr.find(
+        (m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg
+      )
+    ) {
       arr.push(mc)
     }
     return arr
@@ -557,19 +700,21 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
           : 0
         return `${decodedName}: ${value}`
       })
-      .concat(dimetionColumns.map((dc) => {
-        const value = record
-          ? Array.isArray(record)
-            ? record[0][dc]
-            : record[dc]
-          : ''
-        return `${dc}: ${value}`
-      }))
+      .concat(
+        dimetionColumns.map((dc) => {
+          const value = record
+            ? Array.isArray(record)
+              ? record[0][dc]
+              : record[dc]
+            : ''
+          return `${dc}: ${value}`
+        })
+      )
       .join('<br/>')
   }
 }
 
-export function getChartTooltipLabel (type, seriesData, options) {
+export function getChartTooltipLabel(type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
   let dimentionColumns: any[] = cols
   let metricColumns = [...metrics]
@@ -586,12 +731,17 @@ export function getChartTooltipLabel (type, seriesData, options) {
     metricColumns = metricColumns.concat(tip.items)
   }
 
-  dimentionColumns = dimentionColumns.filter((dc, idx) =>
-    dimentionColumns.findIndex((c) => c.name === dc.name) === idx)
+  dimentionColumns = dimentionColumns.filter(
+    (dc, idx) => dimentionColumns.findIndex((c) => c.name === dc.name) === idx
+  )
 
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
+    if (
+      !arr.find(
+        (m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg
+      )
+    ) {
       arr.push(mc)
     }
     return arr
@@ -603,14 +753,20 @@ export function getChartTooltipLabel (type, seriesData, options) {
       const { name, value } = params
       return `参考线<br/>${name}: ${value}`
     } else if (componentType === 'markArea') {
-      const { name, data: { coord } } = params
-      const valueIndex = coord[0].findIndex((c) => c !== Infinity && c !== -Infinity)
+      const {
+        name,
+        data: { coord }
+      } = params
+      const valueIndex = coord[0].findIndex(
+        (c) => c !== Infinity && c !== -Infinity
+      )
       return `参考区间<br/>${name}: ${coord[0][valueIndex]} - ${coord[1][valueIndex]}`
     } else {
       const { seriesIndex, dataIndex, color } = params
-      const record = (type === 'funnel' || type === 'map')
-        ? seriesData[dataIndex]
-        : seriesData[seriesIndex][dataIndex]
+      const record =
+        type === 'funnel' || type === 'map'
+          ? seriesData[dataIndex]
+          : seriesData[seriesIndex][dataIndex]
       let tooltipLabels = []
 
       tooltipLabels = tooltipLabels.concat(
@@ -630,7 +786,10 @@ export function getChartTooltipLabel (type, seriesData, options) {
           const decodedName = decodeMetricName(mc.name)
           let value = record
             ? Array.isArray(record)
-              ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
+              ? record.reduce(
+                  (sum, r) => sum + r[`${mc.agg}(${decodedName})`],
+                  0
+                )
               : record[`${mc.agg}(${decodedName})`]
             : 0
           value = getFormattedValue(value, mc.format)
@@ -652,27 +811,29 @@ export function getChartTooltipLabel (type, seriesData, options) {
   }
 }
 
-export function getChartLabel (seriesData, labelItem) {
+export function getChartLabel(seriesData, labelItem) {
   return function (params) {
     const record = getTriggeringRecord(params, seriesData) || {}
     return labelItem.type === 'category'
       ? Array.isArray(record)
         ? record[0][labelItem.name]
-        : (record[labelItem.name] || '')
+        : record[labelItem.name] || ''
       : Array.isArray(record)
-        ? record.reduce((sum, r) => sum + r[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`], 0)
-        : (record[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`] || 0)
+      ? record.reduce(
+          (sum, r) =>
+            sum + r[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`],
+          0
+        )
+      : record[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`] || 0
   }
 }
 
-export function getTriggeringRecord (params, seriesData) {
+export function getTriggeringRecord(params, seriesData) {
   const { seriesIndex, dataIndex } = params
   const { type, grouped, records } = seriesData[seriesIndex]
   let record
   if (type === 'cartesian') {
-    record = grouped
-      ? records[dataIndex]
-      : records[dataIndex].value
+    record = grouped ? records[dataIndex] : records[dataIndex].value
   } else if (type === 'polar') {
     record = records[dataIndex]
   } else {
@@ -681,11 +842,11 @@ export function getTriggeringRecord (params, seriesData) {
   return record
 }
 
-export function getSizeRate (min, max) {
+export function getSizeRate(min, max) {
   return Math.max(min / 10, max / 100)
 }
 
-export function getSizeValue (value) {
+export function getSizeValue(value) {
   return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
     : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
@@ -716,7 +877,7 @@ export const iconMapping = {
   confidenceBand: 'icon-confidence-band'
 }
 
-export function getCorrectInputNumber (num: any): number {
+export function getCorrectInputNumber(num: any): number {
   switch (typeof num) {
     case 'string':
       if (!num.trim()) {

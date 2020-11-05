@@ -237,10 +237,10 @@ export function* editSlideLayerParams (action: DisplayActionType) {
     return
   }
   const layerList: ILayerFormed[] = yield select(makeSelectCurrentLayerList())
-  const layer = layerList.find(({ id }) => id === action.payload.layerId)
   if (!layerList.length) {
     return
   }
+  const layer = layerList.find(({ id }) => id === action.payload.layerId)
   const { id: displayId } = yield select(makeSelectCurrentDisplay())
   const { id: slideId } = yield select(makeSelectCurrentSlide())
   const updateLayer = {
