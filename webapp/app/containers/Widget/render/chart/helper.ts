@@ -1,4 +1,4 @@
-import { round } from 'node_modules/echarts/lib/util/number'
+import { round } from 'echarts/lib/util/number'
 import { decodeMetricName } from 'containers/Widget/components/util'
 
 type numType = number | string
