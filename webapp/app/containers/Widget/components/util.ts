@@ -349,34 +349,26 @@ export function metricAxisLabelFormatter(value) {
   if (!positive) {
     value = -value
   }
-  
+
   let endValue
   const orderLessKilo = (value) => {
     if (value < Math.pow(10, 3)) {
       endValue = value
-    } else {
-      return 'next'
     }
   }
   const orderKilo = (value) => {
     if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
       endValue = `${precision(value / Math.pow(10, 3))}K`
-    } else {
-      return 'next'
     }
   }
   const orderMillion = (value) => {
     if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
       endValue = `${precision(value / Math.pow(10, 6))}M`
-    } else {
-      return 'next'
     }
   }
   const orderBillion = (value) => {
     if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
       endValue = `${precision(value / Math.pow(10, 9))}B`
-    } else {
-      return 'next'
     }
   }
   const orderTrillion = (value) => {
@@ -384,24 +376,17 @@ export function metricAxisLabelFormatter(value) {
       endValue = `${precision(value / Math.pow(10, 12))}T`
     }
   }
-  Function.prototype.after = function (fn) {
-    let self = this
-    return function () {
-      const ret = self.apply(this, arguments)
-      if (ret === 'next') {
-        return fn.apply(this, arguments)
-      }
-      return ret
-    }
-  }
 
-  const orderFn = orderLessKilo
-    .after(orderKilo)
-    .after(orderMillion)
-    .after(orderBillion)
-    .after(orderTrillion)
-  orderFn(value)
+  const orderFn = (...fns) => (value) =>
+    fns.reduce((pre, fn) => fn.call(this, value), 0)
 
+  orderFn(
+    orderLessKilo,
+    orderKilo,
+    orderMillion,
+    orderBillion,
+    orderTrillion
+  )(value)
   return positive ? endValue : `-${endValue}`
 
   function precision(num) {
