@@ -147,12 +147,15 @@ public class ExcelUtils {
 
 
     /**
+     *
      * 写入数据到excel sheet页
      *
      * @param sheet
      * @param columns
      * @param dataList
      * @param workbook
+     * @param containType
+     * @param widgetConfig
      * @param params
      */
     public static void writeSheet(Sheet sheet,
@@ -160,7 +163,7 @@ public class ExcelUtils {
                                   List<Map<String, Object>> dataList,
                                   SXSSFWorkbook workbook,
                                   boolean containType,
-                                  String json,
+                                  String widgetConfig,
                                   List<Param> params) {
 
 
@@ -186,13 +189,13 @@ public class ExcelUtils {
         headerCellStyle.setAlignment(CellStyle.ALIGN_CENTER);
         headerCellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
 
-        boolean isTable = isTable(json);
+        boolean isTable = isTable(widgetConfig);
 
         ScriptEngine engine = null;
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                excelHeaders = formatHeader(json, params);
+                excelHeaders = formatHeader(widgetConfig, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }

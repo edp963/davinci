@@ -51,6 +51,7 @@ public class ViewExecuteParam extends ConcurrencyStrategy{
     private boolean nativeQuery = false;
 
     public ViewExecuteParam() {
+
     }
 
     public ViewExecuteParam(List<String> groupList,
@@ -104,8 +105,6 @@ public class ViewExecuteParam extends ConcurrencyStrategy{
 
             for (Order order : this.orders) {
                 String column = order.getColumn().trim();
-//                Matcher matcher = PATTERN_SQL_AGGREGATE.matcher(order.getColumn().trim().toLowerCase());
-//                if (!matcher.find()) {
                 StringBuilder columnBuilder = new StringBuilder();
                 if (!column.startsWith(prefix)) {
                     columnBuilder.append(prefix);
@@ -115,7 +114,6 @@ public class ViewExecuteParam extends ConcurrencyStrategy{
                     columnBuilder.append(suffix);
                 }
                 order.setColumn(columnBuilder.toString());
-//                }
                 list.add(order);
             }
         }

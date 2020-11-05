@@ -20,6 +20,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedException;
@@ -30,6 +31,7 @@ import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.ServerUtils;
 import edp.davinci.core.common.ErrorMsg;
+import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
@@ -38,6 +40,7 @@ import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.core.utils.SqlParseUtils;
+import edp.davinci.core.utils.VizUtils;
 import edp.davinci.dao.MemDashboardWidgetMapper;
 import edp.davinci.dao.MemDisplaySlideWidgetMapper;
 import edp.davinci.dao.ViewMapper;
@@ -45,6 +48,7 @@ import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.ShareEntity;
+import edp.davinci.dto.viewDto.SimpleView;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
@@ -359,8 +363,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         //校验权限
         if (!projectPermission.getDownloadPermission()) {
-            log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
-            throw new UnAuthorizedException("you have not permission to download the widget");
+            log.info("User({}) have not permission to download the widget {}", user.getUsername(), id);
+            throw new UnAuthorizedException("You have not permission to download the widget");
         }
 
         executeParam.setPageNo(-1);
@@ -413,10 +417,10 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                 writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
 
             } else {
-                throw new ServerException("unknow file type");
+                throw new ServerException("Unknown file type");
             }
         } catch (Exception e) {
-            throw new ServerException("generation " + type + " error!");
+            throw new ServerException("Generation " + type + " error!");
         }
 
         return serverUtils.getHost() + fileUtils.formatFilePath(filePath);
@@ -424,7 +428,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
 
     /**
-     * widget列表数据写入指定excle文件
+     * widget列表数据写入指定excel文件
      *
      * @param widgets
      * @param projectDetail
@@ -440,11 +444,11 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                            String filePath, User user, boolean containType) throws Exception {
 
         if (StringUtils.isEmpty(filePath)) {
-            throw new ServerException("excel file path is EMPTY");
+            throw new ServerException("Excel file path is empty");
         }
 
         if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
-            throw new ServerException("unknow file format");
+            throw new ServerException("Unknown file format");
         }
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
@@ -467,7 +471,19 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
                     } else {
-                        executeParam = getViewExecuteParam(null, widget.getConfig(), null);
+
+                        Set<SimpleView> simpleViews = new HashSet<>();
+
+                        // widget controller view
+                        Map<String, Object> widgetConfigMap = JSON.parseObject(widget.getConfig(), Map.class);
+                        if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                            simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
+                        }
+
+                        // widget view
+                        simpleViews.add(((ViewMapper) SpringContextHolder.getBean(ViewMapper.class)).getSimpleViewById(widget.getViewId()));
+
+                        executeParam = getViewExecuteParam(null, widget.getConfig(), simpleViews, null);
                     }
 
                     PaginateWithQueryColumns paginate = viewService.getResultDataList(maintainer,
@@ -513,8 +529,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         Widget widget = widgetMapper.getById(id);
 
         if (null == widget) {
-            log.info("widget {} not found", id);
-            throw new NotFoundException("widget is not found");
+            log.info("Widget({}) not found", id);
+            throw new NotFoundException("Widget is not found");
         }
 
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
@@ -528,7 +544,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ViewWithProjectAndSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(id);
 
         if (null == viewWithSource.getSource()) {
-            throw new NotFoundException("source is not found");
+            throw new NotFoundException("Source is not found");
         }
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {

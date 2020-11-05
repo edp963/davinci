@@ -47,26 +47,24 @@ public class WidgetContext implements Serializable {
 
     private ViewExecuteParam executeParam;
 
-    private boolean hasExecuteParam = false;
-
-
     public WidgetContext(Widget widget, Dashboard dashboard, MemDashboardWidget memDashboardWidget, ViewExecuteParam executeParam) {
         this.widget = widget;
         this.dashboard = dashboard;
         this.memDashboardWidget = memDashboardWidget;
-        if (null != executeParam) {
-            this.executeParam = executeParam;
-            this.hasExecuteParam = true;
-        }
+        this.executeParam = executeParam;
     }
 
     public WidgetContext(Widget widget, boolean isMaintainer, ViewExecuteParam executeParam) {
         this.widget = widget;
         this.isMaintainer = isMaintainer;
         this.executeParam = executeParam;
-        this.hasExecuteParam = true;
     }
 
     public WidgetContext() {
+
+    }
+
+    public boolean hasExecuteParam() {
+        return this.executeParam != null;
     }
 }
