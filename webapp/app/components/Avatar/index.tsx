@@ -87,7 +87,7 @@ export const Avatar: React.FC<IAvatarProps> = ({
     if (!inView) {
       return
     }
-    if (!elementRef.current.src) {
+    if (!elementRef.current.src || elementRef.current.src !== path) {
       elementRef.current.src = path
     }
     elementRef.current.addEventListener('load', loaded, false)
@@ -97,7 +97,7 @@ export const Avatar: React.FC<IAvatarProps> = ({
       elementRef.current.removeEventListener('load', loaded)
       elementRef.current.removeEventListener('error', loadFail)
     }
-  }, [inView, status])
+  }, [inView, status, path])
 
   const modalSrc = useMemo(() => {
     return status === 'loaded' ? path : logo

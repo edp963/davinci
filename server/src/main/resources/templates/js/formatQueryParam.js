@@ -272,6 +272,59 @@ if (!Array.prototype.reduce) {
     });
 }
 
+// https://tc39.github.io/ecma262/#sec-array.prototype.find
+if (!Array.prototype.find) {
+    Object.defineProperty(Array.prototype, 'find', {
+      value: function(predicate) {
+        // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+          throw TypeError('"this" is null or not defined');
+        }
+
+        var o = Object(this);
+
+        // 2. Let len be ? ToLength(? Get(O, "length")).
+        var len = o.length >>> 0;
+
+        // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+        if (typeof predicate !== 'function') {
+          throw TypeError('predicate must be a function');
+        }
+
+        // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        var thisArg = arguments[1];
+
+        // 5. Let k be 0.
+        var k = 0;
+
+        // 6. Repeat, while k < len
+        while (k < len) {
+          // a. Let Pk be ! ToString(k).
+          // b. Let kValue be ? Get(O, Pk).
+          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+          // d. If testResult is true, return kValue.
+          var kValue = o[k];
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return kValue;
+          }
+          // e. Increase k by 1.
+          k++;
+        }
+
+        // 7. Return undefined.
+        return undefined;
+      },
+      configurable: true,
+      writable: true
+    });
+  }
+
+if (!Array.isArray) {
+    Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+}
+
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
 if (!Object.keys) {
     Object.keys = (function () {
@@ -4939,7 +4992,8 @@ if (typeof Object.assign != 'function') {
 // console.log(global.moment().format('YYYY-MM-DD'))
 
 // #region Tools
-var DEFAULT_SPLITER = '@davinci@'
+var DEFAULT_SPLITER = '@davinci@';
+var DEFAULT_CACHE_EXPIRED = 300;  // sec
 
 function decodeMetricName(encodedName) {
     return encodedName.split(DEFAULT_SPLITER)[0]
@@ -4955,41 +5009,112 @@ var ViewVariableValueTypes;
 })(ViewVariableValueTypes || (ViewVariableValueTypes = {}));
 
 
-var FilterTypes;
-(function (FilterTypes) {
-    FilterTypes["Select"] = "select";
-    FilterTypes["Date"] = "date";
-    FilterTypes["DateRange"] = "dateRange";
-    FilterTypes["InputText"] = "inputText";
-    FilterTypes["NumberRange"] = "numberRange";
-    // TreeSelect = 'treeSelect'
-})(FilterTypes || (FilterTypes = {}));
+var ControlTypes;
+(function (ControlTypes) {
+    ControlTypes["Select"] = "select";
+    ControlTypes["Radio"] = "radio";
+    ControlTypes["Date"] = "date";
+    ControlTypes["DateRange"] = "dateRange";
+    ControlTypes["InputText"] = "inputText";
+    ControlTypes["NumberRange"] = "numberRange";
+    ControlTypes["Slider"] = "slider";
+    ControlTypes["TreeSelect"] = "treeSelect";
+})(ControlTypes || (ControlTypes = {}));
 
+var RelativeDateValueType;
+(function (RelativeDateValueType) {
+    RelativeDateValueType["Prev"] = "prev";
+    RelativeDateValueType["Current"] = "current";
+    RelativeDateValueType["Next"] = "next";
+})(RelativeDateValueType || (RelativeDateValueType = {}));
 
-var DatePickerDefaultValues;
-(function (DatePickerDefaultValues) {
-    DatePickerDefaultValues["Today"] = "today";
-    DatePickerDefaultValues["Yesterday"] = "yesterday";
-    DatePickerDefaultValues["Week"] = "week";
-    DatePickerDefaultValues["Day7"] = "day7";
-    DatePickerDefaultValues["LastWeek"] = "lastWeek";
-    DatePickerDefaultValues["Month"] = "month";
-    DatePickerDefaultValues["Day30"] = "day30";
-    DatePickerDefaultValues["LastMonth"] = "lastMonth";
-    DatePickerDefaultValues["Quarter"] = "quarter";
-    DatePickerDefaultValues["Day90"] = "day90";
-    DatePickerDefaultValues["LastQuarter"] = "lastQuarter";
-    DatePickerDefaultValues["Year"] = "year";
-    DatePickerDefaultValues["Day365"] = "day365";
-    DatePickerDefaultValues["LastYear"] = "lastYear";
-    DatePickerDefaultValues["Custom"] = "custom";
-})(DatePickerDefaultValues || (DatePickerDefaultValues = {}));
+var ControlFieldTypes;
+(function (ControlFieldTypes) {
+    ControlFieldTypes["Column"] = "column";
+    ControlFieldTypes["Variable"] = "variable";
+})(ControlFieldTypes || (ControlFieldTypes = {}));
 
+var ControlDefaultValueTypes;
+(function (ControlDefaultValueTypes) {
+    ControlDefaultValueTypes["Dynamic"] = "dynamic";
+    ControlDefaultValueTypes["Fixed"] = "fixed";
+})(ControlDefaultValueTypes || (ControlDefaultValueTypes = {}));
+
+var ControlVisibilityTypes;
+(function (ControlVisibilityTypes) {
+    ControlVisibilityTypes["Visible"] = "visible";
+    ControlVisibilityTypes["Hidden"] = "hidden";
+    ControlVisibilityTypes["Conditional"] = "conditional";
+})(ControlVisibilityTypes || (ControlVisibilityTypes = {}));
+
+var ControlOptionTypes;
+(function (ControlOptionTypes) {
+    ControlOptionTypes["Auto"] = "auto";
+    ControlOptionTypes["Manual"] = "manual";
+    ControlOptionTypes["Custom"] = "custom";
+})(ControlOptionTypes || (ControlOptionTypes = {}));
+
+var ControlQueryMode;
+(function (ControlQueryMode) {
+    ControlQueryMode[ControlQueryMode["Immediately"] = 0] = "Immediately";
+    ControlQueryMode[ControlQueryMode["Manually"] = 1] = "Manually";
+})(ControlQueryMode || (ControlQueryMode = {}));
+
+var ChartTypes;
+(function (ChartTypes) {
+    ChartTypes[ChartTypes["Table"] = 1] = "Table";
+    ChartTypes[ChartTypes["Line"] = 2] = "Line";
+    ChartTypes[ChartTypes["Bar"] = 3] = "Bar";
+    ChartTypes[ChartTypes["Scatter"] = 4] = "Scatter";
+    ChartTypes[ChartTypes["Pie"] = 5] = "Pie";
+    ChartTypes[ChartTypes["CMap"] = 7] = "CMap";
+    ChartTypes[ChartTypes["Parallel"] = 8] = "Parallel";
+    ChartTypes[ChartTypes["Funnel"] = 6] = "Funnel";
+    ChartTypes[ChartTypes["Sankey"] = 9] = "Sankey";
+    ChartTypes[ChartTypes["Radar"] = 10] = "Radar";
+    ChartTypes[ChartTypes["WordCloud"] = 11] = "WordCloud";
+    ChartTypes[ChartTypes["Waterfall"] = 12] = "Waterfall";
+    ChartTypes[ChartTypes["Scorecard"] = 13] = "Scorecard";
+    ChartTypes[ChartTypes["Iframe"] = 14] = "Iframe";
+    ChartTypes[ChartTypes["RichText"] = 15] = "RichText";
+    ChartTypes[ChartTypes["DoubleYAxis"] = 16] = "DoubleYAxis";
+    ChartTypes[ChartTypes["Gauge"] = 17] = "Gauge";
+})(ChartTypes || (ChartTypes = {}));
+
+var RelativeDateType;
+(function (RelativeDateType) {
+    RelativeDateType["Day"] = "day";
+    RelativeDateType["Week"] = "week";
+    RelativeDateType["Month"] = "month";
+    RelativeDateType["Quarter"] = "quarter";
+    RelativeDateType["Year"] = "year";
+})(RelativeDateType || (RelativeDateType = {}));
+
+var LegacyDatePickerDefaultValues;
+(function (LegacyDatePickerDefaultValues) {
+    LegacyDatePickerDefaultValues["Today"] = "today";
+    LegacyDatePickerDefaultValues["Yesterday"] = "yesterday";
+    LegacyDatePickerDefaultValues["Week"] = "week";
+    LegacyDatePickerDefaultValues["Day7"] = "day7";
+    LegacyDatePickerDefaultValues["LastWeek"] = "lastWeek";
+    LegacyDatePickerDefaultValues["Month"] = "month";
+    LegacyDatePickerDefaultValues["Day30"] = "day30";
+    LegacyDatePickerDefaultValues["LastMonth"] = "lastMonth";
+    LegacyDatePickerDefaultValues["Quarter"] = "quarter";
+    LegacyDatePickerDefaultValues["Day90"] = "day90";
+    LegacyDatePickerDefaultValues["LastQuarter"] = "lastQuarter";
+    LegacyDatePickerDefaultValues["Year"] = "year";
+    LegacyDatePickerDefaultValues["Day365"] = "day365";
+    LegacyDatePickerDefaultValues["LastYear"] = "lastYear";
+    LegacyDatePickerDefaultValues["Custom"] = "custo";
+})(LegacyDatePickerDefaultValues || (LegacyDatePickerDefaultValues = {}));
 
 var SQL_NUMBER_TYPES = [
-    'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
+    'BIT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
     'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
-    'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
+    'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMBER', 'NUMERIC',
+    'UINT8', 'UINT16', 'UINT32', 'UINT64', 'INT8', 'INT16', 'INT32', 'INT64',
+    'FLOAT32', 'FLOAT64', 'DECIMAL32', 'DECIMAL64', 'DECIMAL128'
 ]
 
 function getValidVariableValue(value, valueType) {
@@ -4998,7 +5123,15 @@ function getValidVariableValue(value, valueType) {
         case ViewVariableValueTypes.Date:
             return "'" + value + "'";
         case ViewVariableValueTypes.Boolean:
-            return !!value;
+            if (typeof value === 'string') {
+                if (value.toLowerCase() === 'false' || value.trim() === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                return !!value;
+            }
         default:
             return value;
     }
@@ -5012,168 +5145,240 @@ function getValidColumnValue(value, sqlType) {
 }
 
 
-function getVariableValue(filter, fields, value) {
+function getVariableParams(control, fields, value, variables) {
     var moment = global.moment
 
-    var type = filter.type, dateFormat = filter.dateFormat, multiple = filter.multiple;
-    var name;
-    var valueType;
-    var variable = [];
-    if (value === void 0
-        || value === null
-        || typeof value === 'string' && !value.trim()) {
-        return variable;
+    var type = control.type, dateFormat = control.dateFormat, multiple = control.multiple;
+    var fieldsVariables = fields
+        .map(function(name) {
+            return variables.find(function(v) {
+                return v.name === name;
+            })
+        })
+        .filter(function(f) {
+            return !!f;
+        })
+    var params = [];
+
+    if (
+        value === void 0 ||
+        value === null ||
+        (typeof value === 'string' && !value.trim()) ||
+        !fieldsVariables.length
+    ) {
+        return params;
     }
-    if (!Array.isArray(fields)) {
-        name = fields.name;
-        valueType = fields.type;
-    }
+
     switch (type) {
-        case FilterTypes.InputText:
-            variable.push({name: name, value: getValidVariableValue(value, valueType)});
+        case ControlTypes.InputText:
+        case ControlTypes.Radio:
+            params = fieldsVariables.map(function(fieldsVariable) {
+                return {
+                    name: fieldsVariable.name,
+                    value: getValidVariableValue(value, fieldsVariable.valueType)
+                };
+            });
             break;
-        case FilterTypes.Select:
+        case ControlTypes.Select:
+        case ControlTypes.TreeSelect:
             if (multiple) {
                 if (value.length && value.length > 0) {
-                    variable.push({
-                        name: name, value: value.map(function (val) {
-                            return getValidVariableValue(val, valueType);
-                        }).join(',')
+                    params = fieldsVariables.map(function(fieldsVariable) {
+                        return {
+                            name: fieldsVariable.name,
+                            value: value
+                              .map(function(val) {
+                                  return getValidVariableValue(val, fieldsVariable.valueType);
+                              })
+                              .join(',')
+                        };
                     });
                 }
             } else {
-                variable.push({name: name, value: getValidVariableValue(value, valueType)});
+                params = fieldsVariables.map(function(fieldsVariable) {
+                    return {
+                        name: fieldsVariable.name,
+                        value: getValidVariableValue(value, fieldsVariable.valueType)
+                    };
+                });
             }
             break;
-        case FilterTypes.NumberRange:
-            variable = value.reduce(function (arr, val, index) {
-                if (val !== '' && !isNaN(val)) {
-                    var _a = fields[index], name_1 = _a.name, valueType_1 = _a.type;
-                    return arr.concat({name: name_1, value: getValidVariableValue(val, valueType_1)});
+        case ControlTypes.NumberRange:
+        case ControlTypes.Slider:
+            params = value.reduce(function(arr, val, index) {
+                if (fieldsVariables[index] && val !== '' && !isNaN(val)) {
+                    return arr.concat({
+                        name: fieldsVariables[index].name,
+                        value: getValidVariableValue(val, fieldsVariables[index].valueType)
+                    });
                 }
                 return arr;
             }, []);
             break;
-        // case FilterTypes.TreeSelect:
-        //   if (value.length && value.length > 0) {
-        //     variable.push({ name, value: value.map((val) => getValidVariableValue(val, valueType)).join(',') })
-        //   }
-        //   break
-        case FilterTypes.Date:
+        case ControlTypes.Date:
             if (multiple) {
-                variable.push({
-                    name: name, value: value.split(',').map(function (v) {
-                        return "'" + v + "'";
-                    }).join(',')
+                params = fieldsVariables.map(function(fieldsVariable) {
+                    return {
+                        name: fieldsVariable.name,
+                        value: value
+                          .split(',')
+                          .map(function(v) {
+                              return "'" + v + "'"
+                          })
+                          .join(',')
+                    };
                 });
             } else {
-                variable.push({name: name, value: "'" + moment(value).format(dateFormat) + "'"});
+                params = fieldsVariables.map(function(fieldsVariable) {
+                    return {
+                        name: fieldsVariable.name,
+                        value: "'" + moment(value).format(dateFormat) + "'"
+                    };
+                });
             }
             break;
-        case FilterTypes.DateRange:
+        case ControlTypes.DateRange:
             if (value.length) {
-                variable = value
-                    .map(function (v, index) {
-                        var name = fields[index].name;
-                        return {name: name, value: "'" + moment(v).format(dateFormat) + "'"};
-                    });
+                params = value
+                    .map(function(v, index) {
+                        return fieldsVariables[index]
+                            ? {
+                                name: fieldsVariables[index].name,
+                                value: "'" + moment(v).format(dateFormat) + "'"
+                            }
+                            : null
+                    })
+                    .filter(function(p) {
+                        return p;
+                    })
             }
             break;
         default:
             var val = value.target.value.trim();
             if (val) {
-                variable.push({name: name, value: getValidVariableValue(val, valueType)});
+                params = fieldsVariables.map(function(fieldsVariable) {
+                    return {
+                        name: fieldsVariable.name,
+                        value: getValidVariableValue(val, fieldsVariable.valueType)
+                    };
+                });
             }
             break;
     }
-    return variable;
+    return params;
 }
 
+function getCustomOptionVariableParams(control, viewId, value, variables) {
+    var customOptions = control.customOptions;
+    var params = [];
+  
+    if (
+      value === void 0 ||
+      value === null ||
+      (typeof value === 'string' && !value.trim())
+    ) {
+      return params;
+    }
 
-function getModelValue(control, field, value) {
+    [].concat(value).forEach(function(val) {
+        var selectedOption = customOptions.find(function(o) {
+            return o.value === val;
+        })
+        if (selectedOption && selectedOption.variables[viewId]) {
+            params = params.concat(
+                getVariableParams(
+                    Object.assign({}, control, {
+                        multiple: false
+                    }),
+                    [selectedOption.variables[viewId]],
+                    val,
+                    variables
+                )
+            )
+        }
+      })
+  
+    return params
+  }
+
+function getFilterParams(control, fields, value, models) {
     var moment = global.moment
 
     var type = control.type, dateFormat = control.dateFormat, multiple = control.multiple, operator = control.operator;
-    var name = field.name, sqlType = field.type;
+    var filterFieldName = fields[0];
     var filters = [];
-    if (value === void 0
-        || value === null
-        || typeof value === 'string' && !value.trim()) {
+
+    if (
+        value === void 0 ||
+        value === null ||
+        (typeof value === 'string' && !value.trim()) ||
+        !models[filterFieldName]
+    ) {
         return filters;
     }
 
-    var commanFilterJson = {
-        name: name,
+    var sqlType = models[filterFieldName].sqlType;
+    var filterBase = {
+        name: filterFieldName,
         type: 'filter',
         value: getValidColumnValue(value, sqlType),
         sqlType: sqlType,
         operator: operator
-    }
+    };
 
     switch (type) {
-        case FilterTypes.InputText:
-            filters.push(commanFilterJson);
+        case ControlTypes.InputText:
+        case ControlTypes.Radio:
+            filters.push(filterBase);
             break;
-        case FilterTypes.Select:
+        case ControlTypes.Select:
+        case ControlTypes.TreeSelect:
             if (multiple) {
-                if (value.length && value.length > 0) {
-                    commanFilterJson.value = value.map(function (val) {
-                        return getValidColumnValue(val, sqlType)
-                    })
-                    filters.push(commanFilterJson)
+                if (Array.isArray(value) && value.length > 0) {
+                    filters.push(Object.assign({}, filterBase, {
+                        value: value.map(function(val) {
+                            return getValidColumnValue(val, sqlType);
+                        })
+                    }));
                 }
             } else {
-                filters.push(commanFilterJson);
+                filters.push(filterBase);
             }
             break;
-        case FilterTypes.NumberRange:
-            if (value[0] !== '' && !isNaN(value[0])) {
-                filters.push(Object.assign({}, commanFilterJson, {
-                    operator: '>=',
-                    value: getValidColumnValue(value[0], sqlType)
-                }))
-            }
-            if (value[1] !== '' && !isNaN(value[1])) {
-                filters.push(Object.assign({}, commanFilterJson, {
-                    operator: '<=',
-                    value: getValidColumnValue(value[1], sqlType)
-                }))
-            }
+        case ControlTypes.NumberRange:
+        case ControlTypes.Slider:
+            value.forEach(function(val, index) {
+                if (val !== '' && !isNaN(val)) {
+                    filters.push(Object.assign({}, filterBase, {
+                        operator: !index ? '>=' : '<=',
+                        value: getValidColumnValue(val, sqlType)
+                    }));
+                }
+            })
             break;
-        // case FilterTypes.TreeSelect:
-        //   if (value.length && value.length > 0) {
-        //     filters.push(`${name} ${operator} (${value.map((val) => getValidColumnValue(val, sqlType)).join(',')})`)
-        //   }
-        //   break
-        case FilterTypes.Date:
-            if (multiple) {
-                filters.push(Object.assign({}, commanFilterJson, {
-                    value: value.split(',').map(function (val) {
-                        return getValidColumnValue(val, sqlType)
+        case ControlTypes.Date:
+            filters.push(Object.assign({}, filterBase, {
+                value: multiple
+                    ? value.split(',').map(function(val) {
+                        return getValidColumnValue(val, sqlType);
                     })
-                }))
-            } else {
-                filters.push(Object.assign({}, commanFilterJson, {
-                    value: getValidColumnValue(moment(value).format(dateFormat), sqlType)
-                }))
-            }
+                    : getValidColumnValue(moment(value).format(dateFormat), sqlType)
+            }));
             break;
-        case FilterTypes.DateRange:
+        case ControlTypes.DateRange:
             if (value.length) {
-                filters.push(Object.assign({}, commanFilterJson, {
-                    operator: '>=',
-                    value: getValidColumnValue(moment(value[0]).format(dateFormat), sqlType)
-                }));
-                filters.push(Object.assign({}, commanFilterJson, {
-                    operator: '<=',
-                    value: getValidColumnValue(moment(value[1]).format(dateFormat), sqlType)
-                }));
+                value.forEach(function(val, index) {
+                    filters.push(Object.assign({}, filterBase, {
+                        operator: !index ? '>=' : '<=',
+                        value: getValidColumnValue(moment(val).format(dateFormat), sqlType)
+                    }));
+                })
             }
             break;
         default:
             var inputValue = value.target.value.trim();
             if (inputValue) {
-                filters.push(Object.assign({}, commanFilterJson, {
+                filters.push(Object.assign({}, filterBase, {
                     value: getValidColumnValue(inputValue, sqlType)
                 }));
             }
@@ -5182,85 +5387,491 @@ function getModelValue(control, field, value) {
     return filters;
 }
 
+function getPreciseDefaultValue(control) {
+    var moment = global.moment;
 
-function deserializeDefaultValue(filter) {
-    var type = filter.type,
-        multiple = filter.multiple,
-        dynamicDefaultValue = filter.dynamicDefaultValue,
-        defaultValue = filter.defaultValue;
-    var moment = global.moment
+    var type = control.type,
+        defaultValueType = control.defaultValueType,
+        defaultValue = control.defaultValue,
+        multiple = control.multiple;
+
     switch (type) {
-        case FilterTypes.Date:
-            if (dynamicDefaultValue) {
-                switch (dynamicDefaultValue) {
-                    case DatePickerDefaultValues.Today:
-                        return moment();
-                    case DatePickerDefaultValues.Yesterday:
-                        return moment().subtract(1, 'days');
-                    case DatePickerDefaultValues.Week:
-                        return moment().startOf('week');
-                    case DatePickerDefaultValues.Day7:
-                        return moment().subtract(7, 'days');
-                    case DatePickerDefaultValues.LastWeek:
-                        return moment().subtract(7, 'days').startOf('week');
-                    case DatePickerDefaultValues.Month:
-                        return moment().startOf('month');
-                    case DatePickerDefaultValues.Day30:
-                        return moment().subtract(30, 'days');
-                    case DatePickerDefaultValues.LastMonth:
-                        return moment().subtract(30, 'days').startOf('month');
-                    case DatePickerDefaultValues.Quarter:
-                        return moment().startOf('month');
-                    case DatePickerDefaultValues.Day90:
-                        return moment().subtract(90, 'days');
-                    case DatePickerDefaultValues.LastQuarter:
-                        return moment().subtract(90, 'days').startOf('quarter');
-                    case DatePickerDefaultValues.Year:
-                        return moment().startOf('year');
-                    case DatePickerDefaultValues.Day365:
-                        return moment().subtract(365, 'days');
-                    case DatePickerDefaultValues.LastYear:
-                        return moment().subtract(90, 'days').startOf('year');
-                    default:
-                        return multiple ? defaultValue : defaultValue && moment(defaultValue);
-                }
-            } else {
-                return null;
+        case ControlTypes.DateRange:
+            return defaultValueType === ControlDefaultValueTypes.Dynamic
+                ? defaultValue.map(function(val) {
+                    return transformRelativeDateValue(val);
+                })
+                : Array.isArray(defaultValue)
+                    ? defaultValue.map(function(val) {
+                        return moment(val);
+                    })
+                    : defaultValue
+        case ControlTypes.Date:
+            if (defaultValue) {
+                return defaultValueType === ControlDefaultValueTypes.Dynamic
+                    ? transformRelativeDateValue(defaultValue)
+                    : multiple ? defaultValue : moment(defaultValue)
             }
         default:
-            return defaultValue;
+            return defaultValue
     }
+}
+
+function transformRelativeDateValue(val) {
+    var moment = global.moment;
+
+    var type = val.type,
+        value = val.value,
+        valueType = val.valueType;
+
+    return valueType === RelativeDateValueType.Prev
+      ? moment()
+          .subtract(value, type + 's')
+          .startOf(type)
+      : moment()
+          .add(value, type + 's')
+          .startOf(type)
 }
 
 // #endregion
 
-function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, itemId) {
-    var dashboardConfig = JSON.parse(dashboardConfigJson || '{}')
-    var widgetConfig = JSON.parse(widgetConfigJson || '{}')
-    var globalFilters = getGlobalFilters(dashboardConfig, +itemId)
-    var widgetExecuteParam = getWidgetExecuteParam(widgetConfig)
-    widgetExecuteParam.filters = widgetExecuteParam.filters.concat(globalFilters.filters)
-    widgetExecuteParam.filters = widgetExecuteParam.filters.map(function(filter) { return JSON.stringify(filter) })
-    widgetExecuteParam.params = widgetExecuteParam.params.concat(globalFilters.params)
-    return JSON.stringify(widgetExecuteParam)
+// #region Migrations
+function beta9FieldsTransform(fields, controlType, interactionType, customOptions, options, valueViewId) {
+    if (Array.isArray(fields)) {
+        return {
+            relatedView: {
+                fieldType: interactionType,
+                fields: fields.map(function(f) {
+                    return {
+                        name: f.name
+                    }
+                })
+            }
+        }
+    } else {
+        var name = fields.name,
+            type = fields.type,
+            optionsFromColumn = fields.optionsFromColumn,
+            column = fields.column;
+  
+        var valueInfo = {}
+  
+        if (controlType === ControlTypes.Select) {
+            if (interactionType === ControlFieldTypes.Variable && optionsFromColumn) {
+                valueInfo = {
+                    optionType: ControlOptionTypes.Manual,
+                    valueViewId: +valueViewId,
+                    valueField: column
+                }
+            } else {
+                valueInfo = {
+                    optionType: customOptions
+                        ? ControlOptionTypes.Custom
+                        : ControlOptionTypes.Auto,
+                    customOptions: customOptions ? options : void 0,
+                    optionWithVariable: customOptions ? false : void 0
+                }
+            }
+        }
+    
+        return {
+            relatedView: {
+                fieldType: interactionType,
+                fields: [name]
+            },
+            valueInfo: valueInfo
+        }
+    }
 }
 
-function getGlobalFilters(dashboardConfig, dashboardItemId) {
-    var globalFiltersInitialValue = {
+function beta9DefaultValueTransform(type, dynamicDefaultValue, defaultValue) {
+    if (type === ControlTypes.Date) {
+        if (
+            !dynamicDefaultValue ||
+            dynamicDefaultValue === LegacyDatePickerDefaultValues.Custom
+        ) {
+            return {
+                defaultValueType: ControlDefaultValueTypes.Fixed,
+                defaultValue: defaultValue
+            }
+        } else {
+            var transformed
+            switch (dynamicDefaultValue) {
+                case LegacyDatePickerDefaultValues.Today:
+                    transformed = {
+                        valueType: RelativeDateValueType.Current,
+                        value: 0,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Yesterday:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 1,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Week:
+                    transformed = {
+                        valueType: RelativeDateValueType.Current,
+                        value: 0,
+                        type: RelativeDateType.Week
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Day7:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 7,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.LastWeek:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 1,
+                        type: RelativeDateType.Week
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Month:
+                    transformed = {
+                        valueType: RelativeDateValueType.Current,
+                        value: 0,
+                        type: RelativeDateType.Month
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Day30:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 30,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.LastMonth:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 1,
+                        type: RelativeDateType.Month
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Quarter:
+                    transformed = {
+                        valueType: RelativeDateValueType.Current,
+                        value: 0,
+                        type: RelativeDateType.Quarter
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Day90:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 90,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.LastQuarter:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 1,
+                        type: RelativeDateType.Quarter
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Year:
+                    transformed = {
+                        valueType: RelativeDateValueType.Current,
+                        value: 0,
+                        type: RelativeDateType.Year
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.Day365:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 365,
+                        type: RelativeDateType.Day
+                    }
+                    break
+                case LegacyDatePickerDefaultValues.LastYear:
+                    transformed = {
+                        valueType: RelativeDateValueType.Prev,
+                        value: 1,
+                        type: RelativeDateType.Year
+                    }
+                    break
+            }
+            return {
+                defaultValueType: ControlDefaultValueTypes.Dynamic,
+                defaultValue: transformed
+            }
+        }
+    } else {
+        return {
+            defaultValueType: ControlDefaultValueTypes.Fixed,
+            defaultValue: void 0
+        }
+    }
+  }
+
+function controlMigration(control, opts) {
+    var type = control.type,
+        cache = control.cache,
+        expired = control.expired;
+    
+    if (type === ControlTypes.Select && (cache === void 0 || expired === void 0)) {
+        control = Object.assign({}, control, {
+            cache: false,
+            expired: DEFAULT_CACHE_EXPIRED
+        });
+    }
+
+    if (control.interactionType) {
+        if (control.fields) {
+            var interactionType = control.interactionType,
+                customOptions = control.customOptions,
+                options = control.options,
+                dynamicDefaultValue = control.dynamicDefaultValue,
+                defaultValue = control.defaultValue,
+                fields = control.fields;
+            var rest = Object.assign({}, control, {
+                interactionType: void 0,
+                customOptions: void 0,
+                options: void 0,
+                dynamicDefaultValue: void 0,
+                defaultValue: void 0,
+                fields: void 0
+            });
+            var relatedViewAndValueInfo = beta9FieldsTransform(
+                fields,
+                rest.type,
+                interactionType,
+                customOptions,
+                options,
+                opts.viewId
+            );
+            var valueInfo = relatedViewAndValueInfo.valueInfo
+            var defaultValueAndType = beta9DefaultValueTransform(
+                rest.type,
+                dynamicDefaultValue,
+                defaultValue
+            );
+            return Object.assign({}, rest, {
+                relatedViews: {
+                    [opts.viewId]: relatedViewAndValueInfo.relatedView
+                },
+                optionType: valueInfo && valueInfo.optionType,
+                customOptions: valueInfo && valueInfo.customOptions,
+                valueViewId: valueInfo && valueInfo.valueViewId,
+                valueField: valueInfo && valueInfo.valueField,
+                optionWithVariable: valueInfo && valueInfo.optionWithVariable,
+                defaultValueType: defaultValueAndType.defaultValueType,
+                defaultValue: defaultValueAndType.defaultValue,
+                visibility: ControlVisibilityTypes.Visible
+            })
+        } else {
+            var interactionType = control.interactionType,
+                relatedViews = control.relatedViews,
+                customOptions = control.customOptions,
+                options = control.options,
+                dynamicDefaultValue = control.dynamicDefaultValue,
+                defaultValue = control.defaultValue;
+            var rest = Object.assign({}, control, {
+                interactionType: void 0,
+                relatedViews: void 0,
+                customOptions: void 0,
+                options: void 0,
+                dynamicDefaultValue: void 0,
+                defaultValue: void 0
+            });
+            var migratedRelatedViews = {};
+            var valueFieldInfo;
+
+            Object.entries(relatedViews).forEach(function(rvs, index) {
+                var key = rvs[0], value = rvs[1];
+                var relatedViewAndValueInfo = beta9FieldsTransform(
+                    value,
+                    rest.type,
+                    interactionType,
+                    customOptions,
+                    options,
+                    key
+                )
+                migratedRelatedViews[key] = relatedViewAndValueInfo.relatedView
+                if (!index) {
+                    valueFieldInfo = relatedViewAndValueInfo.valueInfo
+                }
+            })
+            var defaultValueAndType = beta9DefaultValueTransform(
+                rest.type,
+                dynamicDefaultValue,
+                defaultValue
+            );
+            return Object.assign({}, rest, {
+                relatedViews: migratedRelatedViews,
+                optionType: valueFieldInfo && valueFieldInfo.optionType,
+                customOptions: valueFieldInfo && valueFieldInfo.customOptions,
+                valueViewId: valueFieldInfo && valueFieldInfo.valueViewId,
+                valueField: valueFieldInfo && valueFieldInfo.valueField,
+                optionWithVariable: valueFieldInfo && valueFieldInfo.optionWithVariable,
+                defaultValueType: defaultValueAndType.defaultValueType,
+                defaultValue: defaultValueAndType.defaultValue,
+                visibility: ControlVisibilityTypes.Visible
+            })
+        }
+    } else {
+        return control
+    }
+}
+
+function dashboardConfigMigration(config, options) {
+    return Object.assign({}, config, {
+        filters: (config.filters || []).map(function(control) {
+            return controlMigration(control, options)
+        }),
+        linkages: config.linkages || [],
+        queryMode:
+          config.queryMode === void 0
+            ? ControlQueryMode.Immediately
+            : config.queryMode
+    })
+}
+
+function beta6DimensionFix(dimension) {
+    var sort = dimension.sort
+    if (typeof sort === 'string') {
+      var sortConfig = {
+        sortType: sort
+      }
+      return Object.assign({}, dimension, {
+        sort: sortConfig
+      })
+    }
+    return dimension
+}
+
+function widgetConfigMigration(config, options) {
+    var mode = config.mode, selectedChart = config.selectedChart;
+    // bar chartStyles migration
+    var chartStyles = Object.assign({}, config.chartStyles);
+    if (mode === 'chart' && selectedChart === ChartTypes.Bar) {
+        var barConfig = chartStyles.bar, barSpec = chartStyles.spec;
+        var defaultBarConfig = {
+            barChart: false,
+            border: {
+              color: '#000',
+              width: 0,
+              type: 'solid',
+              radius: 0
+            },
+            gap: 30,
+            width: null,
+            stack: {
+                on: false,
+                percentage: false,
+                group: [],
+                sum: {
+                    show: false,
+                    font: {
+                        fontFamily: 'PingFang SC',
+                        fontStyle: 'normal',
+                        fontSize: '14px',
+                        fontWeight: 'normal',
+                        fontColor: '#666'
+                    }
+                }
+            }
+        }
+        if (!barConfig) {
+            chartStyles = Object.assign({}, chartStyles, {
+                bar: Object.assign({}, defaultBarConfig, {
+                    barChart: !!barSpec.barChart,
+                    stack: Object.assign({}, defaultBarConfig.stack, {
+                        on: !!barSpec.stack,
+                        percentage: barSpec.percentage
+                    })
+                })
+            })
+        } else {
+            if (!barConfig.stack) {
+                chartStyles = Object.assign({}, chartStyles, {
+                    bar: Object.assign({}, barConfig, {
+                        stack: {
+                            group: [],
+                            sum: {
+                                show: false,
+                                font: {
+                                    fontFamily: 'PingFang SC',
+                                    fontStyle: 'normal',
+                                    fontSize: '14px',
+                                    fontWeight: 'normal',
+                                    fontColor: '#666'
+                                }
+                            },
+                            on: !!barSpec.stack,
+                            percentage: barSpec.percentage
+                        }
+                    })
+                })
+            }
+        }
+    }
+
+    // cols and rows migration
+    var cols = config.cols.map(function(c) { return beta6DimensionFix(c) })
+    var rows = config.rows.map(function(r) { return beta6DimensionFix(r) })
+
+    // autoLoadData migration
+    var autoLoadData = config.autoLoadData === void 0 ? true : config.autoLoadData
+
+    return Object.assign({}, config, {
+        chartStyles,
+        cols,
+        rows,
+        autoLoadData,
+        controls: config.controls.map(function(control) {
+            return controlMigration(control, options)
+        }),
+        queryMode:
+          config.queryMode === void 0
+            ? ControlQueryMode.Manually
+            : config.queryMode,
+        limit: config.limit === void 0 ? null : config.limit
+    })
+}
+
+// #endregion
+
+function getDashboardItemExecuteParam(dashboardConfigJson, widgetConfigJson, viewsJson, itemId) {
+    var dashboardConfig = JSON.parse(dashboardConfigJson || '{}');
+    var widgetConfig = JSON.parse(widgetConfigJson || '{}');
+    var views = JSON.parse(viewsJson || '[]')
+    dashboardConfig = dashboardConfigMigration(dashboardConfig)
+    widgetConfig = widgetConfigMigration(widgetConfig)
+    var formedViews = getFormedViews(views);
+    var globalControlInitialValues = getGlobalControlInitialValues(dashboardConfig, formedViews, +itemId);
+    var localControlInitialValues = getLocalControlInitialValues(widgetConfig, formedViews);
+    var widgetExecuteParam = getWidgetExecuteParam(widgetConfig);
+    widgetExecuteParam.filters = widgetExecuteParam.filters
+        .concat(globalControlInitialValues.filters)
+        .concat(localControlInitialValues.filters);
+    widgetExecuteParam.filters = widgetExecuteParam.filters.map(function(filter) { return JSON.stringify(filter) });
+    widgetExecuteParam.params = widgetExecuteParam.params
+        .concat(globalControlInitialValues.params)
+        .concat(localControlInitialValues.params);
+    return JSON.stringify(widgetExecuteParam);
+}
+
+function getGlobalControlInitialValues(dashboardConfig, formedViews, dashboardItemId) {
+    var globalControlInitialValue = {
         filters: [],
         params: []
     }
     if (!dashboardConfig.filters) {
-        return globalFiltersInitialValue
+        return globalControlInitialValue
     }
 
     for (var i = 0; i < dashboardConfig.filters.length; i++) {
-        var filter = dashboardConfig.filters[i]
-        var key = filter.key,
-            interactionType = filter.interactionType,
-            relatedItems = filter.relatedItems,
-            relatedViews = filter.relatedViews;
-        var defaultValue = deserializeDefaultValue(filter);
+        var control = dashboardConfig.filters[i]
+        var optionWithVariable = control.optionWithVariable,
+            relatedItems = control.relatedItems,
+            relatedViews = control.relatedViews;
+        var defaultValue = getPreciseDefaultValue(control);
         if (defaultValue) {
             Object.entries(relatedItems).forEach(function (_a) {
                 var itemId = _a[0],
@@ -5273,34 +5884,100 @@ function getGlobalFilters(dashboardConfig, dashboardItemId) {
 
                 Object.entries(relatedViews).forEach(function (_b) {
                     var viewId = _b[0],
-                        fields = _b[1];
-                    if (config.checked && config.viewId === Number(viewId)) {
+                        relatedView = _b[1];
+                    if (
+                        config.checked &&
+                        config.viewId === Number(viewId) &&
+                        formedViews[viewId]
+                    ) {
+                        var model = formedViews[viewId].model,
+                            variable = formedViews[viewId].variable;
 
-
-                        var filterValue_1 = interactionType === 'column' ?
-                            getModelValue(filter, fields, defaultValue) :
-                            getVariableValue(filter, fields, defaultValue);
-
-                        if (!globalFiltersInitialValue) {
-                            globalFiltersInitialValue = {
-                                filters: [],
-                                variables: []
+                        if (optionWithVariable) {
+                            var filterValue = getCustomOptionVariableParams(
+                                control,
+                                Number(viewId),
+                                defaultValue,
+                                variable
+                            );
+                            globalControlInitialValue.params = globalControlInitialValue.params.concat(filterValue);
+                        } else {
+                            if (relatedView.fieldType === ControlFieldTypes.Column) {
+                                var filterValue = getFilterParams(
+                                    control,
+                                    relatedView.fields,
+                                    defaultValue,
+                                    model
+                                );
+                                globalControlInitialValue.filters = globalControlInitialValue.filters.concat(filterValue);
+                            } else {
+                                var filterValue = getVariableParams(
+                                    control,
+                                    relatedView.fields,
+                                    defaultValue,
+                                    variable
+                                );
+                                globalControlInitialValue.params = globalControlInitialValue.params.concat(filterValue);
                             }
                         }
-
-                        if (interactionType === 'column') {
-                            globalFiltersInitialValue.filters = globalFiltersInitialValue.filters.concat(filterValue_1);
-                        } else {
-                            globalFiltersInitialValue.params = globalFiltersInitialValue.params.concat(filterValue_1);
-                        }
-
                     }
                 });
             });
         }
     }
-    return globalFiltersInitialValue
+    return globalControlInitialValue;
 }
+
+function getLocalControlInitialValues(widgetConfig, formedViews) {
+    var initialValues = {
+        filters: [],
+        params: []
+    };
+    widgetConfig.controls.forEach(function(control) {
+        var optionWithVariable = control.optionWithVariable,
+            relatedViews = control.relatedViews;
+        var defaultValue = getPreciseDefaultValue(control);
+        if (defaultValue) {
+            Object.entries(relatedViews).forEach(function(_entries) {
+                var viewId = _entries[0],
+                    relatedView = _entries[1];
+                if (formedViews[viewId]) {
+                    var model = formedViews[viewId].model,
+                        variable= formedViews[viewId].variable;
+
+                    if (optionWithVariable) {
+                        var filterValue = getCustomOptionVariableParams(
+                            control,
+                            Number(viewId),
+                            defaultValue,
+                            variable
+                        );
+                        initialValues.params = initialValues.params.concat(filterValue);
+                    } else {
+                        if (relatedView.fieldType === ControlFieldTypes.Column) {
+                            var filterValue = getFilterParams(
+                                control,
+                                relatedView.fields,
+                                defaultValue,
+                                model
+                            );
+                            initialValues.filters = initialValues.filters.concat(filterValue);
+                        } else {
+                            var filterValue = getVariableParams(
+                                control,
+                                relatedView.fields,
+                                defaultValue,
+                                variable
+                            );
+                            initialValues.params = initialValues.params.concat(filterValue);
+                        }
+                    }
+                }
+            })
+        }
+    })
+    return initialValues;
+  }
 
 function getWidgetExecuteParam(widgetConfig) {
     var _widgetConfig = widgetConfig;
@@ -5400,6 +6077,16 @@ function getWidgetExecuteParam(widgetConfig) {
         nativeQuery: nativeQuery
     };
     return requestParams
+}
+
+function getFormedViews(views) {
+    return views.reduce(function(obj, view) {
+        obj[view.id] = Object.assign({}, view, {
+          model: JSON.parse(view.model || '{}'),
+          variable: JSON.parse(view.variable || '[]')
+        })
+        return obj
+      }, {})
 }
 
 // // @TEST dashboard filters
