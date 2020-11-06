@@ -43,8 +43,7 @@ public class SqlFilter {
         FLOAT("FLOAT"),
         DOUBLE("DOUBLE"),
         DECIMAL("DECIMAL"),
-        NUMERIC("NUMERIC"),
-        ;
+        NUMERIC("NUMERIC");
 
         private String type;
 
@@ -66,10 +65,10 @@ public class SqlFilter {
         }
 
         if(Type.relation.equalsIgnoreCase(type)){
-            List<SqlFilter> childs = filter.getChildren();
+            List<SqlFilter> children = filter.getChildren();
             condition.append(Consts.PARENTHESES_START);
-            for(int i=0; i<childs.size(); i++){
-                condition.append(i == 0 ? dealFilter(childs.get(i)) : Consts.SPACE + filter.getValue().toString() + Consts.SPACE + dealFilter(childs.get(i)));
+            for(int i=0; i<children.size(); i++){
+                condition.append(i == 0 ? dealFilter(children.get(i)) : Consts.SPACE + filter.getValue().toString() + Consts.SPACE + dealFilter(children.get(i)));
             }
             condition.append(Consts.PARENTHESES_END);
         }
@@ -95,10 +94,19 @@ public class SqlFilter {
     }
 
     private static String generator(Criterion criterion){
+
         StringBuilder whereClause = new StringBuilder();
+
         if(criterion.isSingleValue()){
             //column='value'
             String value = criterion.getValue().toString();
+
+            if (SqlOperatorEnum.LIKE.getValue().equalsIgnoreCase(criterion.getOperator()) ||
+                    SqlOperatorEnum.NOTLIKE.getValue().equalsIgnoreCase(criterion.getOperator())) {
+                value = value.substring(1, value.length() - 1);
+                value = "'%" + value + "%'";
+            }
+
             whereClause.append(criterion.getColumn() + Consts.SPACE + criterion.getOperator() + Consts.SPACE);
             if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value)){
                 whereClause.append(Consts.APOSTROPHE + value + Consts.APOSTROPHE);
@@ -108,22 +116,25 @@ public class SqlFilter {
 
         }else if(criterion.isBetweenValue()){
             //column>='' and column<=''
-            String value1 = criterion.getValue().toString();
+            String value = criterion.getValue().toString();
+
             whereClause.append(Consts.PARENTHESES_START);
             whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlOperatorEnum.GREATERTHANEQUALS.getValue() + Consts.SPACE);
-            if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value1)){
-                whereClause.append(Consts.APOSTROPHE + value1 + Consts.APOSTROPHE);
+            if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value)){
+                whereClause.append(Consts.APOSTROPHE + value + Consts.APOSTROPHE);
             }else{
-                whereClause.append(value1);
+                whereClause.append(value);
             }
+
             whereClause.append(Consts.SPACE + SqlFilter.Type.and + Consts.SPACE);
             whereClause.append(criterion.getColumn()+ Consts.SPACE + SqlOperatorEnum.MINORTHANEQUALS.getValue() + Consts.SPACE);
-            String value2 = criterion.getSecondValue().toString();
-            if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value2)){
-                whereClause.append(Consts.APOSTROPHE + value2 + Consts.APOSTROPHE);
+            String secondValue = criterion.getSecondValue().toString();
+            if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, secondValue)){
+                whereClause.append(Consts.APOSTROPHE + secondValue + Consts.APOSTROPHE);
             }else{
-                whereClause.append(value2);
+                whereClause.append(secondValue);
             }
+
             whereClause.append(Consts.PARENTHESES_END);
 
         }else if(criterion.isListValue()){
@@ -140,8 +151,7 @@ public class SqlFilter {
             }
             whereClause.append(Consts.PARENTHESES_END);
         }
+
         return whereClause.toString();
     }
-
-
 }

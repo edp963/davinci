@@ -26,7 +26,6 @@ public class Criterion {
 
     private boolean listValue;
 
-
     public Criterion(String column, String operator, Object value, String dataType) {
         super();
         this.column = column;
@@ -55,6 +54,4 @@ public class Criterion {
                 .filter(value -> this.dataType.equalsIgnoreCase(value.getType())).findFirst()
                 .isPresent();
     }
-
-
 }
