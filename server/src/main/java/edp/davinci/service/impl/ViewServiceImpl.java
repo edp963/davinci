@@ -547,7 +547,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             filters.forEach(filter -> whereClauses.add(SqlFilter.dealFilter(filter)));
 
         } catch (Exception e) {
-            log.error("convertFilters error . filterStrs = {}, source = {}, filters = {} , whereClauses = {} ",
+            log.error("ConvertFilters error, filterStrs={}, source={}, filters={} , whereClauses={}",
                     JSON.toJSON(filterStrs), JSON.toJSON(source), JSON.toJSON(filters), JSON.toJSON(whereClauses));
             throw e;
         }
@@ -585,7 +585,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         try {
 
             if (StringUtils.isEmpty(viewWithSource.getSql())) {
-                return paginate;
+                return null;
             }
 
             List<SqlVariable> variables = viewWithSource.getVariables();

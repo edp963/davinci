@@ -13,6 +13,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.charset.Charset;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -92,8 +93,8 @@ public class SourcePasswordEncryptUtils {
 
     @PostConstruct
     public void getEnvironment(){
-        AES_BASE_PATH = this.fileBasePath + "AES\\";
-        RSA_BASE_PATH = this.fileBasePath + "RSA\\";
+        AES_BASE_PATH = this.fileBasePath + "AES" + File.separatorChar;
+        RSA_BASE_PATH = this.fileBasePath + "RSA" + File.separatorChar;
         ENCRYPT_TYPE = this.type;
         MAX_ENCRYPT_SIZE = this.maxEncryptSize;
     }
