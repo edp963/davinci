@@ -70,6 +70,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
         break
       case OperatorTypes.Between:
         valuesCount = 2
+        break
       case OperatorTypes.In:
         valuesCount = conditionValues.length
         break

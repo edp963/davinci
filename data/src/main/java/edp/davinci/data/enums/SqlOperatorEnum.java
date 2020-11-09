@@ -37,6 +37,7 @@ public enum SqlOperatorEnum {
     GREATERTHANEQUALS(">="),
     ISNULL("IS NULL"),
     LIKE("LIKE"),
+    NOTLIKE("NOT LIKE"),
     MINORTHAN("<"),
     MINORTHANEQUALS("<="),
     NOTEQUALSTO("!="),
