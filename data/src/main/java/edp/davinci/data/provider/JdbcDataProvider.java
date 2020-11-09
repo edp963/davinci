@@ -94,7 +94,7 @@ public class JdbcDataProvider extends DataProvider {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
 			Stopwatch stopwatch = Stopwatch.createStarted();
-			getJdbcTemplate(dataSource).execute(sql);
+			getJdbcTemplate(dataSource, config.getDatabase()).execute(sql);
 			logSql(sql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 		} catch (Exception e) {
 			throw new SourceException(e.getMessage());
@@ -110,7 +110,7 @@ public class JdbcDataProvider extends DataProvider {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
 
-			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
+			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource, config.getDatabase());
 
 			int maxRows = paging.getLimit();
 			DatabaseTypeEnum database = DatabaseTypeEnum.featureOf(config.getDatabase());
@@ -265,8 +265,9 @@ public class JdbcDataProvider extends DataProvider {
 		});
 	}
 	
-	private JdbcTemplate getJdbcTemplate(DataSource dataSource) {
+	private JdbcTemplate getJdbcTemplate(DataSource dataSource, String database) {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+		jdbcTemplate.setDatabaseProductName(database);
 		jdbcTemplate.setFetchSize(10);
 		return jdbcTemplate;
 	}
