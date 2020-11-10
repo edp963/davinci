@@ -34,9 +34,13 @@ const SettingItemGroup: React.FC<ISettingItemGroupProps> = (props) => {
   const { param } = props
   const { title, items, visible: cardVisible = true } = param
   return (
-    <Card size="small" title={title}  className={classnames({
-      [utilStyles.hide]: !cardVisible
-    })}>
+    <Card
+      size="small"
+      title={title}
+      className={classnames({
+        [utilStyles.hide]: !cardVisible
+      })}
+    >
       <Row>
         {items.map((item) => (
           <Item key={item.name} item={item} />
