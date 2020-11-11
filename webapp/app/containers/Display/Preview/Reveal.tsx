@@ -24,7 +24,8 @@ import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 import { makeSelectCurrentDisplay } from 'containers/Viz/selectors'
 
 import Reveal from 'reveal.js'
-import 'reveal.js/css/reveal.css'
+import 'reveal.js/dist/reveal.css'
+import RevealZoom from 'reveal.js/plugin/zoom/plugin'
 
 import Display from './Display'
 import { DefaultDisplayParams } from '../components/Setting/constants'
@@ -64,12 +65,7 @@ const DisplayReveal: React.FC = () => {
 
       viewDistance: 100,
 
-      dependencies: [
-        {
-          src: 'plugin/zoom-js/zoom.js',
-          async: true
-        }
-      ]
+      plugins: [RevealZoom]
     })
   }, [])
 
