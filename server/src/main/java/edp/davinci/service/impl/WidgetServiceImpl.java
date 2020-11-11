@@ -54,6 +54,7 @@ import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
+import edp.davinci.dto.widgetDto.WidgetWithViewName;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
@@ -148,7 +149,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
+    public List<WidgetWithViewName> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
@@ -157,7 +158,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             return null;
         }
 
-        List<Widget> widgets = widgetMapper.getByProject(projectId);
+        List<WidgetWithViewName> widgets = widgetMapper.getByProject(projectId);
 
         if (null != widgets) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);

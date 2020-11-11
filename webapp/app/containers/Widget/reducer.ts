@@ -105,10 +105,15 @@ const widgetReducer = (
         break
       case ActionTypes.COPY_WIDGET_SUCCESS:
         const fromWidgetId = action.payload.fromWidgetId
+        const copyWidgetIndex = draft.widgets.findIndex(({ id }) => id === fromWidgetId)
         draft.widgets.splice(
-          draft.widgets.findIndex(({ id }) => id === fromWidgetId) + 1,
+          copyWidgetIndex + 1,
           0,
-          action.payload.result
+          {
+            ...action.payload.result,
+            viewName: draft.widgets[copyWidgetIndex].viewName
+          }
+         
         )
         draft.loading = false
         break
