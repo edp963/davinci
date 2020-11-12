@@ -485,8 +485,8 @@ function mappingFilters(sourceDataFilter, group): IFilter[] {
     return []
   }
 
-  const mappgingSource = sourceDataFilter.map(
-    (source) => (source && source[group] ? source[group] : '') // 这里过滤条件没取到的话，不能直接给source。
+  const mappgingSource = sourceDataFilter.map((source) =>
+    source && source[group] ? source[group] : ''
   )
   const sqlType = getSqlType(group)
   return [
