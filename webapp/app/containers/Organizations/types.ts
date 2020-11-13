@@ -87,6 +87,8 @@ export interface IMembersState {
   formVisible: boolean
   modalLoading: boolean
   currentMember: IOrganizationMember
+  notUsersModalVisible: boolean
+  notUsers: string[],
   changeRoleFormCategory: string
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
@@ -107,11 +109,10 @@ export interface IMembersProps {
   ) => any
   currentOrganization: IOrganization
   inviteMemberList: any
-  onInviteMember: (ordId: number, members: number[], needEmail: boolean, resolve: () => void) => any
+  onInviteMember: (ordId: number, members: string[], needEmail: boolean, resolve: (result: any) => void) => any
   handleSearchMember: (keywords: string) => any
   onGetRoleListByMemberId: onGetRoleListByMemberId
 }
-
 
 export interface IProjectsStates {
   formType?: string
@@ -195,7 +196,7 @@ export interface IOrganizationProps {
   currentOrganizationProjects: IProject[]
   currentOrganizationProjectsDetail: {total?: number, list: IProject[]}
   currentOrganizationMembers: IOrganizationMember[]
-  onInviteMember: (ordId: number, members: number[], needEmail: boolean, resolve: () => void) => any
+  onInviteMember: (ordId: number, members: string[], needEmail: boolean, resolve: (result: any) => void) => any
   onSearchMember: (keywords: string) => any
   onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
   onLoadCollectProjects: () => any

@@ -28,5 +28,5 @@ public class InviteMembers {
     private boolean needConfirm = true;
 
     @Size(min = 1, message = "At least one invited member")
-    private Set<Long> members;
+    private Set<String> members;
 }
