@@ -341,7 +341,7 @@ export function* inviteMember(action: OrganizationActionType) {
     const result = asyncData.payload
     yield put(OrganizationActions.inviteMemberSuccess(result))
     if (resolve) {
-      resolve()
+      resolve(result)
     }
   } catch (err) {
     yield put(OrganizationActions.inviteMemberFail())

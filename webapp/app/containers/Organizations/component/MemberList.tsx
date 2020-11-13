@@ -46,11 +46,12 @@ import {
   IMembers,
   ISetRange
 } from '../types'
+import NotUsersList from './NotUsersList'
 
 export class MemberList extends React.PureComponent<
   IMembersProps,
   IMembersState
-> {
+  > {
   constructor(props) {
     super(props)
     this.state = {
@@ -60,6 +61,8 @@ export class MemberList extends React.PureComponent<
       currentMember: null,
       formVisible: false,
       modalLoading: false,
+      notUsersModalVisible: false,
+      notUsers: [],
       changeRoleFormVisible: false,
       changeRoleModalLoading: false,
       organizationMembers: [],
@@ -148,7 +151,13 @@ export class MemberList extends React.PureComponent<
       if (!err) {
         const { members, needEmail } = values
         const orgId = currentOrganization.id
-        this.props.onInviteMember(orgId, members, needEmail, () => {
+        this.props.onInviteMember(orgId, members, needEmail, (result) => {
+          if (result && result.notUsers.length) {
+            this.setState({
+              notUsersModalVisible: true,
+              notUsers: result.notUsers
+            })
+          }
           this.props.loadOrganizationsMembers(Number(orgId))
         })
         this.hideMemberForm()
@@ -193,10 +202,16 @@ export class MemberList extends React.PureComponent<
     if (nextOrgMembers && nextOrgMembers !== organizationMembers) {
       keywords && keywords.length
         ? this.updateOrganizationMembers(
-            this.getOrgMembersBysearch(nextOrgMembers, keywords)
-          )
+          this.getOrgMembersBysearch(nextOrgMembers, keywords)
+        )
         : this.updateOrganizationMembers(nextOrgMembers)
     }
+  }
+
+  private hideNotUsersModal = () => {
+    this.setState({
+      notUsersModalVisible: false
+    })
   }
 
   private searchMember = (searchValue: string) => {
@@ -268,7 +283,9 @@ export class MemberList extends React.PureComponent<
       changeRoleFormVisible,
       changeRoleModalLoading,
       changeRoleFormCategory,
-      organizationMembers
+      organizationMembers,
+      notUsersModalVisible,
+      notUsers
     } = this.state
     const { inviteMemberList, currentOrganization, loginUser } = this.props
     let CreateButton = void 0
@@ -339,11 +356,11 @@ export class MemberList extends React.PureComponent<
                     </Popconfirm>
                   </>
                 ) : (
-                  ''
-                )
+                    ''
+                  )
               ) : (
-                ''
-              )}
+                  ''
+                )}
             </span>
           )
         }
@@ -402,6 +419,18 @@ export class MemberList extends React.PureComponent<
             submitLoading={changeRoleModalLoading}
             wrappedComponentRef={this.refHandles.ChangeRoleForm}
             changeHandler={this.changRole}
+          />
+        </Modal>
+        <Modal
+          title={null}
+          visible={notUsersModalVisible}
+          footer={null}
+          onCancel={this.hideNotUsersModal}
+        >
+          <NotUsersList 
+            category={category}
+            notUsers={notUsers}
+            hideHandler={this.hideNotUsersModal}
           />
         </Modal>
       </div>
