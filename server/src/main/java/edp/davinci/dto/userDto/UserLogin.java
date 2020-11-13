@@ -28,10 +28,10 @@ import javax.validation.constraints.Pattern;
 @Data
 public class UserLogin {
 
-    @NotBlank(message = "username cannot be EMPTY")
+    @NotBlank(message = "Username cannot be empty")
     private String username;
 
-    @NotBlank(message = "password cannot be EMPTY")
+    @NotBlank(message = "Password cannot be empty")
     @Pattern(regexp = Constants.REG_USER_PASSWORD, message = "密码长度为6-20位")
     private String password;
 }

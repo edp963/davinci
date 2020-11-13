@@ -46,7 +46,7 @@ public class LoadSupportDataSourceRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Map<String, List<String>> dataSourceVersions = CustomDataSourceUtils.getDataSourceVersoin();
+        Map<String, List<String>> dataSourceVersions = CustomDataSourceUtils.getDataSourceVersion();
 
         for (DataTypeEnum dataTypeEnum : DataTypeEnum.values()) {
             if (dataSourceVersions.containsKey(dataTypeEnum.getFeature())) {

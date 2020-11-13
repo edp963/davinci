@@ -1,22 +1,7 @@
 package edp.davinci.service.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import edp.core.common.quartz.ScheduleService;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.FileUtils;
@@ -29,6 +14,19 @@ import edp.davinci.model.CronJob;
 import edp.davinci.model.User;
 import edp.davinci.service.screenshot.ImageContent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service("weChatWorkScheduleService")
@@ -82,21 +80,21 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
 
         for (ImageContent imageContent : images) {
             if (null == imageContent || imageContent.getImageFile() == null) {
-                log.error("CronJob({}) image is null !", cronJob.getId());
+                log.error("CronJob({}) image is null!", cronJob.getId());
                 return;
             }
             File imageContentFile = imageContent.getImageFile();
             // 将大于2M的图片进行压缩
             if (imageContentFile.length() > (2 * 1024 * 1024)) {
-                scheduleLogger.info("image size must be less than 2M, the size is {} !", imageContentFile.length());
+                scheduleLogger.info("Image size must be less than 2M, the size is {} !", imageContentFile.length());
 
-                scheduleLogger.info("image start to compressed!", imageContentFile.getPath());
+                scheduleLogger.info("Image start to compressed!", imageContentFile.getPath());
                 File file = FileUtils.compressedImage(imageContent.getImageFile().getPath());
 
-                scheduleLogger.info("image compressed successfully! the size is: {}.", file.length());
+                scheduleLogger.info("Image compressed successfully! the size is {}.", file.length());
                 imageContent.setImageFile(file);
 
-                scheduleLogger.info("the original image has been replaced with a new image(path: {})!", imageContentFile.getPath());
+                scheduleLogger.info("The original image has been replaced with a new image, path:{}!", imageContentFile.getPath());
             }
             
             scheduleLogger.info("CronJob({}) is ready to request WeChatWork API", cronJob.getId());
@@ -149,7 +147,7 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
             resMap.put("md5", MD5Util.byteToString(b));
             return resMap;
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
         }
         return null;
     }

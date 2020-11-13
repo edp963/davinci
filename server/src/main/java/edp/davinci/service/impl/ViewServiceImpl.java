@@ -158,7 +158,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
     public ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         ViewWithSourceBaseInfo view = viewMapper.getViewWithSourceBaseInfo(id);
         if (null == view) {
-            throw new NotFoundException("view is not found");
+            throw new NotFoundException("View is not found");
         }
 
         ProjectDetail projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
@@ -180,12 +180,12 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
 
         Source source = viewWithSource.getSource();
         if (null == source) {
-            throw new NotFoundException("source is not found");
+            throw new NotFoundException("Source is not found");
         }
 
         String sql = viewWithSource.getSql();
         if (StringUtils.isEmpty(sql)) {
-            throw new NotFoundException("sql is not found");
+            throw new NotFoundException("Sql is not found");
         }
 
         SQLContext context = new SQLContext();
@@ -239,7 +239,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
 
         // 测试连接
         if (!sqlUtils.init(source).testConnection()) {
-            throw new ServerException("get source connection fail");
+            throw new ServerException("Get source connection fail");
         }
 
         BaseLock lock = getLock(entity, name, projectId);
@@ -251,10 +251,10 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             View view = new View().createdBy(user.getId());
             BeanUtils.copyProperties(viewCreate, view);
             if (viewMapper.insert(view) <= 0) {
-                throw new ServerException("create view fail");
+                throw new ServerException("Create view fail");
             }
 
-            optLogger.info("view ({}) is create by user (:{})", view.toString(), user.getId());
+            optLogger.info("View({}) is create by user({})", view.toString(), user.getId());
 
             if (!CollectionUtils.isEmpty(viewCreate.getRoles()) && !StringUtils.isEmpty(viewCreate.getVariable())) {
                 checkAndInsertRoleParam(viewCreate.getVariable(), viewCreate.getRoles(), user, view);
@@ -276,8 +276,8 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
     private Source getSource(Long id) {
         Source source = sourceMapper.getById(id);
         if (null == source) {
-            log.error("source (:{}) not found", id);
-            throw new NotFoundException("source is not found");
+            log.error("Source({}) not found", id);
+            throw new NotFoundException("Source is not found");
         }
         return source;
     }
@@ -323,10 +323,10 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             view.updatedBy(user.getId());
 
             if (viewMapper.update(view) <= 0) {
-                throw new ServerException("update view fail");
+                throw new ServerException("Update view fail");
             }
 
-            optLogger.info("view ({}) is updated by user(:{}), origin: ({})", view.toString(), user.getId(), originStr);
+            optLogger.info("View({}) is update by user({}), origin:{}", view.toString(), user.getId(), originStr);
 
             if (CollectionUtils.isEmpty(viewUpdate.getRoles())) {
                 relRoleViewMapper.deleteByViewId(id);
@@ -346,8 +346,8 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
     private View getView(Long id) {
         View view = viewMapper.getById(id);
         if (null == view) {
-            log.error("view ({}) not found", id);
-            throw new NotFoundException("view is not found");
+            log.error("View({}) not found", id);
+            throw new NotFoundException("View is not found");
         }
         return view;
     }
@@ -382,10 +382,10 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         if (viewMapper.deleteById(id) <= 0) {
-            throw new ServerException("delete view fail");
+            throw new ServerException("Delete view fail");
         }
 
-        optLogger.info("view ( {} ) delete by user( :{} )", view.toString(), user.getId());
+        optLogger.info("View({}) is delete by user({})", view.toString(), user.getId());
         relRoleViewMapper.deleteByViewId(id);
         return true;
     }
@@ -496,8 +496,8 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
     private ViewWithSource getViewWithSource(Long id) {
         ViewWithSource viewWithSource = viewMapper.getViewWithSource(id);
         if (null == viewWithSource) {
-            log.info("view (:{}) not found", id);
-            throw new NotFoundException("view is not found");
+            log.info("View({}) not found", id);
+            throw new NotFoundException("View is not found");
         }
         return viewWithSource;
     }
@@ -629,7 +629,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                                 return paginate;
                             }
                         } catch (Exception e) {
-                            log.warn("get data by cache: {}", e.getMessage());
+                            log.warn("Get data by cache error, {}", e.getMessage());
                         }
                     }
                 }
@@ -642,7 +642,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
 
@@ -714,7 +714,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                                 return (List) object;
                             }
                         } catch (Exception e) {
-                            log.warn("get distinct value by cache: {}", e.getMessage());
+                            log.warn("Get distinct value by cache error, {}", e.getMessage());
                         }
                     }
                 }
@@ -733,7 +733,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
 
@@ -822,7 +822,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                     throw new ServerException(e.getMessage());
                 }
             } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
+                log.error(e.toString(), e);
             } finally {
                 executorService.shutdown();
             }

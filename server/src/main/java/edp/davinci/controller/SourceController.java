@@ -19,47 +19,14 @@
 
 package edp.davinci.controller;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.alibaba.druid.util.StringUtils;
-
 import edp.core.annotation.CurrentUser;
 import edp.core.model.DBTables;
 import edp.core.model.TableInfo;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.sourceDto.DatasourceType;
-import edp.davinci.dto.sourceDto.DbBaseInfo;
-import edp.davinci.dto.sourceDto.SourceCatalogInfo;
-import edp.davinci.dto.sourceDto.SourceCreate;
-import edp.davinci.dto.sourceDto.SourceDBInfo;
-import edp.davinci.dto.sourceDto.SourceDataUpload;
-import edp.davinci.dto.sourceDto.SourceDetail;
-import edp.davinci.dto.sourceDto.SourceInfo;
-import edp.davinci.dto.sourceDto.SourceTableInfo;
-import edp.davinci.dto.sourceDto.SourceTest;
-import edp.davinci.dto.sourceDto.UploadMeta;
+import edp.davinci.dto.sourceDto.*;
 import edp.davinci.model.Source;
 import edp.davinci.model.User;
 import edp.davinci.service.SourceService;
@@ -67,7 +34,18 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/sources", tags = "sources", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "sources not found"))
@@ -315,7 +293,7 @@ public class SourceController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Upload file can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -395,7 +373,7 @@ public class SourceController extends BaseController {
         }
 
         if (StringUtils.isEmpty(tableName)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

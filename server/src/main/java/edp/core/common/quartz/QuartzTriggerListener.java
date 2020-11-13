@@ -48,7 +48,7 @@ public class QuartzTriggerListener implements TriggerListener {
         JobDataMap jobDataMap = trigger.getJobDataMap();
         jobDataMap.forEach((k, v) -> {
             ScheduleJob scheduleJob = (ScheduleJob) v;
-            log.warn("Scheduler is misfired :{}", scheduleJob.getId());
+            log.warn("Scheduler({}) is misfired", scheduleJob.getId());
         });
     }
 

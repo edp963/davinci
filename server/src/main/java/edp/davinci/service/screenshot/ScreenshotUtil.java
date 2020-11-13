@@ -211,7 +211,7 @@ public class ScreenshotUtil {
 
     private WebDriver generateChromeDriver() throws ExecutionException {
         if (!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)) {
-            scheduleLogger.info("user RemoteWebDriver ({})", REMOTE_WEBDRIVER_URL);
+            scheduleLogger.info("User remoteWebDriver:{}", REMOTE_WEBDRIVER_URL);
             try {
                 return new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
             } catch (MalformedURLException ex) {

@@ -55,13 +55,13 @@ public abstract class BaseEntityService {
 	}
 
 	protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {
-		log.warn("the {} name ({}) is already taken", entity.getSource(), name);
-		throw new ServerException("the " + entity.getSource() + " name is already taken");
+		log.warn("The {} name({}) is already taken", entity.getSource(), name);
+		throw new ServerException("The " + entity.getSource() + " name is already taken");
 	}
 
 	protected void alertUnAuthorized(CheckEntityEnum entity, User user, String operation) throws ServerException {
-		log.warn("user ({}) don't have permission to {} this {}", user.getId(), operation, entity.getSource());
-		throw new UnAuthorizedException("you don't have permission to " + operation + " this " + entity.getSource());
+		log.warn("User({}) don't have permission to {} this {}", user.getId(), operation, entity.getSource());
+		throw new UnAuthorizedException("You don't have permission to " + operation + " this " + entity.getSource());
 	}
 
 	protected ProjectPermission getProjectPermission(Long projectId, User user) {

@@ -73,7 +73,7 @@ public class ElasticConfigration {
             this.client = preBuiltTransportClient.addTransportAddresses(transportAddresses);
         }
 
-        log.info("ElasticsearchClient connect success [{}].", JSON.toJSON(this.client.transportAddresses()));
+        log.info("ElasticsearchClient connect success {}.", JSON.toJSON(this.client.transportAddresses()));
     }
 
     @PreDestroy

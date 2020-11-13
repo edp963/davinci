@@ -48,28 +48,28 @@ public class CheckServiceImpl implements CheckService {
     	ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (StringUtils.isEmpty(name)) {
-            log.info("the name of entity({}) is EMPTY", checkEntityEnum.getClazz());
+            log.info("The name of entity({}) is empty", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                return resultMap.fail().message("name is EMPTY");
+                return resultMap.fail().message("Name is empty");
             }
-            return resultMap.failAndRefreshToken(request).message("name is EMPTY");
+            return resultMap.failAndRefreshToken(request).message("Name is empty");
         }
 
         try {
             String clazz = Class.forName(checkEntityEnum.getClazz()).getTypeName();
             if (StringUtils.isEmpty(clazz)) {
-                log.info("not found entity type : {}", checkEntityEnum.getClazz());
+                log.info("Not found entity type:{}", checkEntityEnum.getClazz());
                 if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                    return resultMap.fail().message("not supported entity type");
+                    return resultMap.fail().message("Not supported entity type");
                 }
-                return resultMap.failAndRefreshToken(request).message("not supported entity type");
+                return resultMap.failAndRefreshToken(request).message("Not supported entity type");
             }
         } catch (ClassNotFoundException e) {
-            log.error("not supported entity type : {}", checkEntityEnum.getClazz());
+            log.error("Not supported entity type:{}", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                resultMap.fail().message("not supported entity type");
+                resultMap.fail().message("Not supported entity type");
             }
-            return resultMap.failAndRefreshToken(request).message("not supported entity type");
+            return resultMap.failAndRefreshToken(request).message("Not supported entity type");
         }
 
         CheckEntityService checkEntityService = (CheckEntityService) beanFactory.getBean(checkEntityEnum.getService());

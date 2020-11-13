@@ -27,16 +27,16 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @Data
-@NotNull(message = "user info cannot be null")
+@NotNull(message = "User info cannot be null")
 public class UserRegist {
-    @NotBlank(message = "username cannot be EMPTY")
+    @NotBlank(message = "Username cannot be empty")
     private String username;
 
-    @NotBlank(message = "email cannot be EMPTY")
-    @Pattern(regexp = Constants.REG_EMAIL_FORMAT, message = "invalid email format")
+    @NotBlank(message = "Email cannot be empty")
+    @Pattern(regexp = Constants.REG_EMAIL_FORMAT, message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "password cannot be EMPTY")
+    @NotBlank(message = "Password cannot be empty")
     @Pattern(regexp = Constants.REG_USER_PASSWORD, message = "密码长度为6-20位")
     private String password;
 

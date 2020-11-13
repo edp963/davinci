@@ -63,8 +63,8 @@ public class QuartzHandler {
                     DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
                     scheduleJob.getCronExpression()
             };
-            log.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
-            scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+            log.warn("ScheduleJob({}), currentTime:{} is not within the planned execution time, startTime:{}, endTime:{}, cronExpression:{}", args);
+            scheduleLogger.warn("ScheduleJob({}), currentTime:{} is not within the planned execution time, startTime:{}, endTime:{}, cronExpression:{}", args);
             throw new ServerException("Current time is not within the planned execution time!");
         }
 
@@ -72,8 +72,8 @@ public class QuartzHandler {
         TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME_PREFIX + scheduleJob.getId());
         CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
         if (null != trigger) {
-            log.warn("ScheduleJob (:{}) already started!", scheduleJob.getId());
-            scheduleLogger.warn("ScheduleJob (:{}) already started!", scheduleJob.getId());
+            log.warn("ScheduleJob({}) already started!", scheduleJob.getId());
+            scheduleLogger.warn("ScheduleJob({}) already started!", scheduleJob.getId());
             throw new ServerException("job already started!");
         }
 
@@ -98,8 +98,8 @@ public class QuartzHandler {
                 DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
                 scheduleJob.getCronExpression()
         };
-        log.info("ScheduleJob (:{}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
-        scheduleLogger.info("ScheduleJob (:{}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+        log.info("ScheduleJob({}) is added to the scheduler, startTime:{}, endTime:{}, cronExpression:{}", args);
+        scheduleLogger.info("ScheduleJob({}) is added to the scheduler, startTime:{}, endTime:{}, cronExpression:{}", args);
 
         if (!scheduler.isStarted()) {
             scheduler.start();
@@ -117,11 +117,11 @@ public class QuartzHandler {
                 scheduler.pauseTrigger(triggerKey);
                 scheduler.unscheduleJob(triggerKey);
                 scheduler.deleteJob(JobKey.jobKey(scheduleJob.getId().toString()));
-                log.info("ScheduleJob (:{}) removed finish!", triggerKey.getName());
-                scheduleLogger.info("ScheduleJob (:{}) removed finish!", triggerKey.getName());
+                log.info("ScheduleJob({}) removed finish!", triggerKey.getName());
+                scheduleLogger.info("ScheduleJob({}) removed finish!", triggerKey.getName());
             } else {
-                log.info("ScheduleJob (:{}) not found", triggerKey.getName());
-                scheduleLogger.info("ScheduleJob (:{}) not found", triggerKey.getName());
+                log.info("ScheduleJob({}) not found", triggerKey.getName());
+                scheduleLogger.info("ScheduleJob({}) not found", triggerKey.getName());
             }
         } catch (Exception e) {
             throw new ServerException(e.getMessage());

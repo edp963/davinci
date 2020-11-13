@@ -10,7 +10,7 @@ import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 
 @Data
-@NotNull(message = "terminal info cannot be null")
+@NotNull(message = "Terminal info cannot be null")
 public class DavinciStatisticTerminalInfo {
 
     @NotNull

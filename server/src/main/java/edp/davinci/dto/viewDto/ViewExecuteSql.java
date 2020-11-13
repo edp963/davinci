@@ -28,10 +28,10 @@ import java.util.List;
 
 @Data
 public class ViewExecuteSql {
-    @Min(value = 1L, message = "Invalid Source Id")
+    @Min(value = 1L, message = "Invalid source id")
     private Long sourceId;
 
-    @NotBlank(message = "sql cannot be EMPTY")
+    @NotBlank(message = "Sql cannot be empty")
     private String sql;
 
     private List<SqlVariable> variables;

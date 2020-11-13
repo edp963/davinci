@@ -44,11 +44,12 @@ source:
   min-idle: 1
   max-wait: 30000
   max-active: 10
-  break-after-acquire-failure: true
+  break-after-acquire-failure: false
   connection-error-retry-attempts: 1
   time-between-eviction-runs-millis: 2000
   min-evictable-idle-time-millis: 600000
   max-evictable-idle-time-millis: 900000
+  time-between-connect-error-millis: 60000
   test-while-idle: true
   test-on-borrow: false
   test-on-return: false
@@ -87,7 +88,7 @@ spring:
     time-between-eviction-runs-millis: 2000
     min-evictable-idle-time-millis: 600000
     max-evictable-idle-time-millis: 900000
-    time-between-connect-error-millis: 5000
+    time-between-connect-error-millis: 60000
     test-while-idle: true
     test-on-borrow: false
     test-on-return: false

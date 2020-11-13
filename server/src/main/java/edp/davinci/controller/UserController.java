@@ -95,7 +95,7 @@ public class UserController extends BaseController {
                                    HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The activate token can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -103,8 +103,7 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.activateUserNoLogin(token, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -197,8 +196,7 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.changeUserPassword(user, changePassword.getOldPassword(), changePassword.getPassword(), request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -230,7 +228,7 @@ public class UserController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("avatar file can not be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Avatar file can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -239,7 +237,7 @@ public class UserController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -260,7 +258,7 @@ public class UserController extends BaseController {
                                    @ApiIgnore @CurrentUser User user,
                                    HttpServletRequest request) {
         if (StringUtils.isEmpty(keyword)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("keyword can not EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Keyword can not empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         List<UserBaseInfo> users = userService.getUsersByKeyword(keyword, user, orgId, includeSelf);
@@ -287,8 +285,7 @@ public class UserController extends BaseController {
             ResultMap resultMap = userService.getUserProfile(id, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -329,7 +326,7 @@ public class UserController extends BaseController {
         if (res) {
             return ResponseEntity.ok(new ResultMap().success());
         } else {
-            throw new ServerException("reset password fail");
+            throw new ServerException("Reset password fail");
         }
     }
 

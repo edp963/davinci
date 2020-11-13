@@ -117,7 +117,7 @@ public class ShareServiceImpl implements ShareService {
         ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         User loginUser = userService.userLogin(userLogin);
         if (null == loginUser) {
-            throw new NotFoundException("user is not found");
+            throw new NotFoundException("User is not found");
         }
 
         if (!shareFactor.getViewers().contains(loginUser.getId())) {
@@ -129,7 +129,7 @@ public class ShareServiceImpl implements ShareService {
 
         //是否激活
         if (!loginUser.getActive()) {
-            throw new ServerException("this user is not active");
+            throw new ServerException("This user is not active");
         }
         return loginUser;
     }
@@ -551,7 +551,7 @@ public class ShareServiceImpl implements ShareService {
         if (!StringUtils.isEmpty(username)) {
             User shareUser = userMapper.selectByUsername(username);
             if (null == shareUser) {
-                throw new ServerException("user : \"" + username + "\" not found");
+                throw new ServerException("User : \"" + username + "\" not found");
             }
             tokenUserName += Constants.SPLIT_CHAR_STRING + username;
             tokenPassword += (Constants.SPLIT_CHAR_STRING + shareUser.getId());

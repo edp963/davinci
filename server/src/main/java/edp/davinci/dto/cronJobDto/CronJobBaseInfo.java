@@ -28,29 +28,29 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @Data
-@NotNull(message = "cron job info cannot be null")
+@NotNull(message = "Cron job info cannot be null")
 public class CronJobBaseInfo {
 
-    @NotBlank(message = "cron job name cannot be EMPTY")
+    @NotBlank(message = "Cron job name cannot be EMPTY")
     private String name;
 
-    @Min(value = 1L, message = "Invalid project Id")
+    @Min(value = 1L, message = "Invalid project id")
     private Long projectId;
 
-    @NotBlank(message = "cron job type cannot be EMPTY")
+    @NotBlank(message = "Cron job type cannot be empty")
     private String jobType;
 
-    @NotBlank(message = "cron job config cannot be EMPTY")
+    @NotBlank(message = "Cron job config cannot be empty")
     private String config;
 
     @NotBlank(message = "Invalid cron pattern")
     private String cronExpression;
 
-    @NotBlank(message = "start time cannot be EMPTY")
+    @NotBlank(message = "Start time cannot be empty")
     @Pattern(regexp = DateUtils.DATE_HMS_REGEX, message = "Unparseable start date format")
     private String startDate;
 
-    @NotBlank(message = "end time cannot be EMPTY")
+    @NotBlank(message = "End time cannot be empty")
     @Pattern(regexp = DateUtils.DATE_HMS_REGEX, message = "Unparseable end date format")
     private String endDate;
 

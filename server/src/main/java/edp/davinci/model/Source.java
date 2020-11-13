@@ -71,7 +71,7 @@ public class Source extends BaseSource {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
             url = jsonObject.getString("url");
         } catch (Exception e) {
-            log.error("get jdbc url from source config, {}", e.getMessage());
+            log.error("Get jdbc url from source config error", e);
         }
         return url;
     }
@@ -94,7 +94,7 @@ public class Source extends BaseSource {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
             username = jsonObject.getString("username");
         } catch (Exception e) {
-            log.error("get jdbc user from source config, {}", e.getMessage());
+            log.error("Get jdbc user from source config error", e);
         }
         return username;
     }
@@ -117,7 +117,7 @@ public class Source extends BaseSource {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
             password = jsonObject.getString("password");
         } catch (Exception e) {
-            log.error("get jdbc password from source config, {}", e.getMessage());
+            log.error("Get jdbc password from source config error", e);
         }
         return password;
     }
@@ -179,7 +179,7 @@ public class Source extends BaseSource {
                 }
             }
         } catch (Exception e) {
-            log.error("get jdbc properties from source config, {}", e.getMessage());
+            log.error("Get jdbc properties from source config error", e);
         }
         return dicts;
     }
@@ -195,7 +195,7 @@ public class Source extends BaseSource {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
             params = jsonObject.getString("parameters");
         } catch (Exception e) {
-            log.error("get jdbc parameters from source config, {}", e.getMessage());
+            log.error("Get jdbc parameters from source config error", e);
         }
         return params;
     }
