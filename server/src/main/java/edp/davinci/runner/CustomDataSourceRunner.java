@@ -46,7 +46,7 @@ public class CustomDataSourceRunner implements ApplicationRunner {
         try {
             CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
         } catch (Exception e) {
-            log.error("{}", e.getMessage());
+            log.error(e.toString(), e);
             SpringApplication.exit(applicationContext);
             log.info("Server shutdown");
         }

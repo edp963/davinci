@@ -26,10 +26,10 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "role info cannot be null")
+@NotNull(message = "Role info cannot be null")
 public class RoleCreate {
 
-    @NotBlank(message = "role name cannot be EMPTY")
+    @NotBlank(message = "Role name cannot be empty")
     private String name;
 
     private String description;

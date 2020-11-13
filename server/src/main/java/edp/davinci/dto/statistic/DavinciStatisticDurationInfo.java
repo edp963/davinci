@@ -10,7 +10,7 @@ import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 
 @Data
-@NotNull(message = "duration info cannot be null")
+@NotNull(message = "Duration info cannot be null")
 public class DavinciStatisticDurationInfo {
 
     @NotNull

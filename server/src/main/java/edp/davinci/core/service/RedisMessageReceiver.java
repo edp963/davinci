@@ -39,7 +39,7 @@ public class RedisMessageReceiver {
 
     public void receive(RedisMessageEntity messageEntity) {
         if (messageEntity != null && messageEntity.getMessage() != null) {
-            log.info("[ Redis ({}) received message, start handle......]", DAVINCI_TOPIC_CHANNEL);
+            log.info("Redis({}) received message, start handle......", DAVINCI_TOPIC_CHANNEL);
             RedisMessageHandler handler = (RedisMessageHandler) beanFactory.getBean(messageEntity.getClazz());
             handler.handle(messageEntity.getMessage(), messageEntity.getFlag());
         }

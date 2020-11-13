@@ -25,9 +25,9 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "copy display info cannot be null")
+@NotNull(message = "Copy display info cannot be null")
 public class DisplayCopy {
-    @NotBlank(message = "display name cannot be EMPTY")
+    @NotBlank(message = "Display name cannot be empty")
     private String name;
     private String description;
     private Boolean publish = false;

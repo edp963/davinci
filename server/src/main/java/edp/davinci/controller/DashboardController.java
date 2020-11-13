@@ -381,7 +381,7 @@ public class DashboardController extends BaseController {
         }
 
         if (null == memDashboardWidgetCreates || memDashboardWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("dashboard widgets info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Dashboard widgets info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

@@ -138,10 +138,10 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
             BeanUtils.copyProperties(displayInfo, display);
 
             if (displayMapper.insert(display) <= 0) {
-                throw new ServerException("create display fail");
+                throw new ServerException("Create display fail");
             }
 
-            optLogger.info("display ({}) is create by (:{})", display.toString(), user.getId());
+            optLogger.info("Display({}) is create by user({})", display.toString(), user.getId());
 
             if (!CollectionUtils.isEmpty(displayInfo.getRoleIds())) {
                 List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
@@ -151,7 +151,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
                 if (!CollectionUtils.isEmpty(list)) {
                     relRoleDisplayMapper.insertBatch(list);
-                    optLogger.info("display ({}) limit role ({}) access", display.getId(),
+                    optLogger.info("Display({}) limit role({}) access", display.getId(),
                             roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
                 }
             }
@@ -203,7 +203,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         DisplayWithProject displayWithProject = displayMapper.getDisplayWithProjectById(id);
 
         if (null == displayWithProject) {
-            log.info("display (:{}) is not found", id);
+            log.info("Display({}) is not found", id);
         }
 
         if (null == displayWithProject && isThrow) {
@@ -264,10 +264,10 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
             display.updatedBy(user.getId());
 
             if (displayMapper.update(display) <= 0) {
-                throw new ServerException("update display fail");
+                throw new ServerException("Update display fail");
             }
 
-            optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
+            optLogger.info("Display({}) is update by user({}), origin:{}", display.toString(), user.getId(), origin);
             if (displayUpdate.getRoleIds() != null) {
                 relRoleDisplayMapper.deleteByDisplayId(display.getId());
                 if (!CollectionUtils.isEmpty(displayUpdate.getRoleIds())) {
@@ -277,7 +277,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
                             .collect(Collectors.toList());
                     if (!CollectionUtils.isEmpty(list)) {
                         relRoleDisplayMapper.insertBatch(list);
-                        optLogger.info("update display ({}) limit role ({}) access", display.getId(),
+                        optLogger.info("Update display({}) limit role({}) access", display.getId(),
                                 roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
                     }
                 }
@@ -347,8 +347,8 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         try {
             avatar = fileUtils.upload(file, Constants.DISPLAY_AVATAR_PATH, fileName);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new ServerException("display cover picture upload error");
+            log.error(e.toString(), e);
+            throw new ServerException("Display cover picture upload error");
         }
 
         return avatar;
@@ -361,7 +361,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         DisplayWithProject displayWithProject = getDisplayWithProject(id, true);
 
         if (null == displayWithProject.getProject()) {
-            log.info("project is not found");
+            log.error("Project({}) is not found", id);
             throw new NotFoundException("project is not found");
         }
 
@@ -400,13 +400,13 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         if (vizVisibility.isVisible()) {
             if (relRoleDisplayMapper.delete(display.getId(), role.getId()) > 0) {
-                optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role,
+                optLogger.info("Display({}) can be accessed by role({}), update by user({})", display, role,
                         user.getId());
             }
         } else {
             RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
             relRoleDisplayMapper.insert(relRoleDisplay);
-            optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+            optLogger.info("Display({}) limit role({}) access, create by user({})", display, role, user.getId());
         }
 
         return true;
@@ -452,9 +452,9 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
         display.setPublish(copy.getPublish());
         display.createdBy(user.getId());
         if (displayMapper.insert(display) <= 0) {
-            throw new ServerException("copy display fail");
+            throw new ServerException("Copy display fail");
         }
-        optLogger.info("display ({}) is copied by user (:{}) from ({})", display.toString(), user.getId(), originDisplay.toString());
+        optLogger.info("Display({}) is copied by user({}), from ({})", display.toString(), user.getId(), originDisplay.toString());
 
         // copy relRoleDisplay
         if (!CollectionUtils.isEmpty(copy.getRoleIds())) {
@@ -465,7 +465,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
             if (!CollectionUtils.isEmpty(list)) {
                 relRoleDisplayMapper.insertBatch(list);
-                optLogger.info("display ({}) limit role ({}) access", display.getId(),
+                optLogger.info("Display({}) limit role({}) access", display.getId(),
                         roles.stream().map(Role::getId).collect(Collectors.toList()));
             }
         }

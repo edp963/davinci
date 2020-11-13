@@ -28,12 +28,12 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "display slide widget info cannot be null")
+@NotNull(message = "Display slide widget info cannot be null")
 public class MemDisplaySlideWidgetCreate {
 
     private Long id;
 
-    @NotBlank(message = "name cannot be EMPTY")
+    @NotBlank(message = "Name cannot be empty")
     private String name;
 
     @Min(value = 1L, message = "Invalid display slide id")
@@ -48,7 +48,7 @@ public class MemDisplaySlideWidgetCreate {
 
     private Integer index = 0;
 
-    @NotBlank(message = "type cannot be EMPTY")
+    @NotBlank(message = "Type cannot be EMPTY")
     private String params;
 
     private List<Long> roleIds;

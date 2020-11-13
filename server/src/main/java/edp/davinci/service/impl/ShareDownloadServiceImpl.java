@@ -77,12 +77,12 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
                     .withTaskKey("ShareDownload_" + uuid)
                     .build();
             ExecutorUtil.submitWorkbookTask(workBookContext, null);
-            log.info("Share download task submit: {}", wrapper);
+            log.info("Share download task submit:{}", wrapper);
             return true;
         } catch (UnAuthorizedException | ServerException e) {
             throw e;
         } catch (Exception e) {
-            log.error("submit download task error,e=", e);
+            log.error("Submit download task error", e);
             return false;
         }
     }

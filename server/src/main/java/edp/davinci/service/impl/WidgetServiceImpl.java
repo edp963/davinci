@@ -184,8 +184,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         Widget widget = widgetMapper.getById(id);
 
         if (null == widget) {
-            log.info("widget {} not found", id);
-            throw new NotFoundException("widget is not found");
+            log.info("Widget({}) is not found", id);
+            throw new NotFoundException("Widget is not found");
         }
 
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
@@ -229,10 +229,10 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             Widget widget = new Widget().createdBy(user.getId());
             BeanUtils.copyProperties(widgetCreate, widget);
             if (widgetMapper.insert(widget) <= 0) {
-                throw new ServerException("create widget fail");
+                throw new ServerException("Create widget fail");
             }
 
-            optLogger.info("widget ({}) create by user(:{})", widget.toString());
+            optLogger.info("Widget({}) is create by user({})", widget.toString());
             return widget;
 
         } finally {
@@ -242,8 +242,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     private void checkView(Long id) {
         if (null == viewMapper.getById(id)) {
-            log.info("view (:{}) is not found", id);
-            throw new NotFoundException("view not found");
+            log.info("View({}) is not found", id);
+            throw new NotFoundException("View not found");
         }
     }
 
@@ -283,10 +283,10 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             BeanUtils.copyProperties(widgetUpdate, widget);
             widget.updatedBy(user.getId());
             if (widgetMapper.update(widget) <= 0) {
-                throw new ServerException("update widget fail");
+                throw new ServerException("Update widget fail");
             }
 
-            optLogger.info("widget ({}) is updated by user(:{}), origin: ({})", widget.toString(), user.getId(),
+            optLogger.info("Widget({}) is update by user({}), origin:{}", widget.toString(), user.getId(),
                     originStr);
             return true;
 
@@ -298,8 +298,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     private Widget getWidget(Long id) {
         Widget widget = widgetMapper.getById(id);
         if (null == widget) {
-            log.info("widget (:{}) is not found", id);
-            throw new NotFoundException("widget is not found");
+            log.info("Widget({}) is not found", id);
+            throw new NotFoundException("Widget is not found");
         }
         return widget;
     }
@@ -323,7 +323,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         memDisplaySlideWidgetMapper.deleteByWidget(id);
         widgetMapper.deleteById(id);
 
-        optLogger.info("widget ( {} ) delete by user( :{} )", widget.toString(), user.getId());
+        optLogger.info("Widget({}) is delete by user({})", widget.toString(), user.getId());
         return true;
     }
 
@@ -363,7 +363,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         //校验权限
         if (!projectPermission.getDownloadPermission()) {
-            log.info("User({}) have not permission to download the widget {}", user.getUsername(), id);
+            log.info("User({}) have not permission to download the widget({})", user.getUsername(), id);
             throw new UnAuthorizedException("You have not permission to download the widget");
         }
 
@@ -493,7 +493,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType,
                             widget.getConfig(), executeParam.getParams());
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    log.error(e.toString(), e);
                 } finally {
                     sheet = null;
                     countDownLatch.countDown();

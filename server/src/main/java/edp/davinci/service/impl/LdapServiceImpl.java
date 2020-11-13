@@ -110,7 +110,7 @@ public class LdapServiceImpl implements LdapService {
 				ldapPerson = search.get(0);
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 		} finally {
 			if (null != ctx) {
 				LdapUtils.closeContext(ctx);
@@ -128,8 +128,8 @@ public class LdapServiceImpl implements LdapService {
         user.setPassword(LDAP_USER_PASSWORD);
 
         if (userMapper.insert(user) <= 0) {
-            log.error("ldap regist fail: email({})", user.getEmail());
-            throw new ServerException("ldap regist fail: unspecified error");
+            log.error("Ldap regist fail, email({})", user.getEmail());
+            throw new ServerException("Ldap regist fail");
         }
         
         String orgName = user.getUsername() + "'s Organization";

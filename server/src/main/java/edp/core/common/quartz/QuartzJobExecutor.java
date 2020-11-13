@@ -66,7 +66,7 @@ public class QuartzJobExecutor implements Job {
                          DateUtils.toyyyyMMddHHmmss(scheduleJob.getEndDate()),
                          scheduleJob.getCronExpression()
                  };
-                 scheduleLogger.warn("ScheduleJob (:{}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+                 scheduleLogger.warn("ScheduleJob({}), currentTime:{} is not within the planned execution time, startTime:{}, endTime:{}, cronExpression:{}", args);
                  return;
             }
 
@@ -74,7 +74,7 @@ public class QuartzJobExecutor implements Job {
 			ScheduleService scheduleService = (ScheduleService) SpringContextHolder
 					.getBean(jobType + "ScheduleService");
 			if (StringUtils.isEmpty(jobType) || scheduleService == null) {
-				scheduleLogger.warn("Unknown job type [{}], jobId(:{})", jobType, scheduleJob.getId());
+				scheduleLogger.warn("Unknown job type {}, jobId:{}", jobType, scheduleJob.getId());
 				return;
 			}
 			

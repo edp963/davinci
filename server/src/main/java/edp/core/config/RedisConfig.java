@@ -43,7 +43,7 @@ public class RedisConfig {
     public RedisTemplate<String, Object> initRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = null;
         if (isRedisEnable) {
-            log.info("InitRedisTemplate");
+            log.info("Init redisTemplate");
             redisTemplate = (RedisTemplate<String, Object>) beanFactory.getBean("redisTemplate");
 
             redisTemplate.setKeySerializer(new StringRedisSerializer());
@@ -54,7 +54,7 @@ public class RedisConfig {
             redisTemplate.afterPropertiesSet();
 
             //用于测试连接
-            log.info("redis client count: {}", redisTemplate.getClientList().size());
+            log.info("Redis client count:{}", redisTemplate.getClientList().size());
         }
         return redisTemplate;
     }

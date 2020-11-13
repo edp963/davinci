@@ -63,8 +63,7 @@ public class StarController extends BaseController {
             ResultMap resultMap = starService.starAndUnstar(Constants.STAR_TARGET_PROJECT, id, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -82,8 +81,7 @@ public class StarController extends BaseController {
             ResultMap resultMap = starService.getStarUserListByTarget(Constants.STAR_TARGET_PROJECT, id, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -97,8 +95,7 @@ public class StarController extends BaseController {
             ResultMap resultMap = starService.getStarListByUser(Constants.STAR_TARGET_PROJECT, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString(), e);
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }

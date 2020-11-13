@@ -42,7 +42,7 @@ public class CustomDataSourceUtils {
     private static volatile Map<String, CustomDataSource> customDataSourceMap = new HashMap<>();
 
     @Getter
-    private static volatile Map<String, List<String>> dataSourceVersoin = new HashMap<String, List<String>>();
+    private static volatile Map<String, List<String>> dataSourceVersion = new HashMap<String, List<String>>();
 
     public static CustomDataSource getInstance(String jdbcUrl, String version) {
         String dataSourceName = SourceUtils.getDataSourceName(jdbcUrl);
@@ -114,8 +114,8 @@ public class CustomDataSourceUtils {
             }
 
             List<String> versoins = null;
-            if (dataSourceVersoin.containsKey(customDataSource.getName())) {
-                versoins = dataSourceVersoin.get(customDataSource.getName());
+            if (dataSourceVersion.containsKey(customDataSource.getName())) {
+                versoins = dataSourceVersion.get(customDataSource.getName());
             } else {
                 versoins = new ArrayList<>();
             }
@@ -129,7 +129,7 @@ public class CustomDataSourceUtils {
                 versoins.remove(0);
             }
 
-            dataSourceVersoin.put(customDataSource.getName(), versoins);
+            dataSourceVersion.put(customDataSource.getName(), versoins);
             customDataSourceMap.put(getKey(customDataSource.getName(), customDataSource.getVersion()), customDataSource);
         }
     }

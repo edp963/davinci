@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@NotNull(message = "visitor operation info cannot be null")
+@NotNull(message = "Visitor operation info cannot be null")
 public class DavinciStatisticVisitorOperationInfo {
 
     @NotNull

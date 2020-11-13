@@ -102,7 +102,7 @@ public class DownloadController extends BaseController {
             is = new FileInputStream(new File(record.getPath()));
             Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
-            log.error("getDownloadRecordFile error,id=" + id + ",e=", e);
+            log.error("GetDownloadRecordFile error, id=" + id, e);
         } finally {
             FileUtils.closeCloseable(is);
         }
@@ -154,7 +154,7 @@ public class DownloadController extends BaseController {
             is = new FileInputStream(new File(record.getPath()));
             Streams.copy(is, response.getOutputStream(), true);
         } catch (Exception e) {
-            log.error("getShareDownloadRecordFile error,id=" + id + ",e=", e);
+            log.error("GetShareDownloadRecordFile error, id=" + id, e);
         } finally {
             FileUtils.closeCloseable(is);
         }

@@ -320,7 +320,7 @@ public class FileUtils {
         DecimalFormat df = new DecimalFormat("0.000");
         String rate = df.format((float)compressedLength  / originLength);
         float result=  Float.valueOf(rate) * 100;
-        scheduleLogger.info("compression {}/{}={}%",compressedLength,originLength,result);
+        scheduleLogger.info("Compression {}/{}={}%",compressedLength,originLength,result);
         return result;
     }
 

@@ -100,8 +100,8 @@ public class SourceUtils {
                 DataSource dataSource = getDataSource(jdbcSourceInfo);
                 return dataSource.getConnection();
             } catch (Exception e) {
-                log.error("get connection error, jdbcUrl: {}", jdbcSourceInfo.getJdbcUrl());
-                throw new SourceException("get connection error, jdbcUrl: " + jdbcSourceInfo.getJdbcUrl() + " you can try again later or reset datasource");
+                log.error("Get connection error, jdbcUrl:{}", jdbcSourceInfo.getJdbcUrl());
+                throw new SourceException("Get connection error, jdbcUrl:" + jdbcSourceInfo.getJdbcUrl() + " you can try again later or reset datasource");
             }
         }
         return conn;
@@ -139,7 +139,7 @@ public class SourceUtils {
             try {
                 connection.close();
             } catch (Exception e) {
-                log.error("connection release error", e.getMessage());
+                log.error("Connection release error", e);
             }
         }
     }
@@ -149,7 +149,7 @@ public class SourceUtils {
             try {
                 rs.close();
             } catch (Exception e) {
-                log.error("resultSet close error", e.getMessage());
+                log.error("ResultSet close error", e);
             }
         }
     }

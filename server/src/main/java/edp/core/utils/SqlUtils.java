@@ -137,7 +137,7 @@ public class SqlUtils {
         try {
             jdbcTemplate().execute(sql);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             throw new ServerException(e.getMessage());
         }
     }
@@ -447,7 +447,7 @@ public class SqlUtils {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             return dbList;
         } finally {
             SourceUtils.releaseConnection(connection);
@@ -616,7 +616,7 @@ public class SqlUtils {
                 primaryKeys.add(rs.getString("COLUMN_NAME"));
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
         } finally {
             SourceUtils.closeResult(rs);
         }
@@ -647,7 +647,7 @@ public class SqlUtils {
                 columnList.add(new QueryColumn(rs.getString("COLUMN_NAME"), rs.getString("TYPE_NAME")));
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
         } finally {
             SourceUtils.closeResult(rs);
         }
@@ -699,13 +699,13 @@ public class SqlUtils {
     public void executeBatch(String sql, Set<QueryColumn> headers, List<Map<String, Object>> datas) throws ServerException {
 
         if (StringUtils.isEmpty(sql)) {
-            log.info("execute batch sql is EMPTY");
-            throw new ServerException("execute batch sql is EMPTY");
+            log.error("Execute batch sql is empty");
+            throw new ServerException("Execute batch sql is empty");
         }
 
         if (CollectionUtils.isEmpty(datas)) {
-            log.info("execute batch data is EMPTY");
-            throw new ServerException("execute batch data is EMPTY");
+            log.error("Execute batch data is empty");
+            throw new ServerException("Execute batch data is empty");
         }
 
         Connection connection = null;
@@ -807,12 +807,12 @@ public class SqlUtils {
                 connection.commit();
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             if (null != connection) {
                 try {
                     connection.rollback();
                 } catch (SQLException se) {
-                    log.error(se.getMessage(), se);
+                    log.error(se.toString(), se);
                 }
             }
             throw new ServerException(e.getMessage(), e);
@@ -821,7 +821,7 @@ public class SqlUtils {
                 try {
                     pstmt.close();
                 } catch (SQLException e) {
-                    log.error(e.getMessage(), e);
+                    log.error(e.toString(), e);
                     throw new ServerException(e.getMessage(), e);
                 }
             }

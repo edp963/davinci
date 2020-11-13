@@ -130,15 +130,15 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         String username = userRegist.getUsername();
         //用户名是否已经注册
         if (isExist(username, null, null)) {
-            log.info("the username {} has been registered", username);
-            throw new ServerException("the username:" + username + " has been registered");
+            log.info("The username({}) has been registered", username);
+            throw new ServerException("The username:" + username + " has been registered");
         }
 
         String email = userRegist.getEmail();
         //邮箱是否已经注册
         if (isExist(email, null, null)) {
-            log.info("the email {} has been registered", email);
-            throw new ServerException("the email:" + email + " has been registered");
+            log.info("The email({}) has been registered", email);
+            throw new ServerException("The email:" + email + " has been registered");
         }
 
         BaseLock usernameLock = getLock(entity, username, null);
@@ -162,8 +162,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             BeanUtils.copyProperties(userRegist, user);
             //添加用户
             if (userMapper.insert(user) <= 0) {
-                log.info("regist fail: {}", userRegist.toString());
-                throw new ServerException("regist fail: unspecified error");
+                log.info("Regist fail, userRegist:{}", userRegist.toString());
+                throw new ServerException("Regist fail, unspecified error");
             }
             //添加成功，发送激活邮件
             sendMail(user.getEmail(), user);
@@ -198,14 +198,14 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         if (insert > 0) {
             return user;
         } else {
-            log.info("regist fail: {}", oauthUser.getName());
-            throw new ServerException("regist fail: unspecified error");
+            log.info("Regist fail, username:{}", oauthUser.getName());
+            throw new ServerException("Regist fail, unspecified error");
         }
     }
 
     protected void alertNameTaken(CheckEntityEnum entity, String name) throws ServerException {
-        log.warn("the {} username or email ({}) has been registered", entity.getSource(), name);
-        throw new ServerException("the " + entity.getSource() + " username or email has been registered");
+        log.warn("The {} username or email {} has been registered", entity.getSource(), name);
+        throw new ServerException("The " + entity.getSource() + " username or email has been registered");
     }
 
     /**
@@ -249,13 +249,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
                 return user;
             }
 
-            log.info("username({}) password is wrong", username);
-            throw new ServerException("username or password is wrong");
+            log.info("Username({}) password is wrong", username);
+            throw new ServerException("Username or password is wrong");
         }
 
         user = ldapAutoRegist(username, password);
         if (user == null) {
-            throw new ServerException("username or password is wrong");
+            throw new ServerException("Username or password is wrong");
         }
         return user;
     }
@@ -281,13 +281,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         LdapPerson ldapPerson = ldapService.findByUsername(username, password);
         if (null == ldapPerson) {
-            throw new ServerException("username or password is wrong");
+            throw new ServerException("Username or password is wrong");
         }
 
         String email = ldapPerson.getEmail();
         if (userMapper.existEmail(ldapPerson.getEmail())) {
-            log.info("ldap auto regist fail: the email {} has been registered", email);
-            throw new ServerException("ldap auto regist fail: the email " + email + " has been registered");
+            log.info("Ldap auto regist fail, the email {} has been registered", email);
+            throw new ServerException("Ldap auto regist fail: the email " + email + " has been registered");
         }
 
         if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
@@ -334,8 +334,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
     @Transactional
     public boolean updateUser(User user) throws ServerException {
         if (userMapper.updateBaseInfo(user) <= 0) {
-            log.info("update user fail, username: {}", user.getUsername());
-            throw new ServerException("update user fail");
+            log.info("Update user fail, username:{}", user.getUsername());
+            throw new ServerException("Update user fail");
         }
         return true;
     }
@@ -482,8 +482,8 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
                 return resultMap.failAndRefreshToken(request).message("user avatar upload error");
             }
         } catch (Exception e) {
-            log.error("user avatar upload error, username: {}, error: {}", user.getUsername(), e.getMessage());
-            return resultMap.failAndRefreshToken(request).message("user avatar upload error");
+            log.error("User avatar upload error, username:{}", user.getUsername(), e);
+            return resultMap.failAndRefreshToken(request).message("User avatar upload error");
         }
 
         //删除原头像
@@ -564,11 +564,11 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             case EMAIL:
                 String email = ticket.getTicket();
                 if (StringUtils.isEmpty(email)) {
-                    throw new ServerException("email cannot be EMPTY!");
+                    throw new ServerException("Email cannot be empty!");
                 }
                 Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
                 if (!matcher.find()) {
-                    throw new ServerException("invalid email format!");
+                    throw new ServerException("Invalid email format!");
                 }
                 user = userMapper.selectByUsername(email);
                 if (user == null) {
