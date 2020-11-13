@@ -276,7 +276,6 @@ export function getRequestParams(
     cache,
     expired
   } = widget.config
-
   const customOrders = cols
     .concat(rows)
     .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)

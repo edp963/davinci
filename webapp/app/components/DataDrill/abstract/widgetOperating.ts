@@ -292,8 +292,8 @@ export default class OperatingWidget extends OperateObjectAbstract {
   }
 }
 
-function filterByName(target) {
-  return target.filter((t) => t.name !== '指标名字')
+export function filterByName(target) {
+  return target.filter((t) => t.name !== '指标名称')
 }
 
 function filterByCategory(target) {
