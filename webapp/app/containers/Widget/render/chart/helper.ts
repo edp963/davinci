@@ -84,21 +84,10 @@ export function getDoubleYExtendInterval(initExtent, splitNumber) {
     nf = 10
   }
   interval = nf * exp10
-  interval = exponent >= -20 ? +formatDecimal(interval, 2) : interval
+  interval = +interval
   minExtent = round(Math.floor(minExtent / interval) * interval)
   maxExtent = round(Math.ceil(maxExtent / interval) * interval)
   return { minExtent, maxExtent, interval }
-}
-
-export function formatDecimal(num, decimal) {
-  num = num.toString()
-  const index = num.indexOf('.')
-  if (index !== -1) {
-    num = num.substring(0, decimal + index + 1)
-  } else {
-    num = num.substring(0)
-  }
-  return parseFloat(num).toFixed(decimal)
 }
 
 export function strip(num: numType, precision = 3): number {
@@ -196,7 +185,6 @@ export function getMetricsExtendMinAndMax(
     divide(leftExtentMin, leftInterval),
     divide(rightExtentMin, rightInterval)
   ]
-
   if (leftExtentMin > 0 && rightExtentMin > 0) {
     maxCount = Math.max(leftMaxPartCount, rightMaxPartCount)
     minCount = Math.max(leftMinPartCount, rightMinPartCount)
