@@ -126,7 +126,7 @@ export interface IPaginationParams {
   withPaging: boolean
 }
 
-interface IWidgetConfigBase {
+export interface IWidgetConfigBase {
   data: object[]
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]

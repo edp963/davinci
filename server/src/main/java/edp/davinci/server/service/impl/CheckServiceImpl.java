@@ -65,9 +65,9 @@ public class CheckServiceImpl implements CheckService {
                 return resultMap.failAndRefreshToken(request).message("Not supported entity type");
             }
         } catch (ClassNotFoundException e) {
-            log.error("not supported entity type : {}", checkEntityEnum.getClazz());
+            log.error("Not supported entity type:{}", checkEntityEnum.getClazz());
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
-                resultMap.fail().message("not supported entity type");
+                resultMap.fail().message("Not supported entity type");
             }
             return resultMap.failAndRefreshToken(request).message("Not supported entity type");
         }

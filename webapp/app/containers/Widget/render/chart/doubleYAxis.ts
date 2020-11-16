@@ -32,7 +32,7 @@ import {
 import { getFormattedValue } from 'containers/Widget/components/Config/Format'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
-import { getMetricsExtendMinAndMax, formatDecimal } from './helper'
+import { getMetricsExtendMinAndMax } from './helper'
 export default function (chartProps: IChartProps, drillOptions) {
   const {
     data,
@@ -194,7 +194,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         key: 'yAxisIndex0',
         min: rightExtentMin,
         max: rightExtentMax,
-        interval: +formatDecimal(rightInterval, 2),
+        interval: +rightInterval,
         position: 'right',
         showTitleAndUnit: true,
         name: getYAxisName(secondaryMetrics),
@@ -213,7 +213,7 @@ export default function (chartProps: IChartProps, drillOptions) {
         key: 'yAxisIndex1',
         min: leftExtentMin,
         max: leftExtentMax,
-        interval: +formatDecimal(leftInterval, 2),
+        interval: +leftInterval,
         position: 'left',
         showTitleAndUnit: true,
         name: getYAxisName(metrics),

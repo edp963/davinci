@@ -52,7 +52,9 @@ import utilStyles from 'assets/less/util.less'
 import { useTablePagination } from 'utils/hooks'
 import ModulePermission from 'containers/Account/components/checkModulePermission'
 import { initializePermission } from 'containers/Account/components/checkUtilPermission'
-import { IWidgetBase } from './types'
+import { IWidgetBase, IWidgetFormed } from './types'
+import widgetlibs from './config'
+import { IWidgetConfigBase } from './components/Widget'
 
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
@@ -60,17 +62,10 @@ const mapStateToProps = createStructuredSelector({
   currentProject: makeSelectCurrentProject()
 })
 
-const columns: Array<ColumnProps<IWidgetBase>> = [
-  {
-    title: '名称',
-    dataIndex: 'name',
-    sorter: (a, b) => (a.name > b.name ? 1 : -1)
-  },
-  {
-    title: '描述',
-    dataIndex: 'description'
-  }
-]
+const columnTitle = {
+  name: 'Widget名称',
+  viewName: 'View名称'
+}
 
 const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
   const dispatch = useDispatch()
@@ -133,9 +128,8 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
     []
   )
 
-  const [tempFilterWidgetName, setTempFilterWidgetName] = useState('')
-  const [filterWidgetName, setFilterWidgetName] = useState('')
-  const [filterDropdownVisible, setFilterDropdownVisible] = useState(false)
+  const [filterText, setFilterText] = useState('')
+  const [filterColumnKey, setFilterColumnKey] = useState('')
   const [tableSorter, setTableSorter] = useState<SorterResult<IWidgetBase>>(
     null
   )
@@ -146,12 +140,12 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
     if (!Array.isArray(widgets) || !widgets.length) {
       return []
     }
-    const regex = new RegExp(filterWidgetName, 'gi')
+    const regex = new RegExp(filterText, 'gi')
     const filterWidgets = widgets.filter(
-      (v) => v.name.match(regex) || v.description.match(regex)
+      (v) => v.name.match(regex) || v.viewName.match(regex) || v.description.match(regex)
     )
     return filterWidgets
-  }, [filterWidgetName, widgets])
+  }, [filterText, widgets])
 
   const { widgetPermission, AdminButton, EditButton } = useMemo(
     () => ({
@@ -173,49 +167,71 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
     [currentProject]
   )
 
-  const filterWidgetNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTempFilterWidgetName(e.target.value)
-      setFilterWidgetName('')
-    },
-    []
-  )
-  const searchWidget = useCallback((value: string) => {
-    setFilterWidgetName(value)
-    setFilterDropdownVisible(false)
+  const searchWidget = useCallback((value: string, dataIndex: string) => {
+    setFilterText(value)
+    setFilterColumnKey(dataIndex)
   }, [])
 
-  const tableColumns = [...columns]
-  tableColumns[0].filterDropdown = (
-    <SearchFilterDropdown
-      placeholder="名称"
-      value={tempFilterWidgetName}
-      onChange={filterWidgetNameChange}
-      onSearch={searchWidget}
-    />
-  )
-  tableColumns[0].filterDropdownVisible = filterDropdownVisible
-  tableColumns[0].onFilterDropdownVisibleChange = useCallback(
-    (visible: boolean) => setFilterDropdownVisible(visible),
-    []
-  )
-  tableColumns[0].sortOrder =
-    tableSorter && tableSorter.columnKey === 'name' ? tableSorter.order : void 0
-  if (filterWidgetName) {
-    const regex = new RegExp(`(${filterWidgetName})`, 'gi')
-    tableColumns[0].render = (text: string) => (
-      <span
-        dangerouslySetInnerHTML={{
-          __html: text.replace(
-            regex,
-            `<span class="${utilStyles.highlight}">$1</span>`
-          )
-        }}
+  const getFilterProps = (dataIndex: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys }) => (
+      <SearchFilterDropdown
+        placeholder={columnTitle[dataIndex]}
+        value={selectedKeys[0]}
+        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+        onSearch={() => searchWidget(selectedKeys[0], dataIndex)}
       />
-    )
+    ),
+    sortOrder: tableSorter && tableSorter.columnKey === dataIndex ? tableSorter.order : void 0,
+    render: (text: string) => {
+      const regex = new RegExp(`(${filterText})`, 'gi')
+      return (filterText && filterColumnKey === dataIndex ? (
+        <span
+          dangerouslySetInnerHTML={{
+            __html: text.replace(
+              regex,
+              `<span class="${utilStyles.highlight}">$1</span>`
+            )
+          }}
+        />
+      ) : (
+          text
+        ))
+    }
+  });
+
+  const mappingIcon = (widgetConfig: IWidgetConfigBase) => {
+    const selectedChart = widgetConfig.selectedChart
+    const mode = widgetlibs[widgetConfig.mode]
+    return mode[selectedChart - 1].icon
   }
+
+  const columns: Array<ColumnProps<IWidgetFormed>> = [
+    {
+      title: columnTitle.name,
+      dataIndex: 'name',
+      sorter: (a, b) => (a.name > b.name ? 1 : -1),
+      ...getFilterProps('name'),
+      render: (_, record) => (
+        <div>
+          <i className={`iconfont ${mappingIcon(record.config)}`}></i>
+          <span style={{marginLeft: 8}}>{record.name}</span>
+        </div>
+      )
+    },
+    {
+      title: columnTitle.viewName,
+      dataIndex: 'viewName',
+      sorter: (a, b) => (a.name > b.name ? 1 : -1),
+      ...getFilterProps('viewName')
+    },
+    {
+      title: '描述',
+      dataIndex: 'description'
+    }
+  ]
+
   if (widgetPermission) {
-    tableColumns.push({
+    columns.push({
       title: '操作',
       key: 'action',
       align: 'center',
@@ -298,7 +314,7 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
                     rowKey="id"
                     bordered
                     dataSource={filterWidgets}
-                    columns={tableColumns}
+                    columns={columns}
                     pagination={tablePagination}
                     loading={loading}
                     onChange={tableChange}

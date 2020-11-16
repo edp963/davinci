@@ -33,7 +33,7 @@ public class KafkaConfigration {
         if(StringUtils.isBlank(servers)){
             return;
         }
-        log.info("kafka.bootstrap.servers : {}", servers);
+        log.info("Kafka.bootstrap.servers:{}", servers);
 
         String krb5 = environment.getProperty("statistic.java.security.krb5.conf");
         String keytab = environment.getProperty("statistic.java.security.keytab");
