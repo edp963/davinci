@@ -43,13 +43,13 @@ const AddForm: React.FC<IInviteMemberProps & FormComponentProps> = (
   const getOptions = useMemo(() => {
     return inviteMemberList && inviteMemberList.length
       ? inviteMemberList.slice(0, 20).map((d) => (
-          <Option key={`${uuid}${d.username}`} value={d.id}>
-            <div className={styles.options}>
-              <strong>{d.username}</strong>
-              <span className={styles.email}>{d.email}</span>
-            </div>
-          </Option>
-        ))
+        <Option key={`${uuid}${d.username}`} value={d.email}>
+          <div className={styles.options}>
+            <strong>{d.username}</strong>
+            <span className={styles.email}>{d.email}</span>
+          </div>
+        </Option>
+      ))
       : []
   }, [inviteMemberList])
 
@@ -72,7 +72,9 @@ const AddForm: React.FC<IInviteMemberProps & FormComponentProps> = (
               'members'
             )(
               <Select
-                mode="multiple"
+                mode="tags"
+                placeholder={'请搜索或粘贴用户名/邮箱（以英文逗号或英文分号分隔）'}
+                tokenSeparators={[',', ';']}
                 showSearch
                 filterOption={false}
                 onSearch={debouncedSearch}
