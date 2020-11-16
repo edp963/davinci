@@ -131,6 +131,7 @@ public class DownloadController extends BaseController {
                                                   @RequestParam(required = false) String password,
                                                   @PathVariable(name = "uuid") String uuid,
                                                   @PathVariable(name = "type") String type,
+                                                  @ApiIgnore @CurrentUser User user,
                                                   @Valid @RequestBody(required = false) DownloadViewExecuteParam[] params) {
 
         List<DownloadViewExecuteParam> downloadViewExecuteParams = Arrays.asList(params);
