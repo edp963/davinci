@@ -16,21 +16,12 @@
  *  >>
  */
 
-package edp.davinci.dto.organizationDto;
+package edp.davinci.dto.widgetDto;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import edp.davinci.dto.userDto.UserBaseInfo;
+import edp.davinci.model.Widget;
 import lombok.Data;
 
-import java.util.Set;
-
 @Data
-public class BatchInviteMemberResult {
-
-    @JSONField(serialize = false)
-    private int status;
-
-    private Set<UserBaseInfo> successes;
-    private Set<String> notUsers;
-    private Set<UserBaseInfo> exists;
+public class WidgetWithViewName extends Widget {
+    private String viewName;
 }

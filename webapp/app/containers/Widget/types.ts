@@ -28,6 +28,7 @@ export interface IWidgetBase {
   type: number
   viewId: number
   projectId: number
+  viewName?: string
 }
 
 export interface IWidgetRaw extends IWidgetBase {
