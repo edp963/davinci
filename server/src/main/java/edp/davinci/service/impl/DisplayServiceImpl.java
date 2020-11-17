@@ -226,7 +226,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         Display display = displayMapper.getById(displayUpdate.getId());
         if (null == display) {
-            throw new NotFoundException("display is not found");
+            throw new NotFoundException("Display is not found");
         }
 
         Long projectId = displayUpdate.getProjectId();
@@ -362,7 +362,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
 
         if (null == displayWithProject.getProject()) {
             log.error("Project({}) is not found", id);
-            throw new NotFoundException("project is not found");
+            throw new NotFoundException("Project is not found");
         }
 
         Long projectId = displayWithProject.getProjectId();
@@ -395,7 +395,7 @@ public class DisplayServiceImpl extends VizCommonService implements DisplayServi
             throws NotFoundException, UnAuthorizedException, ServerException {
         Display display = displayMapper.getById(vizVisibility.getId());
         if (null == display) {
-            throw new NotFoundException("display is not found");
+            throw new NotFoundException("Display is not found");
         }
 
         if (vizVisibility.isVisible()) {

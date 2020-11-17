@@ -81,7 +81,7 @@ public class ExcelUtils {
 
             //前两行表示列名和类型
             if (sheet.getLastRowNum() < 1) {
-                throw new ServerException("EMPTY excel");
+                throw new ServerException("Empty excel");
             }
             //列
             Row headerRow = sheet.getRow(0);
@@ -94,7 +94,6 @@ public class ExcelUtils {
                     headers.add(new QueryColumn(headerRow.getCell(i).getStringCellValue(),
                             SqlUtils.formatSqlType(typeRow.getCell(i).getStringCellValue())));
                 } catch (Exception e) {
-                    e.printStackTrace();
                     if (e instanceof NullPointerException) {
                         throw new ServerException("Unknown Type");
                     }
@@ -118,7 +117,6 @@ public class ExcelUtils {
             dataUploadEntity.setValues(values);
 
         } catch (ServerException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
@@ -138,7 +136,6 @@ public class ExcelUtils {
                 throw new ServerException("Invalid excel file");
             }
         } catch (IOException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         } finally {
             FileUtils.closeCloseable(inputStream);

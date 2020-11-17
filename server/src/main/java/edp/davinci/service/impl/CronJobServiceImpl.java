@@ -329,7 +329,7 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 					cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 					cronJobMapper.update(cronJob);
 				} catch (ServerException e) {
-					log.warn("CronJob:({}), start error, {", cronJob.getId(), e.getMessage());
+					log.warn("CronJob:({}), start error, {}", cronJob.getId(), e.getMessage());
 				}
 			}
 		});

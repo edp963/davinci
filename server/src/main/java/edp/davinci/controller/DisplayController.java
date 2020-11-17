@@ -203,7 +203,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == displaySlides || displaySlides.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -267,7 +267,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == slideWidgetCreates || slideWidgetCreates.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide widget info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -322,7 +322,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == memDisplaySlideWidgets || memDisplaySlideWidgets.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("display slide widget info cannot be EMPTY");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Display slide widget info cannot be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -507,7 +507,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == ids || ids.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("nothing be deleted");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Nothing be deleted");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -524,7 +524,7 @@ public class DisplayController extends BaseController {
      * @return
      */
     @ApiOperation(value = "upload avatar")
-    @PostMapping(value = "/upload/coverImage")
+    @PostMapping(value = "/upload/coverImage", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity uploadAvatar(@RequestParam("coverImage") MultipartFile file,
                                        HttpServletRequest request) {
 
