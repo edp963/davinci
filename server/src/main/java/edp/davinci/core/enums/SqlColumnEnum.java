@@ -159,7 +159,6 @@ public enum SqlColumnEnum {
                 try {
                     result = DateUtils.toDate(value.trim());
                 } catch (Exception e) {
-                    e.printStackTrace();
                     throw new ServerException(e.getMessage());
                 }
                 break;
@@ -167,7 +166,6 @@ public enum SqlColumnEnum {
                 try {
                     result = DateUtils.toDateTime(value.trim());
                 } catch (Exception e) {
-                    e.printStackTrace();
                     throw new ServerException(e.getMessage());
                 }
                 break;
@@ -175,7 +173,6 @@ public enum SqlColumnEnum {
                 try {
                     result = DateUtils.toTimestamp(value.trim());
                 } catch (Exception e) {
-                    e.printStackTrace();
                     throw new ServerException(e.getMessage());
                 }
                 break;
@@ -184,7 +181,6 @@ public enum SqlColumnEnum {
                 try {
                     result = new SerialBlob(value.trim().getBytes());
                 } catch (SQLException e) {
-                    e.printStackTrace();
                     throw new ServerException(e.getMessage());
                 }
                 break;
@@ -192,7 +188,6 @@ public enum SqlColumnEnum {
                 try {
                     result = new SerialClob(value.trim().toCharArray());
                 } catch (SQLException e) {
-                    e.printStackTrace();
                     throw new ServerException(e.getMessage());
                 }
                 break;

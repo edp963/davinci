@@ -35,7 +35,6 @@ import org.thymeleaf.context.Context;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -202,8 +201,7 @@ public class MailUtils {
             if (customLogger != null) {
                 customLogger.error("Send mail error:{}", e.getMessage());
             }
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
+             throw new ServerException(e.getMessage());
         } 
     }
 }

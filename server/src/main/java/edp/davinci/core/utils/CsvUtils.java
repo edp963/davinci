@@ -99,7 +99,6 @@ public class CsvUtils {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         } finally {
             FileUtils.closeCloseable(csvParser);
@@ -178,7 +177,6 @@ public class CsvUtils {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
                 flushFlushable(csvPrinter);

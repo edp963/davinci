@@ -283,7 +283,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
             // 测试连接
             if (!testConnection(config)) {
-                throw new ServerException("test source connection fail");
+                throw new ServerException("Test source connection fail");
             }
 
             // 失效的数据源
@@ -595,7 +595,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
         try {
             tableInfo = sqlUtils.init(source).getTableInfo(dbName, tableName);
         } catch (SourceException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
@@ -769,7 +768,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 }
             }
         } catch (ServerException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
@@ -831,7 +829,6 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                 log.info("Execute insert end ---- {}", DateUtils.toyyyyMMddHHmmss(endTime));
                 log.info("Execution time {} second", (endTime - startTime) / 1000);
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
                 executorService.shutdown();

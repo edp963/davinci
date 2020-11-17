@@ -44,8 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -142,7 +140,6 @@ public class SqlUtils {
         }
     }
 
-    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit, Set<String> excludeColumns) throws Exception {
         if (null == pageNo || pageNo < 1) {
             pageNo = 0;
@@ -160,7 +157,6 @@ public class SqlUtils {
         return paginate;
     }
 
-    @CachePut(value = "query", key = "#sql")
     public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
@@ -173,13 +169,12 @@ public class SqlUtils {
 
         if (isQueryLogEnable) {
             String md5 = MD5Util.getMD5(sql, true, 16);
-            sqlLogger.info("{} query for({} ms) total count: {} sql:{}", md5, System.currentTimeMillis() - before, list.size(), formatSql(sql));
+            sqlLogger.info("{} query for {} ms, total count:{} sql:{}", md5, System.currentTimeMillis() - before, list.size(), formatSql(sql));
         }
 
         return list;
     }
 
-    @CachePut(value = "query", keyGenerator = "keyGenerator")
     public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit, Set<String> excludeColumns) throws Exception {
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
         sql = filterAnnotate(sql);
@@ -240,7 +235,7 @@ public class SqlUtils {
 
         if (isQueryLogEnable) {
             String md5 = MD5Util.getMD5(sql + pageNo + pageSize + limit, true, 16);
-            sqlLogger.info("{} query for({} ms) total count: {}, page size: {}, sql:{}",
+            sqlLogger.info("{} query for {} ms, total count:{}, page size:{}, sql:{}",
                     md5, System.currentTimeMillis() - before,
                     paginateWithQueryColumns.getTotalCount(),
                     paginateWithQueryColumns.getPageSize(),

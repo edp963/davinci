@@ -369,12 +369,12 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         try {
             projectDetail = projectService.getProjectDetail(view.getProjectId(), user, false);
         } catch (UnAuthorizedException e) {
-            throw new UnAuthorizedException("you have not permission to delete this view");
+            throw new UnAuthorizedException("You have not permission to delete this view");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getViewPermission() < UserPermissionEnum.DELETE.getPermission()) {
-            throw new UnAuthorizedException("you have not permission to delete this view");
+            throw new UnAuthorizedException("You have not permission to delete this view");
         }
 
         if (!CollectionUtils.isEmpty(widgetMapper.getWidgetsByWiew(id))) {
@@ -407,13 +407,13 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         try {
             projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
         } catch (UnAuthorizedException e) {
-            throw new UnAuthorizedException("you have not permission to execute sql");
+            throw new UnAuthorizedException("You have not permission to execute sql");
         }
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()
                 || projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
-            throw new UnAuthorizedException("you have not permission to execute sql");
+            throw new UnAuthorizedException("You have not permission to execute sql");
         }
 
         //结构化Sql
@@ -487,7 +487,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         ViewWithSource viewWithSource = getViewWithSource(id);
         ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
         if (!projectService.allowGetData(projectDetail, user)) {
-            throw new UnAuthorizedException("you have not permission to get data");
+            throw new UnAuthorizedException("You have not permission to get data");
         }
 
         return getResultDataList(projectService.isMaintainer(projectDetail, user), viewWithSource, executeParam, user);
@@ -706,7 +706,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                     querySqlList.set(querySqlList.size() - 1, sql);
 
                     if (null != param.getCache() && param.getCache() && param.getExpired().longValue() > 0L) {
-                        cacheKey = MD5Util.getMD5("DISTINCI" + sql, true, 32);
+                        cacheKey = MD5Util.getMD5(sql, true, 32);
 
                         try {
                             Object object = redisUtils.get(cacheKey);
