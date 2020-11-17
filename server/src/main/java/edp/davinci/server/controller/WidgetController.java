@@ -29,6 +29,7 @@ import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
 import io.swagger.annotations.Api;
@@ -76,7 +77,7 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<Widget> widgets = widgetService.getWidgets(projectId, user);
+        List<WidgetWithViewName> widgets = widgetService.getWidgets(projectId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(widgets));
     }
 

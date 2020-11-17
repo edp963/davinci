@@ -19,17 +19,18 @@
 
 package edp.davinci.server.service;
 
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.dto.project.ProjectDetail;
 import edp.davinci.server.dto.share.ShareEntity;
 import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.Widget;
 
 import java.io.File;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface WidgetService extends CheckEntityService {
-    List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
+    List<WidgetWithViewName> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 

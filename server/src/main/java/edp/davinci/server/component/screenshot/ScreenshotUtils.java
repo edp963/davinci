@@ -61,7 +61,7 @@ public class ScreenshotUtils {
 	
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
-    @Value("${screenshot.default_browser:PHANTOMJS}")
+    @Value("${screenshot.default_browser:CHROME}")
     private String DEFAULT_BROWSER;
 
     @Value("${screenshot.chromedriver_path:}")
@@ -232,13 +232,13 @@ public class ScreenshotUtils {
         options.addArguments("headless");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
-        options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");
         options.addArguments("ignore-certificate-errors");
-        options.addArguments("silent");
+        options.addArguments("silent-launch");
         options.addArguments("disable-application-cache");
         options.addArguments("disable-web-security");
         options.addArguments("no-proxy-server");
+        options.addArguments("disable-dev-shm-usage");
         return new ChromeDriver(options);
     }
 

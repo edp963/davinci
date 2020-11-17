@@ -331,7 +331,6 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-
         BatchInviteMemberResult result = organizationService.batchInviteCustomMembers(orgId, inviteMembers, user);
         if (result.getStatus() == HttpStatus.OK.value()) {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));

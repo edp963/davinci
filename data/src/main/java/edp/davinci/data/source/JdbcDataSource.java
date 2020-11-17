@@ -116,6 +116,10 @@ public class JdbcDataSource {
     @Getter
     protected long maxEvictableIdleTimeMillis;
 
+    @Value("${source.time-between-connect-error-millis}")
+    @Getter
+    protected long timeBetweenConnectErrorMillis;
+
     @Value("${source.test-while-idle}")
     @Getter
     protected boolean testWhileIdle;
@@ -285,6 +289,7 @@ public class JdbcDataSource {
             druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
             druidDataSource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
             druidDataSource.setMaxEvictableIdleTimeMillis(maxEvictableIdleTimeMillis);
+            druidDataSource.setTimeBetweenConnectErrorMillis(timeBetweenConnectErrorMillis);
             druidDataSource.setTestWhileIdle(testWhileIdle);
             druidDataSource.setTestOnBorrow(testOnBorrow);
             druidDataSource.setTestOnReturn(testOnReturn);

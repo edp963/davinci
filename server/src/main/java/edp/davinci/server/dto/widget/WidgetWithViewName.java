@@ -16,17 +16,12 @@
  *  >>
  */
 
-package edp.davinci.server.dto.organization;
+package edp.davinci.server.dto.widget;
 
+import edp.davinci.core.dao.entity.Widget;
 import lombok.Data;
 
-import javax.validation.constraints.Size;
-import java.util.Set;
-
 @Data
-public class InviteMembers {
-    private boolean needConfirm = true;
-    
-    @Size(min = 1, message = "At least one invited member")
-    private Set<String> members;
+public class WidgetWithViewName extends Widget {
+    private String viewName;
 }

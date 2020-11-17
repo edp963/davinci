@@ -420,7 +420,7 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
     }
 
     @Override
-    public BatchInviteMemberResult batchInviteMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedException, ServerException {
+    public BatchInviteMemberResult batchInviteCustomMembers(Long orgId, InviteMembers inviteMembers, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         //验证组织
         Organization organization = getOrganization(orgId);
 
@@ -431,37 +431,33 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         }
 
         BatchInviteMemberResult result = new BatchInviteMemberResult();
-        Set<Long> members = inviteMembers.getMembers();
+        Set<String> members = inviteMembers.getMembers();
 
-        List<User> users = userExtendMapper.getByIds(new ArrayList<>(members));
-        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
-        Set<Long> notUsers = members.stream().filter(id -> !userIds.contains(id)).collect(Collectors.toSet());
+        List<User> users = new ArrayList<>();
+        Set<String> notUsers = new HashSet<>();
+        for (String member : members) {
+            User currentUser = userExtendMapper.selectByUsername(member);
+            if(currentUser != null) {
+                users.add(currentUser);
+            } else {
+                notUsers.add(member);
+            }
+        }
+
         result.setNotUsers(notUsers);
-        if (!CollectionUtils.isEmpty(notUsers)) {
-            members.removeAll(notUsers);
-        }
 
-        if (CollectionUtils.isEmpty(members)) {
-            result.setStatus(HttpStatus.BAD_REQUEST.value());
-            return result;
-        }
-
-        Set<UserBaseInfo> existUsers = relUserOrganizationExtendMapper.selectOrgMembers(orgId, members);
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<UserBaseInfo> existUsers = relUserOrganizationExtendMapper.selectOrgMembers(orgId, userIds);
         result.setExists(existUsers);
 
         if (!CollectionUtils.isEmpty(existUsers)) {
             Set<Long> exist = existUsers.stream().map(UserBaseInfo::getId).collect(Collectors.toSet());
-            members.removeAll(exist);
+            userIds.removeAll(exist);
         }
 
-        if (CollectionUtils.isEmpty(members)) {
-            result.setStatus(HttpStatus.BAD_REQUEST.value());
-            return result;
-        }
+        if (!CollectionUtils.isEmpty(userIds)) {
 
-        if (!CollectionUtils.isEmpty(members)) {
-
-            Set<User> inviteUsers = users.stream().filter(u -> members.contains(u.getId())).collect(Collectors.toSet());
+            Set<User> inviteUsers = users.stream().filter(u -> userIds.contains(u.getId())).collect(Collectors.toSet());
 
             if (inviteMembers.isNeedConfirm()) {
                 FIXED_THREAD_POOL.execute(() -> inviteUsers.forEach(member -> sendInviteEmail(organization, member, user)));
@@ -481,11 +477,11 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
                     organizationExtendMapper.updateMemberNum(organization);
                 }
             }
-            log.info("User({}) invite members join organization({}), is need confirm:{} members:{}", user.getId(), orgId, inviteMembers.isNeedConfirm(), members);
+            log.info("User({}) invite members join organization({}), needConfirm:{}, memberId:{}", user.getId(), orgId, inviteMembers.isNeedConfirm(), members);
             Set<UserBaseInfo> success = inviteUsers.stream().map(UserBaseInfo::new).collect(Collectors.toSet());
-            result.setStatus(HttpStatus.OK.value());
             result.setSuccesses(success);
         }
+        result.setStatus(HttpStatus.OK.value());
         return result;
     }
 

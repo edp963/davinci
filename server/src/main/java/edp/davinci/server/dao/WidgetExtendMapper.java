@@ -23,6 +23,7 @@ import edp.davinci.core.dao.WidgetMapper;
 import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.dto.share.SimpleShareWidget;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
 import edp.davinci.server.dto.widget.WidgetWithVizId;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
@@ -152,8 +153,10 @@ public interface WidgetExtendMapper extends WidgetMapper {
     @Select({"select id from widget where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-    @Select({"select * from widget where project_id = #{projectId}"})
-    List<Widget> getByProject(@Param("projectId") Long projectId);
+	@Select({"select w.*, v.name as 'viewName' from widget w",
+			"left join view v on v.id = w.view_id",
+			"where w.project_id = #{projectId}"})
+    List<WidgetWithViewName> getByProject(@Param("projectId") Long projectId);
 
     @Select({"select w.*, m.id as 'relationId' from mem_dashboard_widget m left join widget w on w.id = m.widget_id where m.dashboard_id = #{dashboardId} order by m.create_time"})
     List<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
