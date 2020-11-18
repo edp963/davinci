@@ -503,7 +503,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == ids || ids.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("nothing be deleted");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Nothing be deleted");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -520,7 +520,7 @@ public class DisplayController extends BaseController {
      * @return
      */
     @ApiOperation(value = "upload avatar")
-    @PostMapping(value = "/upload/coverImage")
+    @PostMapping(value = "/upload/coverImage", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity uploadAvatar(@RequestParam("coverImage") MultipartFile file,
                                        HttpServletRequest request) {
 
