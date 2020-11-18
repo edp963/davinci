@@ -359,12 +359,12 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 			try {
 				quartzHandler.addJob(cronJob);
 			} catch (SchedulerException e) {
-				log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
+				log.warn("CronJob({}) name:{} is start error:{}", cronJob.getId(), cronJob.getName(),
 						e.getMessage());
 				cronJob.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
 				cronJobExtendMapper.update(cronJob);
 			} catch (ServerException e) {
-				log.warn("CronJob({}), name({}) is start error:{}", cronJob.getId(), cronJob.getName(),
+				log.warn("CronJob({}) name:{} is start error:{}", cronJob.getId(), cronJob.getName(),
 						e.getMessage());
 			}
 		});

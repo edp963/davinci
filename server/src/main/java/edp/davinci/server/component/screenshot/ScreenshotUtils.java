@@ -125,7 +125,7 @@ public class ScreenshotUtils {
     private File doScreenshot(Long jobId, String url, Integer imageWidth) throws Exception {
         WebDriver driver = generateWebDriver(jobId, imageWidth);
         driver.get(url);
-        scheduleLogger.info("Cronjob({}) do screenshot for url[timeout={}]({}) start", jobId, timeOutSecond, url);
+        scheduleLogger.info("Cronjob({}) do screenshot for url({}) timeout={} start", jobId, url, timeOutSecond);
         try {
             WebDriverWait wait = new WebDriverWait(driver, timeOutSecond);
 

@@ -41,7 +41,7 @@ public class QuartzJobExecutor implements Job {
 
         ScheduleService scheduleService = (ScheduleService) SpringContextHolder.getBean(jobType + "ScheduleService");
         if (scheduleService == null) {
-            scheduleLogger.warn("ScheduleJob({}) Unknown job type {}", jobId, jobType);
+            scheduleLogger.warn("ScheduleJob({}) unknown job type {}", jobId, jobType);
             return;
         }
 
