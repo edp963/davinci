@@ -1453,12 +1453,25 @@ export class OperatingPanel extends React.Component<
           cols.items = cols.items.filter((c) => c.name !== '指标名称')
           rows.items = rows.items.filter((r) => r.name !== '指标名称')
         }
-        const selectedParams = this.getChartDataConfig(
-          getPivotModeSelectedCharts(metrics.items)
-        )
-        this.setWidgetProps(
-          selectedParams.dataParams,
-          selectedParams.styleParams
+        this.setState(
+          {
+            chartModeSelectedChart: chart,
+            pagination: {
+              pageNo: 0,
+              pageSize: 0,
+              withPaging: false,
+              totalCount: 0
+            }
+          },
+          () => {
+            const selectedParams = this.getChartDataConfig(
+              getPivotModeSelectedCharts(metrics.items)
+            )
+            this.setWidgetProps(
+              selectedParams.dataParams,
+              selectedParams.styleParams
+            )
+          }
         )
       }
     } else {

@@ -142,7 +142,10 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
     }
     const regex = new RegExp(filterText, 'gi')
     const filterWidgets = widgets.filter(
-      (v) => v.name.match(regex) || v.viewName.match(regex) || v.description.match(regex)
+      (v) =>
+        v.name.match(regex) ||
+        v.viewName.match(regex) ||
+        v.description.match(regex)
     )
     return filterWidgets
   }, [filterText, widgets])
@@ -177,14 +180,19 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
       <SearchFilterDropdown
         placeholder={columnTitle[dataIndex]}
         value={selectedKeys[0]}
-        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+        onChange={(e) =>
+          setSelectedKeys(e.target.value ? [e.target.value] : [])
+        }
         onSearch={() => searchWidget(selectedKeys[0], dataIndex)}
       />
     ),
-    sortOrder: tableSorter && tableSorter.columnKey === dataIndex ? tableSorter.order : void 0,
+    sortOrder:
+      tableSorter && tableSorter.columnKey === dataIndex
+        ? tableSorter.order
+        : void 0,
     render: (text: string) => {
       const regex = new RegExp(`(${filterText})`, 'gi')
-      return (filterText && filterColumnKey === dataIndex ? (
+      return filterText && filterColumnKey === dataIndex ? (
         <span
           dangerouslySetInnerHTML={{
             __html: text.replace(
@@ -194,15 +202,16 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
           }}
         />
       ) : (
-          text
-        ))
+        text
+      )
     }
-  });
+  })
 
   const mappingIcon = (widgetConfig: IWidgetConfigBase) => {
     const selectedChart = widgetConfig.selectedChart
     const mode = widgetlibs[widgetConfig.mode]
-    return mode[selectedChart - 1].icon
+    const matchIcon = mode.filter((o) => o.id === selectedChart)[0]
+    return matchIcon && matchIcon.icon
   }
 
   const columns: Array<ColumnProps<IWidgetFormed>> = [
@@ -214,7 +223,7 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
       render: (_, record) => (
         <div>
           <i className={`iconfont ${mappingIcon(record.config)}`}></i>
-          <span style={{marginLeft: 8}}>{record.name}</span>
+          <span style={{ marginLeft: 8 }}>{record.name}</span>
         </div>
       )
     },
