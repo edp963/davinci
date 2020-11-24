@@ -492,6 +492,7 @@ export function getCurrentControlValues(
           if (
             relatedItem &&
             relatedItem.checked &&
+            relatedViews[relatedItem.viewId] &&
             formedViews[relatedItem.viewId]
           ) {
             const relatedView = relatedViews[relatedItem.viewId]
