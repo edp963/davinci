@@ -33,6 +33,7 @@ import { ActionTypes } from './constants'
 import { DashboardActions, DashboardActionType } from './actions'
 import {
   makeSelectDashboard,
+  makeSelectItems,
   makeSelectItemRelatedWidget,
   makeSelectItemInfo,
   makeSelectFormedViews,
@@ -65,7 +66,8 @@ import {
 import {
   IDashboardConfig,
   IDashboard,
-  IQueryConditions
+  IQueryConditions,
+  IDashboardItem
 } from 'app/containers/Dashboard/types'
 import { IShareFormedViews } from 'app/containers/View/types'
 import {
@@ -250,6 +252,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
   }
   const { type, itemId, formValues } = action.payload
   const formedViews: IShareFormedViews = yield select(makeSelectFormedViews())
+  const currentItems: IDashboardItem[] = yield select(makeSelectItems())
 
   if (type === ControlPanelTypes.Global) {
     const currentDashboard: IDashboard = yield select(makeSelectDashboard())
@@ -261,7 +264,8 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
       currentDashboard.config.filters,
       formedViews,
       globalControlFormValues,
-      formValues
+      formValues,
+      currentItems
     )
     const globalControlConditionsByItemEntries: Array<[
       string,
@@ -414,6 +418,7 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const { DownloadTaskInitiated, initiateDownloadTaskFail } = DashboardActions
   const { shareClientId, itemId } = action.payload
   const currentDashboard: IDashboard = yield select(makeSelectDashboard())
+  const currentItems: IDashboardItem[] = yield select(makeSelectItems())
   const currentDashboardFilters = currentDashboard?.config.filters || []
   const formedViews: IShareFormedViews = yield select(makeSelectFormedViews())
   const globalControlFormValues = yield select(
@@ -423,7 +428,9 @@ export function* initiateDownloadTask(action: DashboardActionType) {
     ControlPanelTypes.Global,
     currentDashboardFilters,
     formedViews,
-    globalControlFormValues
+    globalControlFormValues,
+    null,
+    currentItems
   )
   const itemInfo: IShareDashboardItemInfo = yield select((state) =>
     makeSelectItemInfo()(state, itemId)

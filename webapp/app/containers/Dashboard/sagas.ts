@@ -55,7 +55,8 @@ import {
   IDashboardItemInfo,
   IDashboard,
   IQueryConditions,
-  IDataDownloadStatistic
+  IDataDownloadStatistic,
+  IDashboardItem
 } from './types'
 import {
   IGlobalControlConditionsByItem,
@@ -286,6 +287,7 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
   }
   const { type, itemId, formValues, cancelTokenSource } = action.payload
   const formedViews: IFormedViews = yield select(makeSelectFormedViews())
+  const currentItems: IDashboardItem[] = yield select(makeSelectCurrentItems())
 
   if (type === ControlPanelTypes.Global) {
     const currentDashboard: IDashboard = yield select(
@@ -299,7 +301,8 @@ export function* getBatchDataWithControlValues(action: DashboardActionType) {
       currentDashboard.config.filters,
       formedViews,
       globalControlFormValues,
-      formValues
+      formValues,
+      currentItems
     )
     const globalControlConditionsByItemEntries: Array<[
       string,
@@ -394,18 +397,20 @@ export function* initiateDownloadTask(action: DashboardActionType) {
   const globalControlFormValues = yield select(
     makeSelectGlobalControlPanelFormValues()
   )
+  const currentItems = yield select(makeSelectCurrentItems())
   const globalControlConditionsByItem: IGlobalControlConditionsByItem = getCurrentControlValues(
     ControlPanelTypes.Global,
     currentDashboard.config.filters,
     formedViews,
-    globalControlFormValues
+    globalControlFormValues,
+    null,
+    currentItems
   )
 
   let id = action.payload.id
   const downloadInfo: IDataDownloadStatistic[] = []
 
   if (type === DownloadTypes.Dashboard) {
-    const currentItems = yield select(makeSelectCurrentItems())
     const itemIds = currentItems.map((item) => item.id)
     while (itemIds.length) {
       const itemId = itemIds[0]

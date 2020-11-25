@@ -96,7 +96,7 @@ class GlobalControlPanel extends Component<
     } = this.props
     const controls = currentDashboard.config.filters
     const relatedItems = formValues
-      ? getFormValuesRelatedItems(controls, formValues)
+      ? getFormValuesRelatedItems(controls, currentItems, formValues)
       : currentItems.map((item) => item.id)
     onSearch(ControlPanelTypes.Global, relatedItems, formValues)
     if (onMonitoredSearchDataAction) {
