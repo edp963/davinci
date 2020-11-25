@@ -233,7 +233,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			optLogger.info("DashboardPortal({}) is update by user({}), origin:{}", dashboardPortal.toString(),
 					user.getId(), origin);
 
-			relRolePortalMapper.deleteByProtalId(id);
+			relRolePortalMapper.deleteByPortalId(id);
 			if (!CollectionUtils.isEmpty(dashboardPortalUpdate.getRoleIds())) {
 				List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
 				List<RelRolePortal> list = roles.stream()
@@ -256,7 +256,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
     @Override
     public List<Long> getExcludeRoles(Long id) {
-        return relRolePortalMapper.getExecludeRoles(id);
+        return relRolePortalMapper.getExcludeRoles(id);
     }
 
     @Override
@@ -305,7 +305,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         dashboardMapper.deleteByPortalId(id);
 
         if (dashboardPortalMapper.deleteById(id) == 1) {
-            relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
+            relRolePortalMapper.deleteByPortalId(dashboardPortal.getId());
             optLogger.info("DashboardPortal({}) is delete by user({}) ", dashboardPortal.toString(), user.getId());
             return true;
         }

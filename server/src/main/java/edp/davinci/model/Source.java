@@ -131,19 +131,19 @@ public class Source extends BaseSource {
     @Override
     @JSONField(serialize = false)
     public String getDbVersion() {
-        String versoin = null;
+        String version = null;
         if (null == config) {
             return null;
         }
         try {
             JSONObject jsonObject = JSONObject.parseObject(this.config);
-            versoin = jsonObject.getString("version");
-            if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(versoin)) {
+            version = jsonObject.getString("version");
+            if (JDBC_DATASOURCE_DEFAULT_VERSION.equals(version)) {
                 return null;
             }
         } catch (Exception e) {
         }
-        return StringUtils.isEmpty(versoin) ? null : versoin;
+        return StringUtils.isEmpty(version) ? null : version;
     }
 
     @Override

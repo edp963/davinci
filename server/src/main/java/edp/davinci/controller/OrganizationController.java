@@ -388,14 +388,14 @@ public class OrganizationController extends BaseController {
      *
      * @param relationId
      * @param user
-     * @param organzationRole
+     * @param organizationRole
      * @param request
      * @return
      */
     @ApiOperation(value = "change member role or organization", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/member/{relationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateMemberRole(@PathVariable Long relationId,
-                                           @Valid @RequestBody OrganzationRole organzationRole,
+                                           @Valid @RequestBody OrganizationRole organizationRole,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
@@ -410,7 +410,7 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        organizationService.updateMemberRole(relationId, user, organzationRole.getRole());
+        organizationService.updateMemberRole(relationId, user, organizationRole.getRole());
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

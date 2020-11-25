@@ -44,7 +44,7 @@ public interface DownloadRecordMapper {
     @Delete({
             "delete from download_record where create_time < DATE_FORMAT((NOW() - INTERVAL 1 MONTH),'%Y%m%d')"
     })
-    int deleteBeforAMonthRecord();
+    int deleteBeforeAMonthRecord();
 
 
     @Select({

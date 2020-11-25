@@ -36,13 +36,13 @@ import java.util.Set;
 public interface ProjectMapper {
 
 
-    List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
+    List<ProjectWithCreateBy> getProjectsByUser(@Param("userId") Long userId);
 
     List<ProjectWithCreateBy> getFavoriteProjects(@Param("userId") Long userId);
 
     List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("keyword") String keyword);
 
-    List<ProjectWithCreateBy> getProjectsByKewordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
+    List<ProjectWithCreateBy> getProjectsByKeywordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
 
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})
     Long getByNameWithOrgId(@Param("name") String name, @Param("orgId") Long orgId);
@@ -80,5 +80,5 @@ public interface ProjectMapper {
 
     Set<Long> getProjectIdsByAdmin(@Param("userId") Long userId);
 
-    int deleteBeforOrgRole(@Param("projectId") Long projectId, @Param("orgId") Long orgId);
+    int deleteBeforeOrgRole(@Param("projectId") Long projectId, @Param("orgId") Long orgId);
 }

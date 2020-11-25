@@ -65,10 +65,10 @@ public class WeChatWorkScheduleServiceImpl extends BaseScheduleService implement
         scheduleLogger.info("CronJob({}) is start! --------------", jobId);
 
         List<ImageContent> images = null;
-        User creater = userMapper.getById(cronJob.getCreateBy());
+        User creator = userMapper.getById(cronJob.getCreateBy());
 
         if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-            images = generateImages(jobId, cronJobConfig, creater.getId());
+            images = generateImages(jobId, cronJobConfig, creator.getId());
         }
 
         if (CollectionUtils.isEmpty(images)) {

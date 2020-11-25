@@ -15,7 +15,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Component
 @Slf4j
-public class ElasticOperationService extends ElasticConfigration {
+public class ElasticOperationService extends ElasticConfiguration {
 
     public void batchInsert(String index, String type, List<?> objects) {
         

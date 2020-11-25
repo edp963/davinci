@@ -41,7 +41,7 @@ public interface DisplaySlideService extends CheckEntityService {
 
     DisplaySlide createDisplaySlide(DisplaySlideCreate displaySlideCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedException, ServerException;
+    boolean updateDisplaySlides(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     boolean deleteDisplaySlide(Long slideId, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
@@ -59,7 +59,7 @@ public interface DisplaySlideService extends CheckEntityService {
 
     String uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    List<Long> getSlideExecludeRoles(Long id);
+    List<Long> getSlideExcludeRoles(Long id);
 
     boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 

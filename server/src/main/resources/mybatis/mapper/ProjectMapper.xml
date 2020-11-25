@@ -61,7 +61,7 @@
         </trim>
     </insert>
 
-    <delete id="deleteBeforOrgRole">
+    <delete id="deleteBeforeOrgRole">
         delete
         from rel_role_project
         where project_id = #{projectId}
@@ -181,7 +181,7 @@
     </sql>
 
 
-    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getProjectsByKeywordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         <if test="orgList != null">
             AND p.org_id IN
@@ -208,7 +208,7 @@
     </select>
 
 
-    <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+    <select id="getProjectsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
         order by p.id
     </select>

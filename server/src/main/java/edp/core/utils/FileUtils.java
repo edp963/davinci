@@ -65,12 +65,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
+        Matcher matcher = PATTERN_IMG_FORMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-        Matcher matcher = PATTERN_IMG_FROMAT.matcher(file.getName());
+        Matcher matcher = PATTERN_IMG_FORMAT.matcher(file.getName());
         return matcher.find();
     }
 

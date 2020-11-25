@@ -69,9 +69,9 @@ public interface SourceMapper {
             "	p.`org_id` 'project.orgId',",
             "	p.`visibility` 'p.visibility'",
             "FROM source s INNER JOIN project p on p.id = s.project_id",
-            "where s.id = #{souceId}"
+            "where s.id = #{sourceId}"
     })
-    SourceWithProject getSourceWithProjectById(@Param("souceId") Long souceId);
+    SourceWithProject getSourceWithProjectById(@Param("sourceId") Long sourceId);
 
     int insertBatch(@Param("list") List<Source> sourceList);
 

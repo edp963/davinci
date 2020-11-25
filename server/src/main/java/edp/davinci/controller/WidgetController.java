@@ -256,7 +256,7 @@ public class WidgetController extends BaseController {
     }
 
     @ApiOperation(value = "show sql")
-    @GetMapping("/{id}/showSql")
+    @PostMapping("/{id}/showSql")
     public ResponseEntity showSql(@PathVariable Long id,
                                   @RequestBody(required = false) ViewExecuteParam executeParam,
                                   @ApiIgnore @CurrentUser User user,

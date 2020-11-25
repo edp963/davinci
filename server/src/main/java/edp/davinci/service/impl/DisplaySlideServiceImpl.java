@@ -87,7 +87,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     }
 
     /**
-     * 新建diplaySlide
+     * 新建displaySlide
      *
      * @param displaySlideCreate
      * @param user
@@ -185,7 +185,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
      */
     @Override
     @Transactional
-    public boolean updateDisplaySildes(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedException, ServerException {
+    public boolean updateDisplaySlides(Long displayId, DisplaySlide[] displaySlides, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Display display = getDisplay(displayId);
 
@@ -306,7 +306,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 
     private SlideWithDisplayAndProject getSlideWithDisplayAndProject(Long slideId) {
 
-    	SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDispalyAndProjectById(slideId);
+    	SlideWithDisplayAndProject slideWithDisplayAndProject = displaySlideMapper.getSlideWithDisplayAndProjectById(slideId);
 
         if (null == slideWithDisplayAndProject) {
             throw new NotFoundException("display slide is not found");
@@ -644,8 +644,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     @Transactional
     public String uploadSlideBGImage(Long slideId, MultipartFile file, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
-    	SlideWithDisplayAndProject slideWithDispaly = getSlideWithDisplayAndProject(slideId);
-        Display display = slideWithDispaly.getDisplay();
+    	SlideWithDisplayAndProject slideWithDisplay = getSlideWithDisplayAndProject(slideId);
+        Display display = slideWithDisplay.getDisplay();
 
         Long projectId = display.getProjectId();
         ProjectPermission projectPermission = getProjectPermission(projectId, user);
@@ -671,8 +671,8 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 				throw new ServerException("display slide background upload error");
 			}
 
-			if (!StringUtils.isEmpty(slideWithDispaly.getConfig())) {
-				jsonObject = JSONObject.parseObject(slideWithDispaly.getConfig());
+			if (!StringUtils.isEmpty(slideWithDisplay.getConfig())) {
+				jsonObject = JSONObject.parseObject(slideWithDisplay.getConfig());
 				if (null == jsonObject) {
 					jsonObject = new JSONObject();
 				}
@@ -700,13 +700,13 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 		}
 
 		DisplaySlide displaySlide = new DisplaySlide();
-		BeanUtils.copyProperties(slideWithDispaly, displaySlide);
+		BeanUtils.copyProperties(slideWithDisplay, displaySlide);
 
 		displaySlide.updatedBy(user.getId());
 		displaySlide.setConfig(jsonObject.toString());
 		displaySlideMapper.update(displaySlide);
 		optLogger.info("DisplaySlide({}) is update by user({}), origin:{}", displaySlide.toString(), user.getId(),
-				slideWithDispaly.toString());
+				slideWithDisplay.toString());
 
 		return background;
     }
@@ -727,7 +727,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     	MemDisplaySlideWidget memDisplaySlideWidget = getMemDisplaySlideWidget(relationId);
 
         if (2 != memDisplaySlideWidget.getType()) {
-            throw new ServerException("dispaly slide widget is not sub widget");
+            throw new ServerException("Display slide widget is not sub widget");
         }
 
         SlideWithDisplayAndProject slideWithDisplayAndProject = getSlideWithDisplayAndProject(memDisplaySlideWidget.getDisplaySlideId());
@@ -771,7 +771,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
 			jsonObject.put(key, background);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
-			throw new ServerException("display slide sub widget backgroundImage upload error");
+			throw new ServerException("Display slide sub widget backgroundImage upload error");
 		}
 
 		String origin = memDisplaySlideWidget.toString();
@@ -785,7 +785,7 @@ public class DisplaySlideServiceImpl extends VizCommonService implements Display
     }
 
     @Override
-    public List<Long> getSlideExecludeRoles(Long id) {
+    public List<Long> getSlideExcludeRoles(Long id) {
         return relRoleSlideMapper.getById(id);
     }
 

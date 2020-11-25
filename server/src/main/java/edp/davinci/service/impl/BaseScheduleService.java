@@ -234,10 +234,10 @@ public class BaseScheduleService {
         }
 
         rootChildren.sort(Comparator.comparing(DashboardTree::getIndex));
-        root.setChilds(rootChildren);
+        root.setChildren(rootChildren);
 
         for (DashboardTree child : rootChildren) {
-            child.setChilds(getChildren(dashboardsMap, child));
+            child.setChildren(getChildren(dashboardsMap, child));
         }
     }
 
@@ -252,7 +252,7 @@ public class BaseScheduleService {
         List<DashboardTree> list = new ArrayList<>();
         for (Dashboard dashboard : children) {
             DashboardTree treeNode = new DashboardTree(dashboard.getId(), dashboard.getIndex());
-            treeNode.setChilds(getChildren(dashboardsMap, treeNode));
+            treeNode.setChildren(getChildren(dashboardsMap, treeNode));
             list.add(treeNode);
         }
         list.sort(Comparator.comparing(DashboardTree::getIndex));

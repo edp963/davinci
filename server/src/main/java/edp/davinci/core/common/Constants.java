@@ -50,7 +50,7 @@ public class Constants extends Consts {
     public static final String USER_REST_PASSWORD_EMAIL_TEMPLATE = "mail/userRestPasswordEmailTemplate";
 
 
-    public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emaiDefaultTemplate";
+    public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emailDefaultTemplate";
 
     /**
      * 用户激活 / 重发激活邮件主题
@@ -118,7 +118,7 @@ public class Constants extends Consts {
     /**
      * 定时任务发送邮件模板
      */
-    public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";
+    public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmailTemplate";
 
     /**
      * select 表达式

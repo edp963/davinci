@@ -26,7 +26,7 @@ import edp.core.utils.CollectionUtils;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.VizVisiblityEnum;
+import edp.davinci.core.enums.VizVisibilityEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.roleDto.*;
 import edp.davinci.model.*;
@@ -658,26 +658,26 @@ public class RoleServiceImpl implements RoleService {
             return vizPermission;
         }
 
-        vizPermission.setPortals(relRolePortalMapper.getExecludePortals(id, projectId));
-        vizPermission.setDashboards(relRoleDashboardMapper.getExecludeDashboards(id, projectId));
-        vizPermission.setDisplays(relRoleDisplayMapper.getExecludeDisplays(id, projectId));
-        vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));
+        vizPermission.setPortals(relRolePortalMapper.getExcludePortals(id, projectId));
+        vizPermission.setDashboards(relRoleDashboardMapper.getExcludeDashboards(id, projectId));
+        vizPermission.setDisplays(relRoleDisplayMapper.getExcludeDisplays(id, projectId));
+        vizPermission.setSlides(relRoleSlideMapper.getExcludeSlides(id, projectId));
 
         return vizPermission;
     }
 
 
     @Override
-    public boolean postVizvisibility(Long id, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedException, NotFoundException {
-        VizVisiblityEnum visiblityEnum = VizVisiblityEnum.vizOf(vizVisibility.getViz());
-        if (null == visiblityEnum) {
+    public boolean postVizVisibility(Long id, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedException, NotFoundException {
+        VizVisibilityEnum visibilityEnum = VizVisibilityEnum.vizOf(vizVisibility.getViz());
+        if (null == visibilityEnum) {
             throw new ServerException("Invalid viz");
         }
 
         Role role = getRole(id, user, true);
 
         boolean result = false;
-        switch (visiblityEnum) {
+        switch (visibilityEnum) {
             case PORTAL:
                 result = dashboardPortalService.postPortalVisibility(role, vizVisibility, user);
                 break;
@@ -709,7 +709,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectByOrgIdAndMemberId(orgId, memberId);
     }
 
-    private Role getRole(Long id, User user, boolean moidfy) throws NotFoundException, UnAuthorizedException {
+    private Role getRole(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedException {
         Role role = roleMapper.getById(id);
         if (null == role) {
             log.warn("Role({}) is not found", id);
@@ -721,7 +721,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedException();
         }
 
-        if (moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+        if (modify && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
             throw new UnAuthorizedException();
         }
 

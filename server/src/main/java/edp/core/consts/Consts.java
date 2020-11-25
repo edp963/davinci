@@ -135,7 +135,7 @@ public class Consts {
      * 常用图片格式
      */
     public static final String REG_IMG_FORMAT = "^.+(.JPEG|.jpeg|.JPG|.jpg|.PNG|.png|.GIF|.gif)$";
-    public static final Pattern PATTERN_IMG_FROMAT = Pattern.compile(REG_IMG_FORMAT);
+    public static final Pattern PATTERN_IMG_FORMAT = Pattern.compile(REG_IMG_FORMAT);
 
     /**
      * 邮箱格式

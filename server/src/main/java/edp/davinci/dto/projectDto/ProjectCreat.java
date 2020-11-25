@@ -26,15 +26,15 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "project info cannot be null")
+@NotNull(message = "Project info cannot be null")
 public class ProjectCreat {
 
-    @NotBlank(message = "project name cannot be EMPTY")
+    @NotBlank(message = "Project name cannot be empty")
     private String name;
 
     private String description;
 
-    @Min(value = 1L, message = "orgId cannot be EMPTY")
+    @Min(value = 1L, message = "OrgId cannot be empty")
     private Long orgId;
 
     private String pic;

@@ -103,7 +103,7 @@ public interface WidgetMapper {
     int deleteByProject(@Param("projectId") Long projectId);
 
     @Select({"select * from widget where view_id = #{viewId}"})
-    List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
+    List<Widget> getWidgetsByView(@Param("viewId") Long viewId);
 
     int updateConfigBatch(@Param("list") List<Widget> list);
 }

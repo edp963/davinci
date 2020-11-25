@@ -28,10 +28,10 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-@NotNull(message = "dashboard cannot be null")
+@NotNull(message = "Dashboard cannot be null")
 public class DashboardCreate {
 
-    @NotBlank(message = "dashboard name cannot be EMPTY")
+    @NotBlank(message = "Dashboard name cannot be empty")
     private String name;
 
     @Min(value = 1L, message = "Invalid dashboard portal id")

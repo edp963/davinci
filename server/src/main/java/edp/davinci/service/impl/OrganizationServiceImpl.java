@@ -519,8 +519,8 @@ public class OrganizationServiceImpl extends BaseEntityService implements Organi
         return organizationInfo;
     }
 
-    private void isJoined(Long memeberId, Long orgId) {
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(memeberId, orgId);
+    private void isJoined(Long memberId, Long orgId) {
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(memberId, orgId);
         if (rel != null) {
             throw new ServerException("You have joined the organization and don't need to repeat.");
         }
