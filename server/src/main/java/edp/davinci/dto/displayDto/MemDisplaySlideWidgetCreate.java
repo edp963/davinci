@@ -48,7 +48,7 @@ public class MemDisplaySlideWidgetCreate {
 
     private Integer index = 0;
 
-    @NotBlank(message = "Type cannot be EMPTY")
+    @NotBlank(message = "Type cannot be empty")
     private String params;
 
     private List<Long> roleIds;

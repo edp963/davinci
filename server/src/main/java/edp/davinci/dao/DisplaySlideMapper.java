@@ -85,7 +85,7 @@ public interface DisplaySlideMapper {
             "   LEFT JOIN project p on p.id = d.project_id",
             "where s.id = #{slideId}",
     })
-    SlideWithDisplayAndProject getSlideWithDispalyAndProjectById(@Param("slideId") Long slideId);
+    SlideWithDisplayAndProject getSlideWithDisplayAndProjectById(@Param("slideId") Long slideId);
 
     int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
 

@@ -724,7 +724,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     public List<Long> getExcludeRoles(Long id) {
-        return relRoleDashboardMapper.getExecludeRoles(id);
+        return relRoleDashboardMapper.getExcludeRoles(id);
     }
 
     @Override

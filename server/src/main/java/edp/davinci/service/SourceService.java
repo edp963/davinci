@@ -41,7 +41,7 @@ public interface SourceService extends CheckEntityService {
 
     Source updateSource(SourceInfo sourceInfo, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
+    boolean deleteSource(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
     boolean testSource(SourceTest sourceTest) throws ServerException;
 

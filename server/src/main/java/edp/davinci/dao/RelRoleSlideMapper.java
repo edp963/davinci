@@ -58,7 +58,7 @@ public interface RelRoleSlideMapper {
             "INNER JOIN display d on d.id = s.display_id",
             "where rrs.role_id = #{id} and rrs.visible = 0 and d.project_id = #{projectId}"
     })
-    List<Long> getExecludeSlides(@Param("id") Long id, @Param("projectId") Long projectId);
+    List<Long> getExcludeSlides(@Param("id") Long id, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_slide where slide_id = #{slideId} and role_id = #{roleId}"})
     int delete(@Param("slideId") Long slideId, @Param("roleId") Long roleId);

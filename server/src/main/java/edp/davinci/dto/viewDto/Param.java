@@ -26,7 +26,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class Param {
 
-    @NotBlank(message = "Invald parameter name")
+    @NotBlank(message = "Invalid parameter name")
     private String name;
 
     @NotBlank(message = "Invalid parameter value")

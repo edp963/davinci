@@ -145,7 +145,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
     @Override
     public List<ProjectInfo> getProjects(User user) {
         //当前用户能看到的所有project
-        List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
+        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByUser(user.getId());
         return getProjectInfos(user, projects);
     }
 
@@ -171,7 +171,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         }
 
         PageHelper.startPage(pageNum, pageSize);
-        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
+        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByKeywordsWithUser(keywords, user.getId(), orgs);
         PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
         return pageInfo;
     }
@@ -262,7 +262,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
      */
     @Override
     @Transactional
-    public Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException {
+    public Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException {
 
     	ProjectDetail project = getProjectDetail(id, user, true);
 
@@ -313,7 +313,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
         organization.setProjectNum(organization.getProjectNum() + 1);
         organizationMapper.updateProjectNum(organization);
 
-        projectMapper.deleteBeforOrgRole(project.getId(), beforeOrgId);
+        projectMapper.deleteBeforeOrgRole(project.getId(), beforeOrgId);
 
         return project;
     }
@@ -427,7 +427,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
 
     /**
-     * 获取收藏的proeject
+     * 获取收藏的project
      *
      * @param user
      * @return

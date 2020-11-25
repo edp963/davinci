@@ -25,5 +25,5 @@ import edp.davinci.core.enums.CheckEntityEnum;
 import javax.servlet.http.HttpServletRequest;
 
 public interface CheckService {
-    ResultMap checkSource(String name, Long id, CheckEntityEnum checkEntityEnum, Long scopId, HttpServletRequest request);
+    ResultMap checkSource(String name, Long id, CheckEntityEnum checkEntityEnum, Long scopeId, HttpServletRequest request);
 }

@@ -374,7 +374,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
                 userMapper.activeUser(user);
 
                 String orgName = user.getUsername() + "'s Organization";
-                // 激活成功，创建默认Orgnization
+                // 激活成功，创建默认Organization
                 Organization organization = new Organization(orgName, null, user.getId());
                 organizationMapper.insert(organization);
 
@@ -650,9 +650,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             throw new ServerException("Password cannot be Empty");
         }
 
-        String uncompress = StringZipUtil.decompress(token);
+        String decompress = StringZipUtil.decompress(token);
         user.setPassword(ticket.getCheckCode());
-        if (!tokenUtils.validateToken(uncompress, user)) {
+        if (!tokenUtils.validateToken(decompress, user)) {
             throw new ServerException("Invalid check code, check code is wrong or has expired");
         }
         user.setPassword(BCrypt.hashpw(ticket.getPassword(), BCrypt.gensalt()));

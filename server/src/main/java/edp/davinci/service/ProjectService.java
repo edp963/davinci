@@ -43,7 +43,7 @@ public interface ProjectService extends CheckEntityService {
 
     boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    Project transferPeoject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
+    Project transferProject(Long id, Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     PageInfo<ProjectWithCreateBy> searchProjects(String keywords, User user, int pageNum, int pageSize);
 

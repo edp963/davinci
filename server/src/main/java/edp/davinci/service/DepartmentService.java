@@ -26,5 +26,5 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface DepartmentService {
 
-    ResultMap getdepartments(Long projectId, String type, User user, HttpServletRequest request);
+    ResultMap getDepartments(Long projectId, String type, User user, HttpServletRequest request);
 }

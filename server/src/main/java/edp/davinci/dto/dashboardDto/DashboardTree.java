@@ -28,7 +28,7 @@ import java.util.List;
 public class DashboardTree {
     private Long id;
     private int index;
-    private List<DashboardTree> childs;
+    private List<DashboardTree> children;
 
 
     public DashboardTree(Long id, int index) {
@@ -36,13 +36,13 @@ public class DashboardTree {
         this.index = index;
     }
 
-    public DashboardTree(Long id, List<DashboardTree> childs) {
+    public DashboardTree(Long id, List<DashboardTree> children) {
         this.id = id;
-        this.childs = childs;
+        this.children = children;
     }
 
     public List<DashboardTree> traversalLeaf() {
-        if (CollectionUtils.isEmpty(childs)) {
+        if (CollectionUtils.isEmpty(children)) {
             return null;
         }
         List<DashboardTree> leafList = new ArrayList<>();
@@ -51,14 +51,14 @@ public class DashboardTree {
     }
 
     private void traversalLeaf(DashboardTree node, List<DashboardTree> list) {
-        if (CollectionUtils.isEmpty(childs)) {
+        if (CollectionUtils.isEmpty(children)) {
             return;
         }
-        if (CollectionUtils.isEmpty(node.getChilds())) {
+        if (CollectionUtils.isEmpty(node.getChildren())) {
             list.add(node);
             return;
         }
-        for (DashboardTree child : node.getChilds()) {
+        for (DashboardTree child : node.getChildren()) {
             traversalLeaf(child, list);
         }
     }

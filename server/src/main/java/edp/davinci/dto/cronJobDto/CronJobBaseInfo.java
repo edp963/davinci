@@ -31,7 +31,7 @@ import javax.validation.constraints.Pattern;
 @NotNull(message = "Cron job info cannot be null")
 public class CronJobBaseInfo {
 
-    @NotBlank(message = "Cron job name cannot be EMPTY")
+    @NotBlank(message = "Cron job name cannot be empty")
     private String name;
 
     @Min(value = 1L, message = "Invalid project id")

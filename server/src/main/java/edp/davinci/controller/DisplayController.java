@@ -207,7 +207,7 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        displaySlideService.updateDisplaySildes(displayId, displaySlides, user);
+        displaySlideService.updateDisplaySlides(displayId, displaySlides, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -675,7 +675,7 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<Long> excludeRoles = displaySlideService.getSlideExecludeRoles(id);
+        List<Long> excludeRoles = displaySlideService.getSlideExcludeRoles(id);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeRoles));
     }
 

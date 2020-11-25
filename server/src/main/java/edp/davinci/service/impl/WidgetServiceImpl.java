@@ -561,7 +561,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         Set<String> excludeColumns = new HashSet<>();
         viewService.packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
 
-        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+        String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
         StringBuilder res = new StringBuilder();
         List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);

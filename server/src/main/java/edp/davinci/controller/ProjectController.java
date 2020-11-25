@@ -78,7 +78,7 @@ public class ProjectController extends BaseController {
     }
 
 
-    @ApiOperation(value = "get roles where proejct is located")
+    @ApiOperation(value = "get roles where project is located")
     @GetMapping("/{id}/roles")
     public ResponseEntity getRolesOfProject(@ApiIgnore @CurrentUser User user,
                                             @PathVariable Long id,
@@ -93,7 +93,7 @@ public class ProjectController extends BaseController {
     }
 
 
-    @ApiOperation(value = "get roles where proejct is located")
+    @ApiOperation(value = "get roles where project is located")
     @GetMapping("/{id}/roles/{roleId}")
     public ResponseEntity getRoleOfProject(@ApiIgnore @CurrentUser User user,
                                            @PathVariable Long id,
@@ -211,7 +211,7 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        projectService.transferPeoject(id, organizationTransfer.getOrgId(), user);
+        projectService.transferProject(id, organizationTransfer.getOrgId(), user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

@@ -179,7 +179,7 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        sourceService.deleteSrouce(id, user);
+        sourceService.deleteSource(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -316,7 +316,7 @@ public class SourceController extends BaseController {
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -340,7 +340,7 @@ public class SourceController extends BaseController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -368,7 +368,7 @@ public class SourceController extends BaseController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

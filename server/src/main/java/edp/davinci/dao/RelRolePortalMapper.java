@@ -44,10 +44,10 @@ public interface RelRolePortalMapper {
     List<RoleDisableViz> getDisablePortalByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_portal where portal_id = #{portalId}"})
-    int deleteByProtalId(@Param("portalId") Long portalId);
+    int deleteByPortalId(@Param("portalId") Long portalId);
 
     @Select("select role_id from rel_role_portal where portal_id = #{portalId} and visible = 0")
-    List<Long> getExecludeRoles(@Param("portalId") Long portalId);
+    List<Long> getExcludeRoles(@Param("portalId") Long portalId);
 
     @Select({
             "select rrp.portal_id",
@@ -55,7 +55,7 @@ public interface RelRolePortalMapper {
             "inner join dashboard_portal p on p.id = rrp.portal_id",
             "where rrp.role_id = #{id} and rrp.visible = 0 and p.project_id = #{projectId}"
     })
-    List<Long> getExecludePortals(@Param("id") Long id, @Param("projectId") Long projectId);
+    List<Long> getExcludePortals(@Param("id") Long id, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_portal where portal_id = #{portalId} and role_id = #{roleId}"})
     int delete(@Param("portalId") Long portalId, @Param("roleId") Long roleId);

@@ -13,7 +13,7 @@ import javax.annotation.PostConstruct;
 
 @Configuration
 @Slf4j
-public class KafkaConfigration {
+public class KafkaConfiguration {
 
     protected Producer<String, String> producer;
 

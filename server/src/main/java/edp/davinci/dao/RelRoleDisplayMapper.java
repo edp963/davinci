@@ -58,7 +58,7 @@ public interface RelRoleDisplayMapper {
             "inner join display d on d.id = rrd.display_id",
             "where rrd.role_id = #{id} and rrd.visible = 0 and d.project_id = #{projectId}"
     })
-    List<Long> getExecludeDisplays(@Param("id") Long id, @Param("projectId") Long projectId);
+    List<Long> getExcludeDisplays(@Param("id") Long id, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_display where display_id = #{displayId} and role_id = #{roleId}"})
     int delete(@Param("displayId") Long displayId, @Param("roleId") Long roleId);

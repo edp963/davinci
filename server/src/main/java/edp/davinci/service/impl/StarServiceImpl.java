@@ -58,6 +58,7 @@ public class StarServiceImpl implements StarService {
         if (!StringUtils.isEmpty(target)) {
             if (Constants.STAR_TARGET_PROJECT.equals(target)) {
                 Project project = projectMapper.getById(targetId);
+                String id = project.getId().toString().intern();
                 if (null == project) {
                     return resultMap.failAndRefreshToken(request).message("project not found");
                 }
@@ -68,7 +69,7 @@ public class StarServiceImpl implements StarService {
                     star = new Star(target, targetId, user.getId());
                     int i = starMapper.insert(star);
                     if (i > 0) {
-                        synchronized (project) {
+                        synchronized (id) {
                             projectMapper.starNumAdd(project.getId());
                         }
                         return resultMap.successAndRefreshToken(request);
@@ -77,7 +78,7 @@ public class StarServiceImpl implements StarService {
                     //unstar
                     int i = starMapper.deleteById(star.getId());
                     if (i > 0) {
-                        synchronized (project) {
+                        synchronized (id) {
                             projectMapper.starNumReduce(project.getId());
                         }
                     }
