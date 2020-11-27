@@ -83,7 +83,7 @@ public interface DisplaySlideExtendMapper extends DisplaySlideMapper {
             "	d.id as 'display.id',",
             "	d.`name` as 'display.name',",
             "	d.description as 'display.description',",
-            "	d.project_id as 'display.projectid',",
+            "	d.project_id as 'display.projectId',",
             "	d.avatar as 'display.avatar',",
             "	d.publish as 'display.publish',",
             "	d.config as 'display.config',",
@@ -91,15 +91,15 @@ public interface DisplaySlideExtendMapper extends DisplaySlideMapper {
             "	p.`name` 'project.name',",
             "	p.description 'project.description',",
             "	p.pic 'project.pic',",
-            "	p.org_id 'project.orgid',",
-            "	p.user_id 'project.userid',",
+            "	p.org_id 'project.orgId',",
+            "	p.user_id 'project.userId',",
             "	p.visibility 'p.visibility'",
             "from display_slide s ",
             "   left join display d on d.id = s.display_id",
             "   left join project p on p.id = d.project_id",
             "where s.id = #{slideId}",
     })
-    SlideWithDisplayAndProject getSlideWithDispalyAndProjectById(@Param("slideId") Long slideId);
+    SlideWithDisplayAndProject getSlideWithDisplayAndProjectById(@Param("slideId") Long slideId);
 
     @Insert({
     	"<script>",

@@ -257,12 +257,12 @@ public class JdbcSourceUtils {
     	
     	String version = null;
         try {
-            version = (String) JSONUtils.toObject(config, Map.class).get("versoin");
+            version = (String) JSONUtils.toObject(config, Map.class).get("version");
             if (DATABASE_DEFAULT_VERSION.equals(version)) {
                 return null;
             }
         } catch (Exception e) {
-        	log.error("Get jdbc versoin from source config({}) error, e={}", config, e.getMessage());
+        	log.error("Get jdbc version from source config({}) error, e={}", config, e.getMessage());
         }
         return version;
     }

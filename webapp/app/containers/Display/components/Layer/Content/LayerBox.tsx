@@ -152,11 +152,11 @@ const LayerBox: React.FC = (props: ILayerBoxProps) => {
   const editLabelChange = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation()
-      if(labelText){
+      if(labelText && onEditLabelChange){
         onEditLabelChange(layerId, { editing: true })
       }
     },
-    [onEditLabelChange,layerId]
+    [onEditLabelChange, layerId]
   )
 
   const boxCls = classnames({

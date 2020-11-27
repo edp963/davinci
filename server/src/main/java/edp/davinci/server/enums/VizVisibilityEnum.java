@@ -17,18 +17,34 @@
  *
  */
 
-package edp.davinci.server.dto.organization;
+package edp.davinci.server.enums;
 
-import lombok.Data;
+public enum VizVisibilityEnum {
+    PORTAL("portal"),
+    DASHBOARD("dashboard"),
+    DISPLAY("display"),
+    SLIDE("slide");
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+    private String viz;
 
-@Data
-@NotNull(message = "Invalid role")
-public class OrganzationRole {
-    @Min(value = 0, message = "Invalid role")
-    @Max(value = 1, message = "Invalid role")
-    private Short role;
+    VizVisibilityEnum(String viz) {
+        this.viz = viz;
+    }
+
+    VizVisibilityEnum() {
+
+    }
+
+    public static VizVisibilityEnum vizOf(String viz) {
+        for (VizVisibilityEnum visibilityEnum : VizVisibilityEnum.values()) {
+            if (viz.equals(visibilityEnum.viz)) {
+                return visibilityEnum;
+            }
+        }
+        return null;
+    }
+    
+    public String getViz() {
+    	return this.viz;
+    }
 }

@@ -112,7 +112,7 @@ public class CheckController {
 
 
     /**
-     * 检查Disaplay是否存在
+     * 检查Display是否存在
      *
      * @param request
      * @return

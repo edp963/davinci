@@ -83,7 +83,7 @@ public interface RelRolePortalExtendMapper extends RelRolePortalMapper {
     List<RoleDisableViz> getDisablePortalByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_portal where portal_id = #{portalId}"})
-    int deleteByProtalId(@Param("portalId") Long portalId);
+    int deleteByPortalId(@Param("portalId") Long deleteByPortalId);
 
     @Select("select role_id from rel_role_portal where portal_id = #{portalId} and visible = 0")
     List<Long> getExcludeRoles(@Param("portalId") Long portalId);

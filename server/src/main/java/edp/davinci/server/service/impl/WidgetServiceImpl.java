@@ -409,7 +409,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
 
     /**
-     * widget列表数据写入指定excle文件
+     * widget列表数据写入指定excel文件
      *
      * @param widgets
      * @param projectDetail

@@ -75,7 +75,7 @@ public class ProjectController extends BaseController {
     }
 
 
-    @ApiOperation(value = "get roles where proejct is located")
+    @ApiOperation(value = "get roles where project is located")
     @GetMapping("/{id}/roles")
     public ResponseEntity getRolesOfProject(@ApiIgnore @CurrentUser User user,
                                             @PathVariable Long id,
@@ -90,7 +90,7 @@ public class ProjectController extends BaseController {
     }
 
 
-    @ApiOperation(value = "get roles where proejct is located")
+    @ApiOperation(value = "get roles where project is located")
     @GetMapping("/{id}/roles/{roleId}")
     public ResponseEntity getRoleOfProject(@ApiIgnore @CurrentUser User user,
                                            @PathVariable Long id,

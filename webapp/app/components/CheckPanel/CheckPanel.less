@@ -1,0 +1,73 @@
+@minHeight: 400px;
+@maxHeight: 600px;
+
+.highlight {
+  color: rgb(255, 85, 0);
+}
+
+.checkPanelWrapper {
+  display: flex;
+  border: 1px solid #ececec;
+  border-radius: 4px;
+
+  .leftWrapper {
+    width: calc(50% - 1px);
+    border-right: 1px solid #ececec;
+  }
+
+  .rightWrapper {
+    width: 50%;
+  }
+
+  .headWrapper {
+    display: flex;
+    height: 40px;
+    padding: 0 12px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ececec;
+  }
+
+  .contentWrapper, .tagWrapper {
+    padding: 12px;
+  }
+
+  .optionRow {
+    min-height: calc(@minHeight - 40px - 32px - 12px);
+    max-height: calc(@maxHeight - 40px - 32px - 12px);
+    margin-top: 12px;
+    overflow-y: scroll;
+  
+    :global(.ant-checkbox-wrapper) {
+      width: calc(25% - 8px);
+      margin-bottom: 10px;
+    }
+  
+    :global(.ant-checkbox-wrapper + .ant-checkbox-wrapper) {
+      margin-left: 0;
+    }
+  }
+
+  .tagWrapper {
+    min-height: calc(@minHeight - 40px);
+    max-height: calc(@maxHeight - 40px);
+    overflow-y: scroll;
+  }
+
+  :global(.ant-tag) {
+    font-size: 14px;
+    margin-bottom: 12px;
+    .highlight {
+      color: #fff;
+    }
+  }
+
+  :global(.ant-checkbox + span) {
+    width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+}

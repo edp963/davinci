@@ -19,21 +19,20 @@
 
 package edp.davinci.server.service.impl;
 
-import java.util.Date;
-
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.core.dao.entity.CronJob;
+import edp.davinci.core.enums.CronJobStatusEnum;
+import edp.davinci.server.dao.CronJobExtendMapper;
+import edp.davinci.server.enums.LogNameEnum;
+import edp.davinci.server.service.RedisMessageHandler;
+import edp.davinci.server.util.QuartzHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.core.dao.entity.CronJob;
-import edp.davinci.server.dao.CronJobExtendMapper;
-import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.service.RedisMessageHandler;
-import edp.davinci.server.util.QuartzHandler;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Date;
 
 @Slf4j
 @Component
@@ -59,7 +58,7 @@ public class CronJobMessageHandler implements RedisMessageHandler {
 
 		CronJob cronJob = JSONUtils.toObject((String) message, CronJob.class);
 		quartzHandler.removeJob(cronJob);
-		scheduleLogger.info("CronJob({}) is stoped", cronJob.getId());
+		scheduleLogger.info("CronJob({}) is stopped", cronJob.getId());
 		cronJob.setJobStatus(CronJobStatusEnum.STOP.getStatus());
 		cronJob.setUpdateTime(new Date());
 		cronJobExtendMapper.update(cronJob);

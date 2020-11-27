@@ -93,13 +93,13 @@ public interface SourceExtendMapper extends SourceMapper {
             "	p.`name` 'project.name',",
             "	p.`description` 'project.description',",
             "	p.`pic` 'project.pic',",
-            "	p.`user_id` 'project.userid',",
-            "	p.`org_id` 'project.orgid',",
+            "	p.`user_id` 'project.userId',",
+            "	p.`org_id` 'project.orgId',",
             "	p.`visibility` 'p.visibility'",
             "from source s inner join project p on p.id = s.project_id",
-            "where s.id = #{souceId}"
+            "where s.id = #{sourceId}"
     })
-    SourceWithProject getSourceWithProjectById(@Param("souceId") Long souceId);
+    SourceWithProject getSourceWithProjectById(@Param("sourceId") Long sourceId);
 
     @Delete({"delete from `source` where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);

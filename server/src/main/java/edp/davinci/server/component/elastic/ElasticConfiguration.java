@@ -19,7 +19,7 @@ import java.net.InetAddress;
 
 @Configuration
 @Slf4j
-public class ElasticConfigration {
+public class ElasticConfiguration {
 
     protected TransportClient client;
 

@@ -23,7 +23,7 @@ import edp.davinci.server.dao.*;
 import edp.davinci.server.dto.role.*;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.enums.VizVisiblityEnum;
+import edp.davinci.server.enums.VizVisibilityEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.exception.UnAuthorizedException;
@@ -128,8 +128,8 @@ public class RoleServiceImpl implements RoleService {
     public Role createRole(RoleCreate roleCreate, User user) throws ServerException, UnAuthorizedException, NotFoundException {
         Organization organization = organizationExtendMapper.selectByPrimaryKey(roleCreate.getOrgId());
         if (null == organization) {
-            log.error("Orgainzation({}) is not found", roleCreate.getOrgId());
-            throw new NotFoundException("Orgainzation is not found");
+            log.error("Organization({}) is not found", roleCreate.getOrgId());
+            throw new NotFoundException("Organization is not found");
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
@@ -352,7 +352,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (user.getId().equals(relRoleUser.getUserId())) {
-            throw new ServerException("You cannot remove youself");
+            throw new ServerException("You cannot remove yourself");
         }
 
         if (relRoleUserExtendMapper.deleteByPrimaryKey(relationId) > 0) {
@@ -623,7 +623,7 @@ public class RoleServiceImpl implements RoleService {
     public List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException {
         Organization organization = organizationExtendMapper.selectByPrimaryKey(orgId);
         if (null == organization) {
-            log.error("Orgainzation({}) is not found", orgId);
+            log.error("Organization({}) is not found", orgId);
             throw new NotFoundException("Organization is not found");
         }
 
@@ -683,15 +683,15 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public boolean postVizvisibility(Long roleId, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedException, NotFoundException {
-        VizVisiblityEnum visiblityEnum = VizVisiblityEnum.vizOf(vizVisibility.getViz());
-        if (null == visiblityEnum) {
+        VizVisibilityEnum visibilityEnum = VizVisibilityEnum.vizOf(vizVisibility.getViz());
+        if (null == visibilityEnum) {
             throw new ServerException("Invalid viz");
         }
 
         Role role = getRole(roleId, user, true);
 
         boolean result = false;
-        switch (visiblityEnum) {
+        switch (visibilityEnum) {
             case PORTAL:
                 result = dashboardPortalService.postPortalVisibility(role, vizVisibility, user);
                 break;
@@ -724,7 +724,7 @@ public class RoleServiceImpl implements RoleService {
         return roleExtendMapper.selectByOrgIdAndMemberId(orgId, memberId);
     }
 
-    private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedException {
+    private Role getRole(Long id, User user, Boolean modify) throws NotFoundException, UnAuthorizedException {
         Role role = roleExtendMapper.selectByPrimaryKey(id);
         if (null == role) {
             log.error("Role({}) is not found", id);
@@ -736,7 +736,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedException();
         }
 
-        if (moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+        if (modify && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
             throw new UnAuthorizedException();
         }
 

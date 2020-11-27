@@ -125,7 +125,7 @@ public class DashboardController extends BaseController {
 
 
     /**
-     * 获取Dashboardportal 排除访问的团队列表
+     * 获取Dashboardportal 排除访问的角色列表
      *
      * @param id
      * @param user

@@ -253,7 +253,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 			throw new ServerException("Update dashboardPortal fail");
 		}
 
-		relRolePortalExtendMapper.deleteByProtalId(dashboardPortal.getId());
+		relRolePortalExtendMapper.deleteByPortalId(dashboardPortal.getId());
 
 		if (CollectionUtils.isEmpty(roleIds)) {
 			return;
@@ -335,7 +335,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         dashboardExtendMapper.deleteByPortalId(id);
 
         if (dashboardPortalExtendMapper.deleteByPrimaryKey(id) == 1) {
-            relRolePortalExtendMapper.deleteByProtalId(dashboardPortal.getId());
+            relRolePortalExtendMapper.deleteByPortalId(dashboardPortal.getId());
             optLogger.info("DashboardPortal({}) is delete by user({})", id, user.getId());
             return true;
         }

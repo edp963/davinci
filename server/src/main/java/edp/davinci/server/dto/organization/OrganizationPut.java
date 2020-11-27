@@ -28,13 +28,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@NotNull(message = "Organzation info can not be null")
+@NotNull(message = "Organization info can not be null")
 public class OrganizationPut {
 
-    @Min(value = 1L, message = "Invalid organzation id")
+    @Min(value = 1L, message = "Invalid Organization id")
     private Long id;
 
-    @NotBlank(message = "Organzation name cannot be empty")
+    @NotBlank(message = "Organization name cannot be empty")
     private String name;
 
     private String description;

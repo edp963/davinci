@@ -19,13 +19,14 @@
 
 package edp.davinci.server.service.impl;
 
+import com.jayway.jsonpath.JsonPath;
 import edp.davinci.commons.util.AESUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Organization;
 import edp.davinci.core.dao.entity.RelUserOrganization;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.enums.UserOrgRoleEnum;
-import static edp.davinci.commons.Constants.*;
-
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.commons.ErrorMsg;
 import edp.davinci.server.controller.ResultMap;
@@ -34,26 +35,14 @@ import edp.davinci.server.dao.RelUserOrganizationExtendMapper;
 import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dto.organization.OrganizationInfo;
 import edp.davinci.server.dto.user.*;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.enums.LockType;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.MailContentTypeEnum;
-import edp.davinci.server.enums.UserDistinctType;
+import edp.davinci.server.enums.*;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.LdapPerson;
 import edp.davinci.server.model.MailContent;
 import edp.davinci.server.model.TokenEntity;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.LdapService;
 import edp.davinci.server.service.UserService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.LockFactory;
-import edp.davinci.server.util.MailUtils;
-import edp.davinci.server.util.ServerUtils;
-import edp.davinci.server.util.TokenUtils;
+import edp.davinci.server.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
 import org.openqa.selenium.NotFoundException;
@@ -68,11 +57,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.jayway.jsonpath.JsonPath;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.regex.Matcher;
+
+import static edp.davinci.commons.Constants.AT_SIGN;
+import static edp.davinci.commons.Constants.SPACE;
 
 
 @Slf4j
@@ -391,7 +381,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 				userExtendMapper.activeUser(user);
 
 				String orgName = user.getUsername() + "'s Organization";
-				// 激活成功，创建默认Orgnization
+				// 激活成功，创建默认Organization
 				Organization organization = new Organization();
 		        organization.setName(orgName);
 		        organization.setUserId(userId);
@@ -649,7 +639,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             case EMAIL:
                 String email = ticket.getTicket();
                 if (StringUtils.isEmpty(email)) {
-                    throw new ServerException("Email cannot be EMPTY!");
+                    throw new ServerException("Email cannot be empty!");
                 }
                 Matcher matcher = Constants.PATTERN_EMAIL_FORMAT.matcher(email);
                 if (!matcher.find()) {
@@ -681,9 +671,9 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             throw new ServerException("Password cannot be empty");
         }
 
-        String uncompress = StringUtils.decompress(token);
+        String decompress = StringUtils.decompress(token);
         user.setPassword(ticket.getCheckCode());
-        if (!tokenUtils.validateToken(uncompress, new TokenEntity(user.getUsername(), user.getPassword()))) {
+        if (!tokenUtils.validateToken(decompress, new TokenEntity(user.getUsername(), user.getPassword()))) {
             throw new ServerException("Invalid check code, check code is wrong or expired");
         }
         user.setPassword(BCrypt.hashpw(ticket.getPassword(), BCrypt.gensalt()));

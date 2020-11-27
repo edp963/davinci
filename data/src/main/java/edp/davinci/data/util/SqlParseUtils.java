@@ -435,10 +435,10 @@ public class SqlParseUtils {
         }
 
         if(Filter.TYPE_RELATION.equalsIgnoreCase(type)){
-            List<Filter> childs = filter.getChildren();
+            List<Filter> children = filter.getChildren();
             condition.append(PARENTHESES_START);
-            for(int i=0; i<childs.size(); i++){
-                condition.append(i == 0 ? parseFilter(childs.get(i), keywordPrefix, keywordSuffix) : SPACE + filter.getValue().toString() + SPACE + parseFilter(childs.get(i), keywordPrefix, keywordSuffix));
+            for(int i=0; i<children.size(); i++){
+                condition.append(i == 0 ? parseFilter(children.get(i), keywordPrefix, keywordSuffix) : SPACE + filter.getValue().toString() + SPACE + parseFilter(children.get(i), keywordPrefix, keywordSuffix));
             }
             condition.append(PARENTHESES_CLOSE);
         }

@@ -70,7 +70,6 @@ const Item: React.FC<IItemProps> = (props) => {
 
   const { getFieldDecorator } = form
   const options: GetFieldDecoratorOptions = { initialValue: item.default }
-
   let control: React.ReactNode
   switch (item.component) {
     case 'input':

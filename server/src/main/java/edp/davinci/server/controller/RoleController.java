@@ -207,7 +207,7 @@ public class RoleController extends BaseController {
 
 
     /**
-     * 更新rele 和 member关联
+     * 更新role 和 member关联
      *
      * @param id
      * @param memberIds
@@ -332,12 +332,12 @@ public class RoleController extends BaseController {
      */
     @ApiOperation(value = "update relation between a role and a project", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/{id}/project/{projectId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateProjet(@PathVariable Long id,
-                                       @PathVariable Long projectId,
-                                       @Valid @RequestBody RelRoleProjectDTO projectRole,
-                                       @ApiIgnore BindingResult bindingResult,
-                                       @ApiIgnore @CurrentUser User user,
-                                       HttpServletRequest request) {
+    public ResponseEntity updateProject(@PathVariable Long id,
+                                        @PathVariable Long projectId,
+                                        @Valid @RequestBody RelRoleProjectDTO projectRole,
+                                        @ApiIgnore BindingResult bindingResult,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

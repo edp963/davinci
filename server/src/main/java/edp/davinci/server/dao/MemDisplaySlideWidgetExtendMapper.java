@@ -19,18 +19,13 @@
 
 package edp.davinci.server.dao;
 
-import java.util.List;
-
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
-import org.springframework.stereotype.Component;
-
 import edp.davinci.core.dao.MemDisplaySlideWidgetMapper;
 import edp.davinci.core.dao.entity.MemDisplaySlideWidget;
 import edp.davinci.server.dto.display.MemDisplaySlideWidgetWithSlide;
+import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public interface MemDisplaySlideWidgetExtendMapper extends MemDisplaySlideWidgetMapper {
@@ -134,10 +129,10 @@ public interface MemDisplaySlideWidgetExtendMapper extends MemDisplaySlideWidget
 
     @Select({
             "select m.*,",
-            "	s.id 'displayslide.id',",
-            "	s.display_id 'displayslide.displayid',",
-            "	s.`index` 'displayslide.index',",
-            "	s.`config` 'displayslide.config'",
+            "	s.id 'displaySlide.id',",
+            "	s.display_id 'displaySlide.displayId',",
+            "	s.`index` 'displaySlide.index',",
+            "	s.`config` 'displaySlide.config'",
             "from mem_display_slide_widget m left join display_slide s on m.display_slide_id = s.id",
             "where s.display_id = #{displayId}",
     })

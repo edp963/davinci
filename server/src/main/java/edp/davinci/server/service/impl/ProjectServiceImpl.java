@@ -319,7 +319,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 		try {
 			project.setOrgId(organization.getId());
 			transferProject(project, organization);
-			optLogger.info("Project({}) transferd from org({}) to org({}) by user({})", project.getId(),
+			optLogger.info("Project({}) transfered from org({}) to org({}) by user({})", project.getId(),
 					project.getOrgId(), orgId, user.getId());
 			return project;
 		}finally {
@@ -477,7 +477,7 @@ public class ProjectServiceImpl extends BaseEntityService implements ProjectServ
 
 
     /**
-     * 获取收藏的proeject
+     * 获取收藏的project
      *
      * @param user
      * @return

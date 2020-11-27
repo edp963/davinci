@@ -336,7 +336,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 	 */
 	@Override
 	@Transactional
-	public boolean deleteSrouce(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
+	public boolean deleteSource(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		Source source = getSource(id, false);
 

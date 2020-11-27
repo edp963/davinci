@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class KafkaOperationService extends KafkaConfigration {
+public class KafkaOperationService extends KafkaConfiguration {
 
     public void send(String topic, String msg) {
         try {
