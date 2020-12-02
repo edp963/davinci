@@ -2,31 +2,21 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
 import { createStructuredSelector } from 'reselect'
-import { getExternalAuthProviders, tryExternalAuth } from '../App/actions'
-import { makeSelectExternalAuthProviders } from '../App/selectors'
+import { getExternalAuthProviders } from 'share/containers/App/actions'
+import { makeSelectExternalAuthProviders } from 'share/containers/App/selectors'
 const styles = require('./ExternalLogin.less')
 
 
 interface IExternalLoginProps {
   providers: Array<{}>
   onGetExternalAuthProviders: () => any
-  tryExternalAuth: (resolve: () => any) => any
 }
 
 class ExternalLogin extends React.Component<IExternalLoginProps, {}> {
 
   public componentWillMount() {
-    const { onGetExternalAuthProviders, tryExternalAuth } = this.props
+    const { onGetExternalAuthProviders } = this.props
     onGetExternalAuthProviders()
-    tryExternalAuth(() => {
-      if(localStorage.getItem('shareToken')) {
-        const token = localStorage.getItem('shareToken')
-        const hash = localStorage.getItem('shareRoute')
-        location.replace(`/share.html?shareToken=${token}${hash}`)
-        return
-      }
-      location.replace('/#/projects')
-    })
   }
 
   private mapProviders = (authProviders) => {
@@ -59,7 +49,6 @@ class ExternalLogin extends React.Component<IExternalLoginProps, {}> {
 export function mapDispatchToProps(dispatch) {
   return {
     onGetExternalAuthProviders: () => dispatch(getExternalAuthProviders()),
-    tryExternalAuth: (resolve) => dispatch(tryExternalAuth(resolve))
   }
 }
 

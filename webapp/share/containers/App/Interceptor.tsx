@@ -24,7 +24,12 @@ import { useInjectReducer } from 'utils/injectReducer'
 import { useInjectSaga } from 'utils/injectSaga'
 import { ActionTypes } from './constants'
 import { AppActions } from './actions'
-import { makeSelectShareType, makeSelectPermissionLoading } from './selectors'
+import {
+  makeSelectShareType,
+  makeSelectPermissionLoading,
+  makeSelectLoginLoading,
+  makeSelectOauth2Enabled
+} from './selectors'
 import Password from 'share/components/Password'
 import Login from 'share/components/Login'
 import {
@@ -38,7 +43,6 @@ import reducer from './reducer'
 import saga from './sagas'
 import { Tmode } from 'app/components/SharePanel/types'
 import { message } from 'antd'
-import { makeSelectLoginLoading } from '../App/selectors'
 
 const Interceptor: React.FC<any> = (props) => {
   useInjectReducer({ key: 'global', reducer })
@@ -47,6 +51,7 @@ const Interceptor: React.FC<any> = (props) => {
   const shareType: Tmode = useSelector(makeSelectShareType())
   const loading: boolean = useSelector(makeSelectPermissionLoading())
   const loginLoading: boolean = useSelector(makeSelectLoginLoading())
+  const oauth2Enabled: boolean = useSelector(makeSelectOauth2Enabled())
 
   const { shareToken } = useMemo(
     () => querystring(window.location.search.substr(1)),
@@ -88,6 +93,8 @@ const Interceptor: React.FC<any> = (props) => {
   )
 
   const afterLogin = useCallback(() => {
+    localStorage.removeItem('shareToken')
+    localStorage.removeItem('shareRoute')
     setLegitimate(true)
     dispatch(AppActions.getPermissions(shareToken))
   }, [islegitimate])
@@ -100,6 +107,7 @@ const Interceptor: React.FC<any> = (props) => {
       if (shareType === 'AUTH' && !islegitimate) {
         return (
           <Login
+            oauth2Enabled={oauth2Enabled}
             loading={loginLoading}
             shareToken={shareToken}
             loginCallback={afterLogin}

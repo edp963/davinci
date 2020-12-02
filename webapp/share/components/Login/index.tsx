@@ -1,6 +1,7 @@
 import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
 import LoginForm from 'app/containers/Login/LoginForm'
+import ExternalLogin from 'share/components/ExternalLogin'
 import Background from 'share/components/Background'
 import { AppActions } from 'share/containers/App/actions'
 import checkLogin from 'utils/checkLogin'
@@ -9,6 +10,7 @@ import { message } from 'antd'
 interface ILoginProps {
   loading: boolean
   shareToken: any
+  oauth2Enabled: boolean
   loginCallback?: () => void
   onLogin?: (
     username: string,
@@ -86,7 +88,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   public render() {
-    const { loading } = this.props
+    const { loading, oauth2Enabled } = this.props
     const { username, password } = this.state
     return (
       <Background>
@@ -98,6 +100,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
         />
+        {oauth2Enabled && <ExternalLogin />}
       </Background>
     )
   }

@@ -57,6 +57,8 @@ export const App: React.FC = () => {
   const dispatch = useDispatch()
 
   useEffect(() => {
+    localStorage.setItem('shareToken', shareToken)
+    localStorage.setItem('shareRoute', window.location.hash)
     dispatch(AppActions.interceptor(shareToken))
     dispatch(AppActions.getServerConfigurations())
   }, [])
@@ -76,6 +78,8 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (shareType === 'NORMAL') {
+      localStorage.removeItem('shareToken')
+      localStorage.removeItem('shareRoute')
       dispatch(AppActions.getPermissions(shareToken))
     }
   }, [shareType])
