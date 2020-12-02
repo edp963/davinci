@@ -359,6 +359,7 @@ export function getLegendOption(
   const {
     showLegend,
     legendPosition,
+    legendType,
     selectAll,
     fontFamily,
     fontSize,
@@ -367,6 +368,18 @@ export function getLegendOption(
 
   let orient
   let positions
+  let type
+
+  switch (legendType) {
+    case 'plain':
+      type = 'plain'
+      break
+    case 'scroll':
+      type = 'scroll'
+      break
+    default:
+      break
+  }
 
   switch (legendPosition) {
     case 'top':
@@ -400,7 +413,7 @@ export function getLegendOption(
   return {
     show: showLegend && seriesNames.length > 1,
     data: seriesNames,
-    type: 'scroll',
+    type,
     textStyle: {
       fontFamily,
       fontSize,
