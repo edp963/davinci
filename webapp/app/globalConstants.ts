@@ -68,22 +68,56 @@ export const PIVOT_DEFAULT_AXIS_LINE_COLOR = '#D9D9D9'
 export const PIVOT_DEFAULT_FONT_COLOR = '#666'
 export const PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR = '#f7f7f7'
 export const PIVOT_CHART_FONT_FAMILIES = [
-  { name: '苹方', value: 'PingFang SC'},
-  { name: '微软雅黑', value: 'Microsoft YaHei'},
-  { name: '宋体', value: 'SimSun'},
-  { name: '黑体', value: 'SimHei'},
-  { name: 'Helvetica Neue', value: '"Helvetica Neue"'},
-  { name: 'Helvetica', value: 'Helvetica'},
-  { name: 'Arial', value: 'Arial'},
-  { name: 'sans-serif', value: 'sans-serif'}
+  { name: '苹方', value: 'PingFang SC' },
+  { name: '微软雅黑', value: 'Microsoft YaHei' },
+  { name: '宋体', value: 'SimSun' },
+  { name: '黑体', value: 'SimHei' },
+  { name: 'Helvetica Neue', value: '"Helvetica Neue"' },
+  { name: 'Helvetica', value: 'Helvetica' },
+  { name: 'Arial', value: 'Arial' },
+  { name: 'sans-serif', value: 'sans-serif' }
 ]
 export const PIVOT_CHART_LINE_STYLES = [
-  { name: '实线', value: 'solid'},
-  { name: '虚线', value: 'dashed'},
-  { name: '点', value: 'dotted'}
+  { name: '实线', value: 'solid' },
+  { name: '虚线', value: 'dashed' },
+  { name: '点', value: 'dotted' }
 ]
-export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96, 128]
-export const PIVOT_CHART_FONT_WEIGHTS = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']
+export const PIVOT_CHART_FONT_SIZES = [
+  10,
+  12,
+  13,
+  14,
+  15,
+  16,
+  18,
+  20,
+  24,
+  28,
+  32,
+  36,
+  40,
+  48,
+  56,
+  64,
+  72,
+  96,
+  128
+]
+export const PIVOT_CHART_FONT_WEIGHTS = [
+  'normal',
+  'bold',
+  'bolder',
+  'lighter',
+  '100',
+  '200',
+  '300',
+  '400',
+  '500',
+  '600',
+  '700',
+  '800',
+  '900'
+]
 export const PIVOT_CHART_FONT_STYLE = [
   { name: '普通', value: 'normal' },
   { name: '斜体', value: 'oblique' }
@@ -104,26 +138,26 @@ export const CHART_LABEL_POSITIONS = [
   { name: '内右下', value: 'insideBottomRight' }
 ]
 export const CHART_PIE_LABEL_POSITIONS = [
-  { name: '外侧', value: 'outside'},
-  { name: '内部', value: 'inside'},
-  { name: '中心', value: 'center'}
+  { name: '外侧', value: 'outside' },
+  { name: '内部', value: 'inside' },
+  { name: '中心', value: 'center' }
 ]
 export const CHART_FUNNEL_LABEL_POSITIONS = [
-  { name: '左侧', value: 'left'},
-  { name: '右侧', value: 'right'},
-  { name: '内部', value: 'inside'}
+  { name: '左侧', value: 'left' },
+  { name: '右侧', value: 'right' },
+  { name: '内部', value: 'inside' }
 ]
 
 export const CHART_SORT_MODES = [
-  { name: '降序', value: 'descending'},
-  { name: '升序', value: 'ascending'},
-  { name: '无', value: 'none'}
+  { name: '降序', value: 'descending' },
+  { name: '升序', value: 'ascending' },
+  { name: '无', value: 'none' }
 ]
 
 export const CHART_ALIGNMENT_MODES = [
-  { name: '居中', value: 'center'},
-  { name: '居左', value: 'left'},
-  { name: '居右', value: 'right'}
+  { name: '居中', value: 'center' },
+  { name: '居左', value: 'left' },
+  { name: '居右', value: 'right' }
 ]
 
 export const AXIS_NAME_LOCATIONS = [
@@ -137,6 +171,11 @@ export const CHART_LEGEND_POSITIONS = [
   { name: '上', value: 'top' },
   { name: '下', value: 'bottom' },
   { name: '左', value: 'left' }
+]
+
+export const CHART_LEGEND_TYPE = [
+  { name: '普通', value: 'plain' },
+  { name: '滚动', value: 'scroll' }
 ]
 
 export const CHART_VISUALMAP_POSITIONS = [
@@ -154,13 +193,13 @@ export const CHART_LAYER_TYPES = [
 ]
 
 export const CHART_LINES_SYMBOL_TYPE = [
-  {name: '圆形', value: 'circle'},
-  {name: '矩形', value: 'rect'},
-  {name: '圆角矩形', value: 'roundRect'},
-  {name: '三角形', value: 'triangle'},
-  {name: '菱形', value: 'diamond'},
-  {name: '大头针形', value: 'pin'},
-  {name: '箭头形', value: 'arrow'}
+  { name: '圆形', value: 'circle' },
+  { name: '矩形', value: 'rect' },
+  { name: '圆角矩形', value: 'roundRect' },
+  { name: '三角形', value: 'triangle' },
+  { name: '菱形', value: 'diamond' },
+  { name: '大头针形', value: 'pin' },
+  { name: '箭头形', value: 'arrow' }
 ]
 
 export const CHART_VISUALMAP_DIRECYTIONS = [
@@ -173,26 +212,82 @@ export const PIVOT_CHART_YAXIS_OPTIONS = [
   { name: '柱状图', value: 'bar' }
 ]
 
-
-
 export const SQL_STRING_TYPES = [
-  'CHAR', 'NCHAR', 'VARCHAR', 'NVARCHAR', 'LONGVARCHAR', 'LONGNVARCHAR', 'VARCHAR2', 'NVARCHAR2',
-  'STRING', 'TINYTEXT', 'TEXT', 'NTEXT', 'MEDIUMTEXT', 'LONGTEXT',
-  'JSON', 'XML', 'LINESTRING', 'MULTILINESTRING',
-  'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'CBLOB',
-  'BINARY', 'VARBINARY', 'LONGVARBINARY', 'ENUM', 'SET', 'NULL', 'ROWID',
-  'FIXEDSTRING', 'IPV4', 'IPV6', 'UUID'
+  'CHAR',
+  'NCHAR',
+  'VARCHAR',
+  'NVARCHAR',
+  'LONGVARCHAR',
+  'LONGNVARCHAR',
+  'VARCHAR2',
+  'NVARCHAR2',
+  'STRING',
+  'TINYTEXT',
+  'TEXT',
+  'NTEXT',
+  'MEDIUMTEXT',
+  'LONGTEXT',
+  'JSON',
+  'XML',
+  'LINESTRING',
+  'MULTILINESTRING',
+  'TINYBLOB',
+  'MEDIUMBLOB',
+  'BLOB',
+  'LONGBLOB',
+  'CBLOB',
+  'BINARY',
+  'VARBINARY',
+  'LONGVARBINARY',
+  'ENUM',
+  'SET',
+  'NULL',
+  'ROWID',
+  'FIXEDSTRING',
+  'IPV4',
+  'IPV6',
+  'UUID'
 ]
 export const SQL_NUMBER_TYPES = [
-  'BIT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
-  'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
-  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMBER', 'NUMERIC',
-  'UINT8', 'UINT16', 'UINT32', 'UINT64', 'INT8', 'INT16', 'INT32', 'INT64',
-  'FLOAT32', 'FLOAT64', 'DECIMAL32', 'DECIMAL64', 'DECIMAL128'
+  'BIT',
+  'TINYINT',
+  'SMALLINT',
+  'MEDIUMINT',
+  'INT',
+  'INTEGER',
+  'BIGINT',
+  'FLOAT',
+  'DOUBLE',
+  'DOUBLE PRECISION',
+  'REAL',
+  'DECIMAL',
+  'BIT',
+  'SERIAL',
+  'BOOL',
+  'BOOLEAN',
+  'DEC',
+  'FIXED',
+  'NUMBER',
+  'NUMERIC',
+  'UINT8',
+  'UINT16',
+  'UINT32',
+  'UINT64',
+  'INT8',
+  'INT16',
+  'INT32',
+  'INT64',
+  'FLOAT32',
+  'FLOAT64',
+  'DECIMAL32',
+  'DECIMAL64',
+  'DECIMAL128'
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 
-export const SQL_TYPES = SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES).concat(SQL_DATE_TYPES)
+export const SQL_TYPES = SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES).concat(
+  SQL_DATE_TYPES
+)
 
 export type SqlTypes = typeof SQL_TYPES[number]
 
@@ -202,11 +297,12 @@ export const KEY_COLUMN = 'davinciUniqueId'
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_STYLE = 'normal'
 export const DEFAULT_FONT_SIZE = '14px'
-export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
+export const DEFAULT_FONT_FAMILY =
+  '"Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
 export const DEFAULT_JWT_TOKEN_EXPIRED = 60 * 60 * 1000 // ms
-export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000  // ms
-export const DEFAULT_CACHE_EXPIRED = 300  // sec
+export const DOWNLOAD_LIST_POLLING_FREQUENCY = 30000 // ms
+export const DEFAULT_CACHE_EXPIRED = 300 // sec
