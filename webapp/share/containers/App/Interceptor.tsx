@@ -88,6 +88,8 @@ const Interceptor: React.FC<any> = (props) => {
   )
 
   const afterLogin = useCallback(() => {
+    localStorage.removeItem('shareToken')
+    localStorage.removeItem('shareRoute')
     setLegitimate(true)
     dispatch(AppActions.getPermissions(shareToken))
   }, [islegitimate])
