@@ -180,11 +180,11 @@ public class ExcelUtils {
         //表头粗体居中
         Font font = workbook.createFont();
         font.setFontName("黑体");
-        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setBold(true);
         headerCellStyle.setFont(font);
         headerCellStyle.setDataFormat(format.getFormat("@"));
-        headerCellStyle.setAlignment(CellStyle.ALIGN_CENTER);
-        headerCellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
         boolean isTable = isTable(widgetConfig);
 
