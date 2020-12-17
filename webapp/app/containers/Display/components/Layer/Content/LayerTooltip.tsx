@@ -41,7 +41,7 @@ const LayerTooltip: React.FC = () => {
         : layer.params,
     [dragging, operateItemParams, layer.params]
   )
-  
+
   const labelText = useMemo(
     (): boolean => subType === SecondaryGraphTypes.Label,
     [subType]

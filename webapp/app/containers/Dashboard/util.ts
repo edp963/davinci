@@ -31,7 +31,8 @@ import {
   IDashboardItemInfo,
   IQueryConditions,
   IDataRequestParams,
-  IDataRequestBody
+  IDataRequestBody,
+  IDashboardItem
 } from './types'
 import { IWidgetFormed } from '../Widget/types'
 import ChartTypes from '../Widget/config/chart/ChartTypes'
@@ -93,8 +94,8 @@ export function getUpdatedPagination(
   const { pageNo, pageSize, totalCount } = result
   return {
     ...pagination,
-    pageNo,
-    pageSize,
+    pageNo: pagination.withPaging ? pageNo : 0,
+    pageSize: pagination.withPaging ? pageSize : 0,
     totalCount
   }
 }
@@ -449,13 +450,17 @@ export function getRequestBody(
 
 export function getFormValuesRelatedItems(
   controls: IControl[],
+  currentItems: IDashboardItem[],
   formValues: object
 ): number[] {
   return Object.keys(formValues).reduce((items, key) => {
     const control = controls.find((c) => c.key === key)
     const { relatedItems } = control
     const checkedItems = Object.entries(relatedItems)
-      .filter(([itemId, config]) => config.checked)
+      .filter(
+        ([itemId, config]) =>
+          config.checked && currentItems.find((c) => c.id === Number(itemId))
+      )
       .map(([itemId]) => itemId)
     return Array.from(new Set([...items, ...checkedItems]))
   }, [])
@@ -466,7 +471,8 @@ export function getCurrentControlValues(
   controls: IControl[],
   formedViews: IFormedViews | IShareFormedViews,
   allFormValues: object,
-  changedFormValues?: object
+  changedFormValues?: object,
+  currentItems?: IDashboardItem[]
 ): IGlobalControlConditionsByItem | ILocalControlConditions {
   const updatedFormValues = {
     ...allFormValues,
@@ -476,6 +482,7 @@ export function getCurrentControlValues(
   if (type === ControlPanelTypes.Global) {
     const changedFormValuesRelatedItems = getFormValuesRelatedItems(
       controls,
+      currentItems,
       changedFormValues || allFormValues
     )
 
@@ -492,6 +499,7 @@ export function getCurrentControlValues(
           if (
             relatedItem &&
             relatedItem.checked &&
+            relatedViews[relatedItem.viewId] &&
             formedViews[relatedItem.viewId]
           ) {
             const relatedView = relatedViews[relatedItem.viewId]

@@ -66,7 +66,17 @@ const makeSelectPermissionLoading = () => createSelector(
   }
 )
 
+const makeSelectExternalAuthProviders = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.externalAuthProviders
+  )
 
+const makeSelectOauth2Enabled = () =>
+  createSelector(
+    selectGlobal,
+    (globalState) => globalState.oauth2Enabled
+  )
 
 
 
@@ -78,5 +88,7 @@ export {
   makeSelectShareType,
   makeSelectVizType,
   makeSelectPermission,
-  makeSelectPermissionLoading
+  makeSelectPermissionLoading,
+  makeSelectExternalAuthProviders,
+  makeSelectOauth2Enabled
 }

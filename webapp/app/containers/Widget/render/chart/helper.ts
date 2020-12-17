@@ -84,13 +84,13 @@ export function getDoubleYExtendInterval(initExtent, splitNumber) {
     nf = 10
   }
   interval = nf * exp10
-  interval = +interval
+  interval = exponent >= -20 ? +interval.toFixed(exponent < 0 ? -exponent : 0) : interval
   minExtent = round(Math.floor(minExtent / interval) * interval)
   maxExtent = round(Math.ceil(maxExtent / interval) * interval)
   return { minExtent, maxExtent, interval }
 }
 
-export function strip(num: numType, precision = 3): number {
+export function strip(num: numType, precision = 12): number {
   return +parseFloat(Number(num).toPrecision(precision))
 }
 
@@ -165,9 +165,11 @@ export function getMetricsExtendMinAndMax(
     data,
     stack
   )
+
   const [leftExtentMin, leftExtentMax, leftInterval] = Object.values(
     getDoubleYExtendInterval([leftMin, leftMax], splitNumber)
   )
+
   const [rightExtentMin, rightExtentMax, rightInterval] = Object.values(
     getDoubleYExtendInterval([rightMin, rightMax], splitNumber)
   )

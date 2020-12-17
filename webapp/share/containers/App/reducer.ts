@@ -30,6 +30,8 @@ interface IState {
   vizType: 'dashboard' | 'widget' | 'display' | ''
   permissionLoading: boolean
   download: boolean
+  oauth2Enabled: boolean
+  externalAuthProviders: any[]
 }
 
 export const initialState: IState = {
@@ -39,12 +41,17 @@ export const initialState: IState = {
   shareType: '',
   vizType: '',
   permissionLoading: false,
-  download: false
+  download: false,
+  oauth2Enabled: false,
+  externalAuthProviders: []
 }
 
 const appReducer = (state = initialState, action) =>
   produce(state, (draft) => {
     switch (action.type) {
+      case ActionTypes.GET_EXTERNAL_AUTH_PROVIDERS_SUCESS:
+        draft.externalAuthProviders = action.payload.externalAuthProviders
+        break
       case ActionTypes.LOGIN:
         draft.loading = true
         break
@@ -59,6 +66,10 @@ const appReducer = (state = initialState, action) =>
       case ActionTypes.LOGOUT:
         draft.logged = false
         draft.loginUser = null
+        break
+      case ActionTypes.GET_SERVER_CONFIGURATIONS_SUCCESS:
+        draft.oauth2Enabled =
+          action.payload.configurations.security.oauth2.enable
         break
       case ActionTypes.INTERCEPTOR_PREFLIGHT_SUCCESS:
         draft.shareType = action.payload.shareType
