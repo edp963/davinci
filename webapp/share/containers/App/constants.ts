@@ -22,6 +22,8 @@ import { createTypes } from 'app/utils/redux'
 
 enum Types {
   DEFAULT_LOCALE = 'en',
+  GET_EXTERNAL_AUTH_PROVIDERS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS',
+  GET_EXTERNAL_AUTH_PROVIDERS_SUCESS = 'davinci/App/GET_EXTERNAL_AUTH_PROVIDERS_SUCESS',
   LOGIN = 'davinci/Share/App/LOGIN',
   LOGGED = 'davinci/Share/App/LOGGED',
   LOGON_FAILURE = 'davinci/Share/App/LOGON_FAILURE',

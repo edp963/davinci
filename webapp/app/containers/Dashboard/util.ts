@@ -94,8 +94,8 @@ export function getUpdatedPagination(
   const { pageNo, pageSize, totalCount } = result
   return {
     ...pagination,
-    pageNo,
-    pageSize,
+    pageNo: pagination.withPaging ? pageNo : 0,
+    pageSize: pagination.withPaging ? pageSize : 0,
     totalCount
   }
 }

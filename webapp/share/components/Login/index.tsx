@@ -1,7 +1,10 @@
 import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectOauth2Enabled } from 'share/containers/App/selectors'
 import LoginForm from 'app/containers/Login/LoginForm'
 import Background from 'share/components/Background'
+import ExternalLogin from 'share/components/ExternalLogin'
 import { AppActions } from 'share/containers/App/actions'
 import checkLogin from 'utils/checkLogin'
 import { setToken } from 'utils/request'
@@ -9,6 +12,7 @@ import { message } from 'antd'
 interface ILoginProps {
   loading: boolean
   shareToken: any
+  oauth2Enabled: boolean
   loginCallback?: () => void
   onLogin?: (
     username: string,
@@ -39,7 +43,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private checkNormalLogin = () => {
-    const { loginCallback } = this.props
+    const { oauth2Enabled, shareToken, loginCallback } = this.props
     if (checkLogin()) {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
@@ -48,6 +52,9 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
       if (loginCallback) {
         loginCallback()
       }
+    } else if (oauth2Enabled) {
+      localStorage.setItem('shareToken', shareToken)
+      localStorage.setItem('shareRoute', window.location.hash)
     }
   }
 
@@ -86,7 +93,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   public render() {
-    const { loading } = this.props
+    const { loading, oauth2Enabled, shareToken } = this.props
     const { username, password } = this.state
     return (
       <Background>
@@ -98,10 +105,15 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
           onChangePassword={this.changePassword}
           onLogin={this.doLogin}
         />
+        {oauth2Enabled && <ExternalLogin />}
       </Background>
     )
   }
 }
+
+const mapStateToProps = createStructuredSelector({
+  oauth2Enabled: makeSelectOauth2Enabled()
+})
 
 export function mapDispatchToProps(dispatch) {
   return {
@@ -116,4 +128,4 @@ export function mapDispatchToProps(dispatch) {
   }
 }
 
-export default connect<{}, {}, ILoginProps>(null, mapDispatchToProps)(Login)
+export default connect(mapStateToProps, mapDispatchToProps)(Login)

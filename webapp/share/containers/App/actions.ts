@@ -23,6 +23,21 @@ import { returnType } from 'utils/redux'
 import { IServerConfigurations } from 'app/containers/App/types'
 
 export const AppActions = {
+  getExternalAuthProviders() {
+    return {
+      type: ActionTypes.GET_EXTERNAL_AUTH_PROVIDERS
+    }
+  },
+  
+  gotExternalAuthProviders(externalAuthProviders) {
+    return {
+      type: ActionTypes.GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
+      payload: {
+        externalAuthProviders
+      }
+    }
+  },
+
   login(username, password, shareToken, resolve, reject?) {
     return {
       type: ActionTypes.LOGIN,

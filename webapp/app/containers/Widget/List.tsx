@@ -281,12 +281,15 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
         <Helmet title="Widget" />
         <ContainerTitle>
           <Row>
-            <Col xl={18} lg={16} md={12} sm={24}>
+            <Col span={24} className={utilStyles.shortcut}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">Widget</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
+              <Link to={`/account/organization/${currentProject.orgId}`}>
+                <i className='iconfont icon-organization' />
+              </Link>
             </Col>
           </Row>
         </ContainerTitle>
