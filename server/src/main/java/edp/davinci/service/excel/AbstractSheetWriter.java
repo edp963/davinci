@@ -79,11 +79,11 @@ public abstract class AbstractSheetWriter {
         header = context.getWorkbook().createCellStyle();
         Font font = context.getWorkbook().createFont();
         font.setFontName("黑体");
-        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setBold(true);
         header.setFont(font);
         header.setDataFormat(format.getFormat("@"));
-        header.setAlignment(CellStyle.ALIGN_CENTER);
-        header.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+        header.setAlignment(HorizontalAlignment.CENTER);
+        header.setVerticalAlignment(VerticalAlignment.CENTER);
     }
 
     protected void writeHeader(SheetContext context) throws Exception {

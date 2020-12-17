@@ -24,6 +24,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
+import edp.core.model.Dict;
 import edp.core.model.JdbcSourceInfo;
 import edp.core.utils.CollectionUtils;
 import edp.core.utils.CustomDataSourceUtils;
@@ -233,6 +234,7 @@ public class JdbcDataSource {
 
             druidDataSource.setInitialSize(initialSize);
             druidDataSource.setMinIdle(minIdle);
+            druidDataSource.setMaxIdle(minIdle);
             druidDataSource.setMaxActive(maxActive);
             druidDataSource.setMaxWait(maxWait);
             druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
@@ -268,7 +270,25 @@ public class JdbcDataSource {
 
             if (!CollectionUtils.isEmpty(jdbcSourceInfo.getProperties())) {
                 Properties properties = new Properties();
-                jdbcSourceInfo.getProperties().forEach(dict -> properties.setProperty(dict.getKey(), dict.getValue()));
+                for (Dict dict : jdbcSourceInfo.getProperties()) {
+                    if ("davinci.initial-size".equalsIgnoreCase(dict.getKey())) {
+                        druidDataSource.setInitialSize(Integer.parseInt(dict.getValue()));
+                        continue;
+                    }
+
+                    if ("davinci.min-idle".equalsIgnoreCase(dict.getKey())) {
+                        druidDataSource.setMinIdle(Integer.parseInt(dict.getValue()));
+                        druidDataSource.setMaxIdle(Integer.parseInt(dict.getValue()));
+                        continue;
+                    }
+
+                    if ("davinci.max-active".equalsIgnoreCase(dict.getKey())) {
+                        druidDataSource.setMaxActive(Integer.parseInt(dict.getValue()));
+                        continue;
+                    }
+
+                    properties.setProperty(dict.getKey(), dict.getValue());
+                }
                 druidDataSource.setConnectProperties(properties);
             }
 
