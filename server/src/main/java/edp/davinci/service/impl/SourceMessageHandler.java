@@ -19,19 +19,17 @@
 
 package edp.davinci.service.impl;
 
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.alibaba.fastjson.JSON;
-
 import edp.core.common.jdbc.JdbcDataSource;
 import edp.core.model.JdbcSourceInfo;
 import edp.core.model.JdbcSourceInfo.JdbcSourceInfoBuilder;
 import edp.core.utils.SourceUtils;
 import edp.davinci.core.service.RedisMessageHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -60,6 +58,7 @@ public class SourceMessageHandler implements RedisMessageHandler {
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
         JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
         		.aJdbcSourceInfo()
+                .withName((String)map.get("name"))
                 .withJdbcUrl((String)map.get("url"))
                 .withUsername((String)map.get("username"))
                 .withPassword((String)map.get("password"))

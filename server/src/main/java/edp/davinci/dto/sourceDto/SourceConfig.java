@@ -28,6 +28,8 @@ import java.util.List;
 @Data
 public class SourceConfig {
 
+    private String name;
+
     private String username;
 
     private String password;

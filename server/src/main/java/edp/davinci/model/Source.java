@@ -24,8 +24,8 @@ import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
-import edp.core.model.BaseSource;
 import edp.core.model.Dict;
+import edp.core.model.RecordInfo;
 import edp.core.utils.SourceUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,7 +38,7 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper=true)
-public class Source extends BaseSource {
+public class Source extends RecordInfo<Source> {
 
     private Long id;
 
@@ -54,13 +54,12 @@ public class Source extends BaseSource {
     private String config;
 
     /**
-     * 从config中获取jdbcUrl
+     * 从config中获取url
      * <p>
      * json key： url
      *
      * @return
      */
-    @Override
     @JSONField(serialize = false)
     public String getJdbcUrl() {
         String url = null;
@@ -77,13 +76,12 @@ public class Source extends BaseSource {
     }
 
     /**
-     * 从config中获取jdbc username
+     * 从config中获取username
      * <p>
      * json key: user
      *
      * @return
      */
-    @Override
     @JSONField(serialize = false)
     public String getUsername() {
         String username = null;
@@ -100,13 +98,12 @@ public class Source extends BaseSource {
     }
 
     /**
-     * 从config中获取 jdbc password
+     * 从config中获取password
      * <p>
      * json key: password
      *
      * @return
      */
-    @Override
     @JSONField(serialize = false)
     public String getPassword() {
         String password = null;
@@ -122,13 +119,11 @@ public class Source extends BaseSource {
         return password;
     }
 
-    @Override
     @JSONField(serialize = false)
     public String getDatabase() {
         return SourceUtils.getDataSourceName(getJdbcUrl());
     }
 
-    @Override
     @JSONField(serialize = false)
     public String getDbVersion() {
         String version = null;
@@ -146,7 +141,6 @@ public class Source extends BaseSource {
         return StringUtils.isEmpty(version) ? null : version;
     }
 
-    @Override
     @JSONField(serialize = false)
     public boolean isExt() {
         boolean ext = false;

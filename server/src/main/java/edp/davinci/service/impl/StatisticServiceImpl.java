@@ -70,7 +70,7 @@ public class StatisticServiceImpl implements StatisticService {
             String mysqlPassword = environment.getProperty("statistic.mysql_password");
             // Password encryption
             String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
-            this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, encrypt, null, null, false);
+            this.sqlUtils = this.sqlUtils.init("statistic", mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
             List<Map<String, Object>> values = entityConvertIntoMap(infoList);
             Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
@@ -92,7 +92,7 @@ public class StatisticServiceImpl implements StatisticService {
         String mysqlPassword = environment.getProperty("spring.datasource.password");
         // Password encryption
         String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
-        this.sqlUtils = this.sqlUtils.init(mysqlUrl, mysqlUsername, encrypt, null, null, false);
+        this.sqlUtils = this.sqlUtils.init("statistic", mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
         List<Map<String, Object>> values = entityConvertIntoMap(infoList);
         Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
@@ -170,6 +170,4 @@ public class StatisticServiceImpl implements StatisticService {
         }
         return l;
     }
-
-
 }

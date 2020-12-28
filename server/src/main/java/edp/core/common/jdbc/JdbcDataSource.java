@@ -19,8 +19,11 @@
 
 package edp.core.common.jdbc;
 
+import com.alibaba.druid.filter.Filter;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.druid.wall.WallConfig;
+import com.alibaba.druid.wall.WallFilter;
 import edp.core.consts.Consts;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
@@ -31,10 +34,14 @@ import edp.core.utils.CustomDataSourceUtils;
 import edp.core.utils.SourceUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +54,42 @@ import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 @Slf4j
 @Component
 public class JdbcDataSource {
+
+    @Bean(name = "wallConfig")
+    WallConfig wallConfig() {
+        WallConfig config = new WallConfig();
+        config.setDeleteAllow(false);
+        config.setUpdateAllow(false);
+        config.setInsertAllow(false);
+        config.setReplaceAllow(false);
+        config.setMergeAllow(false);
+        config.setTruncateAllow(false);
+        config.setCreateTableAllow(false);
+        config.setAlterTableAllow(false);
+        config.setDropTableAllow(false);
+        config.setCommentAllow(true);
+        config.setUseAllow(false);
+        config.setDescribeAllow(false);
+        config.setShowAllow(false);
+        config.setSelectWhereAlwayTrueCheck(false);
+        config.setSelectHavingAlwayTrueCheck(false);
+        config.setSelectUnionCheck(false);
+        config.setConditionDoubleConstAllow(true);
+        config.setConditionAndAlwayTrueAllow(true);
+        config.setConditionAndAlwayFalseAllow(true);
+        return config;
+    }
+
+    @Bean(name = "wallFilter")
+    @DependsOn("wallConfig")
+    WallFilter wallFilter(WallConfig wallConfig) {
+        WallFilter wfilter = new WallFilter();
+        wfilter.setConfig(wallConfig);
+        return wfilter;
+    }
+
+    @Autowired
+    WallFilter wallFilter;
 	
     @Value("${source.max-active:8}")
     @Getter
@@ -169,6 +212,7 @@ public class JdbcDataSource {
 
     public DruidDataSource getDataSource(JdbcSourceInfo jdbcSourceInfo) throws SourceException {
 
+        String name = jdbcSourceInfo.getName();
         String jdbcUrl = jdbcSourceInfo.getJdbcUrl();
         String username = jdbcSourceInfo.getUsername();
         String password = jdbcSourceInfo.getPassword();
@@ -225,6 +269,7 @@ public class JdbcDataSource {
             	druidDataSource.setDriverClassLoader(ExtendedJdbcClassLoader.getExtJdbcClassLoader(path));
             }
 
+            druidDataSource.setName(name);
             druidDataSource.setUrl(jdbcUrl);
             druidDataSource.setUsername(username);
 
@@ -293,6 +338,23 @@ public class JdbcDataSource {
             }
 
             try {
+
+                // druid wall filter not support some database so set type mysql
+                if (DataTypeEnum.MOONBOX == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.MONGODB == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.ELASTICSEARCH == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.CASSANDRA == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.VERTICA == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.HANA == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.IMPALA == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.TDENGINE == DataTypeEnum.urlOf(jdbcUrl)) {
+                    wallFilter.setDbType(DataTypeEnum.MYSQL.getFeature());
+                }
+
+                if (!"statistic".equals(name)) {// davinci's statistic source don't need wall filter
+                    druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
+                }
+
                 druidDataSource.setFilters(filters);
                 druidDataSource.init();
             } catch (Exception e) {
@@ -310,7 +372,8 @@ public class JdbcDataSource {
     }
     
     private String getDataSourceKey (JdbcSourceInfo jdbcSourceInfo) {
-        return SourceUtils.getKey(jdbcSourceInfo.getJdbcUrl(),
+        return SourceUtils.getKey(jdbcSourceInfo.getName(),
+                jdbcSourceInfo.getJdbcUrl(),
                 jdbcSourceInfo.getUsername(),
                 jdbcSourceInfo.getPassword(),
                 jdbcSourceInfo.getDbVersion(),

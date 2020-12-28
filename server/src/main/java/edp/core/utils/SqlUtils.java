@@ -31,6 +31,7 @@ import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import edp.davinci.core.utils.SqlParseUtils;
+import edp.davinci.model.Source;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -91,11 +92,12 @@ public class SqlUtils {
 
     private SourceUtils sourceUtils;
 
-    public SqlUtils init(BaseSource source) {
+    public SqlUtils init(Source source) {
         // Password decryption
         String decrypt = SourcePasswordEncryptUtils.decrypt(source.getPassword());
         return SqlUtilsBuilder
                 .getBuilder()
+                .withName(source.getId() + AT_SYMBOL + source.getName())
                 .withJdbcUrl(source.getJdbcUrl())
                 .withUsername(source.getUsername())
                 .withPassword(decrypt)
@@ -108,11 +110,12 @@ public class SqlUtils {
                 .build();
     }
 
-    public SqlUtils init(String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext) {
+    public SqlUtils init(String name, String jdbcUrl, String username, String password, String dbVersion, List<Dict> properties, boolean ext) {
         // Password decryption
         String decrypt = SourcePasswordEncryptUtils.decrypt(password);
         return SqlUtilsBuilder
                 .getBuilder()
+                .withName(name)
                 .withJdbcUrl(jdbcUrl)
                 .withUsername(username)
                 .withPassword(decrypt)
@@ -657,12 +660,12 @@ public class SqlUtils {
      * @throws ServerException
      */
     public static void checkSensitiveSql(String sql) throws ServerException {
-        Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
-        if (matcher.find()) {
-            String group = matcher.group();
-            log.warn("Sensitive SQL operations are not allowed: {}", group.toUpperCase());
-            throw new ServerException("Sensitive SQL operations are not allowed: " + group.toUpperCase());
-        }
+//        Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
+//        if (matcher.find()) {
+//            String group = matcher.group();
+//            log.warn("Sensitive SQL operations are not allowed: {}", group.toUpperCase());
+//            throw new ServerException("Sensitive SQL operations are not allowed: " + group.toUpperCase());
+//        }
     }
 
     public JdbcTemplate jdbcTemplate() throws SourceException {
@@ -888,7 +891,7 @@ public class SqlUtils {
      * @return
      */
     public static String filterAnnotate(String sql) {
-        sql = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1");
+        // sql = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1");
         sql = sql.replaceAll(NEW_LINE_CHAR, SPACE).replaceAll("(;+\\s*)+", SEMICOLON);
         return sql;
     }
@@ -953,6 +956,7 @@ public class SqlUtils {
         private JdbcDataSource jdbcDataSource;
         private int resultLimit;
         private boolean isQueryLogEnable;
+        private String name;
         private String jdbcUrl;
         private String username;
         private String password;
@@ -980,6 +984,11 @@ public class SqlUtils {
 
         SqlUtilsBuilder withIsQueryLogEnable(boolean isQueryLogEnable) {
             this.isQueryLogEnable = isQueryLogEnable;
+            return this;
+        }
+
+        SqlUtilsBuilder withName(String name) {
+            this.name = name;
             return this;
         }
 
@@ -1020,6 +1029,7 @@ public class SqlUtils {
             JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfo
                     .JdbcSourceInfoBuilder
                     .aJdbcSourceInfo()
+                    .withName(this.name)
                     .withJdbcUrl(this.jdbcUrl)
                     .withUsername(this.username)
                     .withPassword(this.password)

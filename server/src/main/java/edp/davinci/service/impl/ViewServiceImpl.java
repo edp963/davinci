@@ -578,7 +578,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         }
 
         if (null == viewWithSource.getSource()) {
-            throw new NotFoundException("source is not found");
+            throw new NotFoundException("Source is not found");
         }
 
         String cacheKey = null;
