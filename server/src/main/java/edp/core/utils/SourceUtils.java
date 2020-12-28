@@ -100,7 +100,7 @@ public class SourceUtils {
                 DataSource dataSource = getDataSource(jdbcSourceInfo);
                 return dataSource.getConnection();
             } catch (Exception e) {
-                log.error("Get connection error, jdbcUrl:{}", jdbcSourceInfo.getJdbcUrl());
+                log.error("Get connection error, jdbcUrl:{}, e:{}", jdbcSourceInfo.getJdbcUrl(), e);
                 throw new SourceException("Get connection error, jdbcUrl:" + jdbcSourceInfo.getJdbcUrl() + " you can try again later or reset datasource");
             }
         }
@@ -172,7 +172,7 @@ public class SourceUtils {
 					throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 				}
 			} catch (NullPointerException en) {
-				throw new ServerException("JDBC driver is not found: " + dataSourceName + ":" + version);
+				throw new ServerException("JDBC driver is not found: " + dataSourceName + "-" + version);
 			} catch (ClassNotFoundException ex) {
 				throw new SourceException("Unable to get driver instance for jdbcUrl: " + jdbcUrl);
 			}
@@ -265,22 +265,18 @@ public class SourceUtils {
 		jdbcDataSource.removeDatasource(jdbcSourceInfo);
     }
 
-    public static String getKey(String jdbcUrl, String username, String password, String version, boolean isExt) {
+    public static String getKey(String name, String jdbcUrl, String username, String password, String version, boolean isExt) {
 
         StringBuilder sb = new StringBuilder();
-        
-        if (!StringUtils.isEmpty(username)) {
-            sb.append(username);
-        }
-        
-        if (!StringUtils.isEmpty(password)) {
-            sb.append(Consts.COLON).append(password);
-        }
-        
-        sb.append(Consts.AT_SYMBOL).append(jdbcUrl.trim());
-        
+
+        sb.append(StringUtils.isEmpty(name) ? "null" : name).append(Consts.COLON);
+        sb.append(StringUtils.isEmpty(username) ? "null" : username).append(Consts.COLON);
+        sb.append(StringUtils.isEmpty(password) ? "null" : password).append(Consts.COLON);
+        sb.append(jdbcUrl.trim()).append(Consts.COLON);
         if (isExt && !StringUtils.isEmpty(version)) {
-            sb.append(Consts.COLON).append(version);
+            sb.append(version);
+        }else {
+            sb.append("null");
         }
 
         return MD5Util.getMD5(sb.toString(), true, 64);

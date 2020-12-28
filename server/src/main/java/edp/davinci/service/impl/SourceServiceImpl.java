@@ -70,6 +70,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static edp.core.consts.Consts.AT_SYMBOL;
 import static edp.core.consts.Consts.JDBC_DATASOURCE_DEFAULT_VERSION;
 import static edp.davinci.core.common.Constants.DAVINCI_TOPIC_CHANNEL;
 
@@ -244,6 +245,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
         // The password is encrypted
         String encrypt = SourcePasswordEncryptUtils.encrypt(config.getPassword());
         return sqlUtils.init(
+                config.getName(),
                 config.getUrl(),
                 config.getUsername(),
                 encrypt,
@@ -304,6 +306,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 
             // 释放失效数据源
             String copyKey = SourceUtils.getKey(
+                    sourceCopy.getId() + AT_SYMBOL + sourceCopy.getName(),
                     sourceCopy.getJdbcUrl(),
                     sourceCopy.getUsername(),
                     sourceCopy.getPassword(),
@@ -311,6 +314,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
                     sourceCopy.isExt());
 
             String newKey = SourceUtils.getKey(
+                    sourceCopy.getId() + AT_SYMBOL + config.getName(),
                     config.getUrl(),
                     config.getUsername(),
                     config.getPassword(),
@@ -631,15 +635,18 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
     }
 
     /**
-     * 释放失效数据源
+     * 释放数据源
      *
      * @param source
      */
     private void releaseSource(Source source) {
 
+        String name = source.getId() + AT_SYMBOL + source.getName();
+
         SourceUtils sourceUtils = new SourceUtils(jdbcDataSource);
         JdbcSourceInfo jdbcSourceInfo = JdbcSourceInfoBuilder
                 .aJdbcSourceInfo()
+                .withName(name)
                 .withJdbcUrl(source.getJdbcUrl())
                 .withUsername(source.getUsername())
                 .withPassword(source.getPassword())
@@ -652,6 +659,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
         if (redisUtils.isRedisEnable()) {
             Map<String, Object> map = new HashMap<>();
 
+            map.put("name", name);
             map.put("url", source.getJdbcUrl());
             map.put("username", source.getUsername());
             map.put("password", source.getPassword());

@@ -135,6 +135,7 @@ public class DruidConfig {
     @Bean
     public DruidDataSource druidDataSource() {
         DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setName("davinci");
         druidDataSource.setUrl(durl);
         druidDataSource.setUsername(username);
         druidDataSource.setPassword(password);
