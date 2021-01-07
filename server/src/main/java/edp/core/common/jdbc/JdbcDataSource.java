@@ -346,6 +346,7 @@ public class JdbcDataSource {
                         DataTypeEnum.CASSANDRA == DataTypeEnum.urlOf(jdbcUrl) ||
                         DataTypeEnum.VERTICA == DataTypeEnum.urlOf(jdbcUrl) ||
                         DataTypeEnum.HANA == DataTypeEnum.urlOf(jdbcUrl) ||
+                        DataTypeEnum.KYLIN == DataTypeEnum.urlOf(jdbcUrl) ||
                         DataTypeEnum.IMPALA == DataTypeEnum.urlOf(jdbcUrl) ||
                         DataTypeEnum.TDENGINE == DataTypeEnum.urlOf(jdbcUrl)) {
                     wallFilter.setDbType(DataTypeEnum.MYSQL.getFeature());
