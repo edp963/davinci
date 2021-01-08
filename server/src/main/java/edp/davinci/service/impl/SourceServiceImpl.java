@@ -245,6 +245,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
         // The password is encrypted
         String encrypt = SourcePasswordEncryptUtils.encrypt(config.getPassword());
         return sqlUtils.init(
+                SourceTypeEnum.JDBC.getType(),
                 config.getName(),
                 config.getUrl(),
                 config.getUsername(),

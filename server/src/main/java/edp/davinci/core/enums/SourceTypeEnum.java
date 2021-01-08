@@ -30,6 +30,10 @@ public enum SourceTypeEnum {
         this.type = type;
     }
 
+    public String getType() {
+        return this.type;
+    }
+
     public static String typeOf(String type) {
         for (SourceTypeEnum sourceTypeEnum : values()) {
             if (sourceTypeEnum.type.equals(type)) {

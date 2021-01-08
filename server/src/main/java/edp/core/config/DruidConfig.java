@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * druid数据库连接池配置
@@ -154,6 +155,10 @@ public class DruidConfig {
         druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
         druidDataSource.setValidationQuery(validationQuery);
         druidDataSource.setValidationQueryTimeout(validationQueryTime);
+
+        Properties properties = new Properties();
+        properties.setProperty("druid.mysql.usePingMethod", "false");
+        druidDataSource.setConnectProperties(properties);
 
         try {
             druidDataSource.setFilters(filters);

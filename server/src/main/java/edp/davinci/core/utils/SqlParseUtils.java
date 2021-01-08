@@ -254,41 +254,45 @@ public class SqlParseUtils {
         return String.format(REG_AUTHVAR, delimiter, delimiter, delimiter, delimiter);
     }
 
-    public List<String> getSqls(String sql, boolean isQuery) {
+    public List<String> getSqls(String sqlStr, boolean isQuery) {
 
-        sql = sql.trim();
+        sqlStr = sqlStr.trim();
 
-        if (StringUtils.isEmpty(sql)) {
+        if (StringUtils.isEmpty(sqlStr)) {
             return null;
         }
 
-        if (sql.startsWith(SEMICOLON)) {
-            sql = sql.substring(1);
+        if (sqlStr.startsWith(SEMICOLON)) {
+            sqlStr = sqlStr.substring(1);
         }
 
-        if (sql.endsWith(SEMICOLON)) {
-            sql = sql.substring(0, sql.length() - 1);
+        if (sqlStr.endsWith(SEMICOLON)) {
+            sqlStr = sqlStr.substring(0, sqlStr.length() - 1);
         }
 
-        List<String> list = null;
+        List<String> list = new ArrayList<>();
 
-        String[] split = sql.split(SEMICOLON);
-        if (split.length > 0) {
-            list = new ArrayList<>();
-            for (String sqlStr : split) {
-                boolean select = sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH);
+        String[] sqls = sqlStr.split(SEMICOLON);
+        if (sqls.length > 0) {
+            for (String sql : sqls) {
+                boolean select = isQuery(sql);
                 if (isQuery) {
-                    if (select) {
-                        list.add(sqlStr);
+                    if (select || isQuery(PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1"))) {
+                        list.add(sql);
                     }
                 } else {
-                    if (!select) {
-                        list.add(sqlStr);
+                    if (!select && !isQuery(PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1"))) {
+                        list.add(sql);
                     }
                 }
             }
         }
+
         return list;
+    }
+
+    private boolean isQuery(String sql) {
+        return sql.trim().toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH);
     }
 
     public static String rebuildSqlWithFragment(String sql) {
@@ -480,24 +484,28 @@ public class SqlParseUtils {
             String repl = user == null ? condition : user.getId().toString();
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex())
                     : SystemVariableEnum.USER_NAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex())
                     : SystemVariableEnum.USER_USERNAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex())
                     : SystemVariableEnum.USER_EMAIL.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getEmail());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex())
                     : SystemVariableEnum.USER_DEPARTMENT.getRegex();

@@ -82,7 +82,7 @@ public class CustomDataSourceUtils {
             CustomDataSource customDataSource = mapper.convertValue(entry.getValue(), CustomDataSource.class);
 
             if (StringUtils.isEmpty(customDataSource.getName()) || StringUtils.isEmpty(customDataSource.getDriver())) {
-                throw new Exception("Load custom datasource error: name or driver cannot be EMPTY");
+                throw new Exception("Load custom datasource error: name or driver cannot be empty");
             }
 
             if ("null".equals(customDataSource.getName().trim().toLowerCase())) {
