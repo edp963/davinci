@@ -5,6 +5,7 @@ import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.SourceTypeEnum;
 import edp.davinci.core.utils.SourcePasswordEncryptUtils;
 import edp.davinci.service.StatisticService;
 import edp.davinci.service.elastic.ElasticOperationService;
@@ -70,7 +71,7 @@ public class StatisticServiceImpl implements StatisticService {
             String mysqlPassword = environment.getProperty("statistic.mysql_password");
             // Password encryption
             String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
-            this.sqlUtils = this.sqlUtils.init("statistic", mysqlUrl, mysqlUsername, encrypt, null, null, false);
+            this.sqlUtils = this.sqlUtils.init("statistic", SourceTypeEnum.CSV.getType(), mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
             List<Map<String, Object>> values = entityConvertIntoMap(infoList);
             Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
@@ -92,7 +93,7 @@ public class StatisticServiceImpl implements StatisticService {
         String mysqlPassword = environment.getProperty("spring.datasource.password");
         // Password encryption
         String encrypt = SourcePasswordEncryptUtils.encrypt(mysqlPassword);
-        this.sqlUtils = this.sqlUtils.init("statistic", mysqlUrl, mysqlUsername, encrypt, null, null, false);
+        this.sqlUtils = this.sqlUtils.init("statistic", SourceTypeEnum.CSV.getType(), mysqlUrl, mysqlUsername, encrypt, null, null, false);
 
         List<Map<String, Object>> values = entityConvertIntoMap(infoList);
         Set<QueryColumn> headers = getHeaders(mysqlUrl, tableName);
