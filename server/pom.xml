@@ -210,12 +210,6 @@
 		</dependency>
 
         <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>4.1.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.7</version>
@@ -403,10 +397,11 @@
             <version>${graalvm.version}</version>
             <scope>runtime</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.17</version>
+            <version>4.1.2</version>
         </dependency>
 
         <!--oracle -->

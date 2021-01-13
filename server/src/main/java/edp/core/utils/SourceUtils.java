@@ -220,38 +220,31 @@ public class SourceUtils {
     }
 
     public static String getDriverClassName(String jdbcUrl, String version) {
-        
+
         String className = null;
-        
+
         try {
             className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
         } catch (SQLException e) {
 
         }
-        
+
         if (!StringUtils.isEmpty(className) && !className.contains("com.sun.proxy")
                 && !className.contains("net.sf.cglib.proxy")) {
             return className;
         }
-        
+
+        CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
+        if (customDataSource != null) {
+            return customDataSource.getDriver().trim();
+        }
+
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-        CustomDataSource customDataSource = null;
-        if (null == dataTypeEnum) {
-            try {
-                customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl, version);
-            }
-            catch (Exception e) {
-                throw new SourceException(e.getMessage());
-            }
+        if (dataTypeEnum != null) {
+            return dataTypeEnum.getDriver();
         }
 
-        if (null == dataTypeEnum && null == customDataSource) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
-        }
-
-        return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
-                ? dataTypeEnum.getDriver()
-                : customDataSource.getDriver().trim();
+        throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
     }
 
 
