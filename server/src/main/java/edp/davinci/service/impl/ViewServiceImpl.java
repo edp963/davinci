@@ -304,7 +304,7 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
             alertNameTaken(entity, name);
         }
 
-        Source source = getSource(view.getSourceId());
+        Source source = getSource(viewUpdate.getSourceId());
 
         //测试连接
         if (!sqlUtils.init(source).testConnection()) {
