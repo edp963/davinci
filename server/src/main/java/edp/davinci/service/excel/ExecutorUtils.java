@@ -33,33 +33,39 @@ import java.util.concurrent.*;
  * To change this template use File | Settings | File Templates.
  */
 @Slf4j
-public class ExecutorUtil {
+public class ExecutorUtils {
 
-    public static final ExecutorService WORKBOOK_WORKERS = Executors.newFixedThreadPool(4,
-            new ThreadFactoryBuilder().setNameFormat("Workbook-worker-%d").setDaemon(true).build());
+    private static final ThreadPoolExecutor JOB_WORKERS = new ThreadPoolExecutor(8, 64,
+            60_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
-    public static final ExecutorService SHEET_WORKERS = Executors.newFixedThreadPool(16,
-            new ThreadFactoryBuilder().setNameFormat("Sheet-worker-%d").setDaemon(true).build());
+    private static final ThreadPoolExecutor WORKBOOK_WORKERS = new ThreadPoolExecutor(16, 128,
+            60_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(),
+            new ThreadFactoryBuilder().setNameFormat("Workbook-worker-%d").setDaemon(true).build(), new ThreadPoolExecutor.CallerRunsPolicy());
+
+
+    private static final ThreadPoolExecutor SHEET_WORKERS = new ThreadPoolExecutor(32, 256,
+            60_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(),
+            new ThreadFactoryBuilder().setNameFormat("Sheet-worker-%d").setDaemon(true).build(), new ThreadPoolExecutor.CallerRunsPolicy());
 
     public static <T> Future<T> submitWorkbookTask(WorkBookContext context, Logger customLogger) {
-        return ExecutorUtil.submitWorkbookTask(new WorkbookWorker(context), customLogger);
+        return ExecutorUtils.submitWorkbookTask(new WorkbookWorker(context), customLogger);
     }
 
     private static <T> Future<T> submitWorkbookTask(WorkbookWorker worker, Logger customLogger) {
-        printThreadPoolStatusLog(WORKBOOK_WORKERS, "WORKBOOK_WORKERS", customLogger);
-        return ExecutorUtil.WORKBOOK_WORKERS.submit(worker);
+        printThreadPoolStatus(WORKBOOK_WORKERS, "WORKBOOK_WORKERS", customLogger);
+        return ExecutorUtils.WORKBOOK_WORKERS.submit(worker);
     }
 
     public static <T> Future<T> submitSheetTask(SheetContext context, Logger customLogger) {
-        return ExecutorUtil.submitSheetTask(new SheetWorker(context), customLogger);
+        return ExecutorUtils.submitSheetTask(new SheetWorker(context), customLogger);
     }
 
     private static <T> Future<T> submitSheetTask(SheetWorker worker, Logger customLogger) {
-        printThreadPoolStatusLog(SHEET_WORKERS, "SHEET_WORKERS", customLogger);
-        return ExecutorUtil.SHEET_WORKERS.submit(worker);
+        printThreadPoolStatus(SHEET_WORKERS, "SHEET_WORKERS", customLogger);
+        return ExecutorUtils.SHEET_WORKERS.submit(worker);
     }
 
-    public static void printThreadPoolStatusLog(ExecutorService executorService, String serviceName, Logger customLogger) {
+    public static void printThreadPoolStatus(ExecutorService executorService, String serviceName, Logger customLogger) {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorService;
         Object[] args = {
                 serviceName,
@@ -72,5 +78,9 @@ public class ExecutorUtil {
         if (customLogger != null) {
             customLogger.info("{} keep alive time:{}, poolSize:{}, waiting queue size:{}, task count:{}, completed task size:{}", args);
         }
+    }
+
+    public static ExecutorService getJobWorkers() {
+        return JOB_WORKERS;
     }
 }

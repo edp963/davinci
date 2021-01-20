@@ -90,7 +90,7 @@ mapper:
   mappers: edp.davinci.dao
 
 
-sql_template_delimiter: $
+sql-template-delimiter: $
 
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml

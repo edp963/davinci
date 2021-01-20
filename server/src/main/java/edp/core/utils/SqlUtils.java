@@ -92,6 +92,13 @@ public class SqlUtils {
 
     private SourceUtils sourceUtils;
 
+    private static String sqlTempDelimiter;
+
+    @Value("${sql-template-delimiter:$}")
+    public void setSqlTempDelimiter(String delimiter) {
+        this.sqlTempDelimiter = delimiter;
+    }
+
     public SqlUtils init(Source source) {
         // Password decryption
         String decrypt = SourcePasswordEncryptUtils.decrypt(source.getPassword());
@@ -885,6 +892,20 @@ public class SqlUtils {
         return StringUtils.isEmpty(aliasSuffix) ? EMPTY : aliasSuffix;
     }
 
+    public static String getSqlTempDelimiter(List<Dict> properties) {
+
+        if (CollectionUtils.isEmpty(properties)) {
+            return sqlTempDelimiter;
+        }
+
+        Optional<Dict> optional = properties.stream().filter(d -> d.getKey().equalsIgnoreCase("davinci.sql-template" +
+                "-delimiter")).findFirst();
+        if (optional.isPresent()) {
+            return optional.get().getValue();
+        }
+
+        return sqlTempDelimiter;
+    }
 
     /**
      * 过滤sql中的注释

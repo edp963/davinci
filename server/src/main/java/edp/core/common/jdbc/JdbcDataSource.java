@@ -281,7 +281,6 @@ public class JdbcDataSource {
 
             druidDataSource.setInitialSize(initialSize);
             druidDataSource.setMinIdle(minIdle);
-            druidDataSource.setMaxIdle(minIdle);
             druidDataSource.setMaxActive(maxActive);
             druidDataSource.setMaxWait(maxWait);
             druidDataSource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);

@@ -26,10 +26,7 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedException;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
-import edp.core.utils.BaseLock;
-import edp.core.utils.CollectionUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.ServerUtils;
+import edp.core.utils.*;
 import edp.davinci.core.common.ErrorMsg;
 import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.CheckEntityEnum;
@@ -55,6 +52,7 @@ import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithViewName;
+import edp.davinci.model.Source;
 import edp.davinci.model.SqlVariable;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
@@ -72,7 +70,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,9 +120,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Autowired
     private SqlParseUtils sqlParseUtils;
-
-    @Value("${sql_template_delimiter:$}")
-    private String sqlTempDelimiter;
 
     @Autowired
     private String TOKEN_SECRET;
@@ -544,7 +538,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
         ViewWithProjectAndSource viewWithSource = viewMapper.getViewWithProjectAndSourceByWidgetId(id);
 
-        if (null == viewWithSource.getSource()) {
+        Source source = viewWithSource.getSource();
+        if (null == source) {
             throw new NotFoundException("Source is not found");
         }
 
@@ -555,6 +550,8 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         if (StringUtils.isEmpty(viewWithSource.getSql())) {
             return "";
         }
+
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(source.getProperties());
 
         List<SqlVariable> variables = viewWithSource.getVariables();
         SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);

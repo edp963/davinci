@@ -51,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.stringtemplate.v4.ST;
@@ -99,9 +98,6 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Autowired
     private SqlParseUtils sqlParseUtils;
-
-    @Value("${sql_template_delimiter:$}")
-    private String sqlTempDelimiter;
 
     private static final String SQL_VARABLE_KEY = "name";
 
@@ -187,6 +183,8 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
         if (StringUtils.isEmpty(sql)) {
             throw new NotFoundException("Sql is not found");
         }
+
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(source.getProperties());
 
         SQLContext context = new SQLContext();
         //解析变量
@@ -403,6 +401,8 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
 
         Source source = getSource(executeSql.getSourceId());
 
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(source.getProperties());
+
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
@@ -588,14 +588,16 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                 return null;
             }
 
+            Source source = viewWithSource.getSource();
+
+            String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(source.getProperties());
+
             List<SqlVariable> variables = viewWithSource.getVariables();
             SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
             Set<String> excludeColumns = new HashSet<>();
             packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, executeParam.getParams(), excludeColumns, user);
 
             String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
-
-            Source source = viewWithSource.getSource();
 
             SqlUtils sqlUtils = this.sqlUtils.init(source);
 
@@ -675,13 +677,15 @@ ViewServiceImpl extends BaseEntityService implements ViewService {
                 return null;
             }
 
+            Source source = viewWithSource.getSource();
+
+            String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(source.getProperties());
+
             List<SqlVariable> variables = viewWithSource.getVariables();
             SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter, user, isMaintainer);
             packageParams(isMaintainer, viewWithSource.getId(), sqlEntity, variables, param.getParams(), null, user);
 
             String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQueryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
-
-            Source source = viewWithSource.getSource();
 
             SqlUtils sqlUtils = this.sqlUtils.init(source);
 
