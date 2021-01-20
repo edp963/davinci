@@ -32,7 +32,7 @@ import edp.davinci.dto.viewDto.DownloadViewExecuteParam;
 import edp.davinci.model.ShareDownloadRecord;
 import edp.davinci.service.ShareDownloadService;
 import edp.davinci.service.ShareService;
-import edp.davinci.service.excel.ExecutorUtil;
+import edp.davinci.service.excel.ExecutorUtils;
 import edp.davinci.service.excel.MsgWrapper;
 import edp.davinci.service.excel.WidgetContext;
 import edp.davinci.service.excel.WorkBookContext;
@@ -76,7 +76,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
                     .withResultLimit(resultLimit)
                     .withTaskKey("ShareDownload_" + uuid)
                     .build();
-            ExecutorUtil.submitWorkbookTask(workBookContext, null);
+            ExecutorUtils.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit:{}", wrapper);
             return true;
         } catch (UnAuthorizedException | ServerException e) {

@@ -29,7 +29,7 @@ import edp.davinci.core.config.SpringContextHolder;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.LockType;
 import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.service.excel.ExecutorUtil;
+import edp.davinci.service.excel.ExecutorUtils;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.TriggerKey;
@@ -37,17 +37,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class QuartzJobExecutor implements Job {
 
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
-    public static final ExecutorService executorService = Executors.newFixedThreadPool(4);
-
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
-        ExecutorUtil.printThreadPoolStatusLog(executorService, "Cronjob_Executor", scheduleLogger);
+		ExecutorService executorService = ExecutorUtils.getJobWorkers();
+		ExecutorUtils.printThreadPoolStatus(executorService, "JOB_WORKERS", scheduleLogger);
         executorService.submit(() -> {
             TriggerKey triggerKey = jobExecutionContext.getTrigger().getKey();
             ScheduleJob scheduleJob = (ScheduleJob) jobExecutionContext.getMergedJobDataMap().get(QuartzHandler.getJobDataKey(triggerKey));

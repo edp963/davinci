@@ -140,9 +140,7 @@ public class SqlParseUtils {
     }
 
     private String getPlaceholderReg(String delimiter) {
-        if (DOLLAR_DELIMITER.equals(delimiter)) {
-            delimiter = "\\" + delimiter;
-        }
+        delimiter = "\\" + delimiter;
         return String.format(REG_SQL_PLACEHOLDER, delimiter, delimiter);
     }
 
@@ -228,6 +226,7 @@ public class SqlParseUtils {
 
         char delimiter = sqlTempDelimiter.charAt(0);
         ST st = new ST(sql, delimiter, delimiter);
+
         if (!CollectionUtils.isEmpty(authParamMap) && !CollectionUtils.isEmpty(expSet)) {
             authParamMap.forEach((k, v) -> {
                 List values = authParamMap.get(k);
@@ -243,14 +242,13 @@ public class SqlParseUtils {
         if (!CollectionUtils.isEmpty(queryParamMap)) {
             queryParamMap.forEach(st::add);
         }
+
         sql = st.render();
         return sql;
     }
 
     public static String getAuthVarReg(String delimiter) {
-        if (DOLLAR_DELIMITER.equals(delimiter)) {
-            delimiter = "\\" + delimiter;
-        }
+        delimiter = "\\" + delimiter;
         return String.format(REG_AUTHVAR, delimiter, delimiter, delimiter, delimiter);
     }
 
