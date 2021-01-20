@@ -321,6 +321,7 @@ public class JdbcDataSource {
                     DataTypeEnum.ELASTICSEARCH == DataTypeEnum.urlOf(jdbcUrl) ||
                     DataTypeEnum.CASSANDRA == DataTypeEnum.urlOf(jdbcUrl) ||
                     DataTypeEnum.VERTICA == DataTypeEnum.urlOf(jdbcUrl) ||
+                    DataTypeEnum.KYLIN == DataTypeEnum.urlOf(jdbcUrl) ||
                     DataTypeEnum.HANA == DataTypeEnum.urlOf(jdbcUrl) ||
                     DataTypeEnum.IMPALA == DataTypeEnum.urlOf(jdbcUrl) ||
                     DataTypeEnum.TDENGINE == DataTypeEnum.urlOf(jdbcUrl)) {
