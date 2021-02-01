@@ -1,28 +1,11 @@
 package edp.davinci.server.service.impl;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.PostConstruct;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
-
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.provider.JdbcDataProvider;
 import edp.davinci.data.util.JdbcSourceUtils;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.component.elastic.ElasticOperationService;
@@ -31,6 +14,20 @@ import edp.davinci.server.model.QueryColumn;
 import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.service.StatisticService;
 import edp.davinci.server.util.DataUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
+
+import javax.annotation.PostConstruct;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 @Service("statisticService")
 public class StatisticServiceImpl implements StatisticService {
@@ -102,7 +99,7 @@ public class StatisticServiceImpl implements StatisticService {
                                     .build();
         Source source = new Source();
         source.setConfig(JSONUtils.toString(config));
-        source.setType("jdbc");
+        source.setType(JdbcDataProvider.type);
 
         List<QueryColumn> headers = getHeaders(source, tableName, user);
         List<Map<String, Object>> values = entityConvertIntoMap(infoList);

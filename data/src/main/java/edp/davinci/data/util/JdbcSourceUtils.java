@@ -129,38 +129,31 @@ public class JdbcSourceUtils {
     }
 
     public static String getDriverClassName(String url, String version) {
-        
+
         String className = null;
-        
+
         try {
             className = DriverManager.getDriver(url.trim()).getClass().getName();
         } catch (SQLException e) {
 
         }
-        
+
         if (!StringUtils.isEmpty(className) && !className.contains("com.sun.proxy")
                 && !className.contains("net.sf.cglib.proxy")) {
             return className;
         }
-        
+
+        CustomDatabase customDatabase = CustomDatabaseUtils.getInstance(url, version);
+        if (customDatabase != null) {
+            return customDatabase.getDriver().trim();
+        }
+
         DatabaseTypeEnum dataTypeEnum = DatabaseTypeEnum.urlOf(url);
-        CustomDatabase customDatabase = null;
-        if (null == dataTypeEnum) {
-            try {
-                customDatabase = CustomDatabaseUtils.getInstance(url, version);
-            }
-            catch (Exception e) {
-                throw new SourceException(e.getMessage());
-            }
+        if (dataTypeEnum != null) {
+            return dataTypeEnum.getDriver();
         }
 
-        if (null == dataTypeEnum && null == customDatabase) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + url);
-        }
-
-        return null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
-                ? dataTypeEnum.getDriver()
-                : customDatabase.getDriver().trim();
+        throw new SourceException("Not supported data type: jdbcUrl=" + url);
     }
 
 
@@ -177,12 +170,12 @@ public class JdbcSourceUtils {
     /**
      * get data source unique name
      * 
-     * @param projectId
+     * @param id
      * @param name
      * @return
      */
-	public static String getSourceUName(Long projectId, String name) {
-		return projectId + AT_SIGN + name;
+	public static String getSourceUName(Long id, String name) {
+		return id + AT_SIGN + name;
 	}
 
 	/**
@@ -318,7 +311,7 @@ public class JdbcSourceUtils {
         sourceConfig.setDatabase(getDatabase(sourceConfig.getUrl()));
         
         if (StringUtils.isEmpty(sourceConfig.getName())) {
-            sourceConfig.setName(getSourceUName(source.getProjectId(), source.getName()));
+            sourceConfig.setName(getSourceUName(source.getId(), source.getName()));
         }
 
         return sourceConfig;

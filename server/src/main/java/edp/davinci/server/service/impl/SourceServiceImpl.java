@@ -277,7 +277,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			String sourceCopyConfig = sourceCopy.getConfig();
 			
 			String oldKey = JdbcSourceUtils.getSourceUID(
-					source.getName(),
+					JdbcSourceUtils.getSourceUName(source.getId(), source.getName()),
 					JdbcSourceUtils.getUrl(sourceCopyConfig), 
 					JdbcSourceUtils.getUsername(sourceCopyConfig),
 					JdbcSourceUtils.getPassword(sourceCopyConfig), 
@@ -288,8 +288,8 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 			config.setPassword(newPassword);
 
 			String newKey = JdbcSourceUtils.getSourceUID(
-					sourceInfo.getName(),
-					config.getUrl(), 
+					JdbcSourceUtils.getSourceUName(sourceInfo.getId(), sourceInfo.getName()),
+					config.getUrl(),
 					config.getUsername(),
 					config.getPassword(),
 					config.getVersion(), 
@@ -654,7 +654,7 @@ public class SourceServiceImpl extends BaseEntityService implements SourceServic
 										.version(JdbcSourceUtils.getVersion(config))
 										.properties(JdbcSourceUtils.getProperties(config))
 										.ext(JdbcSourceUtils.isExt(config))
-										.name(JdbcSourceUtils.getSourceUName(source.getProjectId(), source.getName()))
+										.name(JdbcSourceUtils.getSourceUName(source.getId(), source.getName()))
 										.build();
 
 		utils.releaseDataSource(sourceConfig);

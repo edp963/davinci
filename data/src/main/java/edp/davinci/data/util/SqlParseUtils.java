@@ -73,7 +73,8 @@ public class SqlParseUtils {
     public static final Pattern PATTERN_SQL_ANNOTATION = Pattern.compile(REG_SQL_ANNOTATION);
 
     public static String parseAnnotations(String sql) {
-        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replaceAll("(;+\\s*)+", SEMICOLON);
+        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replace(NEW_LINE, EMPTY).replaceAll("(;+\\s*)+",
+                SEMICOLON);
     }
 
     public static String parseSystemVars(String sql, boolean isMaintainer, User user) {
@@ -100,24 +101,28 @@ public class SqlParseUtils {
             String repl = user == null ? condition : user.getId().toString();
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex())
                     : SystemVariableEnum.USER_NAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex())
                     : SystemVariableEnum.USER_USERNAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex())
                     : SystemVariableEnum.USER_EMAIL.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex())
                     : SystemVariableEnum.USER_DEPARTMENT.getRegex();
@@ -177,9 +182,7 @@ public class SqlParseUtils {
     
     private static String getAuthRegExp(String express, String sqlTempDelimiter) {
         String arg = sqlTempDelimiter;
-        if (DOLLAR_SIGN.equals(sqlTempDelimiter)) {
-            arg = "\\" + arg;
-        }
+        arg = "\\" + arg;
         return String.format(express, arg, arg, arg, arg);
     }
 
@@ -447,10 +450,10 @@ public class SqlParseUtils {
     }
 
     private static String parseOperator(Filter filter, String keywordPrefix, String keywordSuffix){
-        String name     = filter.getName();
-        Object value    = filter.getValue();
+        String name = filter.getName();
+        Object value = filter.getValue();
         String operator = filter.getOperator();
-        String sqlType  = filter.getSqlType();
+        String sqlType = filter.getSqlType();
 
         Criterion criterion;
         if (SqlOperatorEnum.BETWEEN.getValue().equalsIgnoreCase(operator)) {
@@ -538,10 +541,9 @@ public class SqlParseUtils {
 		if (strArr.length > 0) {
 			list = new ArrayList<>();
 			for (String s : strArr) {
-				boolean select = s.toLowerCase().startsWith(SELECT) || s.toLowerCase().startsWith(WITH);
+				boolean select = isQuerySql(s);
 				if (isQuery) {
 					if (select) {
-                        checkSensitiveSql(s);
 						list.add(s);
 					}
 				} else {
@@ -553,6 +555,11 @@ public class SqlParseUtils {
 			}
         }
 		return list;
+    }
+
+    private static boolean isQuerySql(String sql) {
+        String temp = parseAnnotations(sql);
+        return temp.toLowerCase().startsWith(SELECT) || temp.toLowerCase().startsWith(WITH);
     }
 
     private static void checkSensitiveSql(String sql) {

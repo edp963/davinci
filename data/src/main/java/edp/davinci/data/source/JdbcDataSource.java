@@ -30,6 +30,7 @@ import edp.davinci.data.enums.DatabaseTypeEnum;
 import edp.davinci.data.exception.SourceException;
 import edp.davinci.data.jdbc.ExtendedJdbcClassLoader;
 import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.data.pojo.SourceProperty;
 import edp.davinci.data.provider.CSVDataProvider;
 import edp.davinci.data.util.CustomDatabaseUtils;
 import edp.davinci.data.util.JdbcSourceUtils;
@@ -64,7 +65,7 @@ public class JdbcDataSource {
         config.setCreateTableAllow(false);
         config.setAlterTableAllow(false);
         config.setDropTableAllow(false);
-        // config.setCommentAllow(false);
+        config.setCommentAllow(true);
         config.setUseAllow(false);
         config.setDescribeAllow(false);
         config.setShowAllow(false);
@@ -313,11 +314,56 @@ public class JdbcDataSource {
                 druidDataSource.setValidationQuery("select 1 from dual");
             }
 
-            if (!CollectionUtils.isEmpty(config.getProperties())) {
-                Properties properties = new Properties();
-                config.getProperties().forEach(p -> properties.setProperty(p.getKey(), p.getValue()));
-                druidDataSource.setConnectProperties(properties);
+            if (driverName.indexOf("elasticsearch") != -1) {
+                druidDataSource.setValidationQuery(null);
             }
+
+            // druid wall filter not support some database so set type mysql
+            if (DatabaseTypeEnum.MOONBOX == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.MONGODB == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.ELASTICSEARCH == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.CASSANDRA == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.VERTICA == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.KYLIN == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.HANA == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.IMPALA == DatabaseTypeEnum.urlOf(url) ||
+                    DatabaseTypeEnum.TDENGINE == DatabaseTypeEnum.urlOf(url)) {
+                wallFilter.setDbType(DatabaseTypeEnum.MYSQL.getFeature());
+            }
+
+            Properties properties = new Properties();
+            if (driverName.indexOf("mysql") != -1) {
+                properties.setProperty("druid.mysql.usePingMethod", "false");
+            }
+
+            if (!CollectionUtils.isEmpty(config.getProperties())) {
+                for (SourceProperty property : config.getProperties()) {
+
+                    if ("davinci.db-type".equalsIgnoreCase(property.getKey())) {
+                        wallFilter.setDbType(property.getValue());
+                        continue;
+                    }
+
+                    if ("davinci.initial-size".equalsIgnoreCase(property.getKey())) {
+                        druidDataSource.setInitialSize(Integer.parseInt(property.getValue()));
+                        continue;
+                    }
+
+                    if ("davinci.min-idle".equalsIgnoreCase(property.getKey())) {
+                        druidDataSource.setMinIdle(Integer.parseInt(property.getValue()));
+                        continue;
+                    }
+
+                    if ("davinci.max-active".equalsIgnoreCase(property.getKey())) {
+                        druidDataSource.setMaxActive(Integer.parseInt(property.getValue()));
+                        continue;
+                    }
+
+                    properties.setProperty(property.getKey(), property.getValue());
+                }
+            }
+
+            druidDataSource.setConnectProperties(properties);
 
             try {
                 druidDataSource.setFilters(filters);
@@ -332,18 +378,6 @@ public class JdbcDataSource {
                     druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
                 } else if (!name.equals(aggregatorName) && !name.equals("statistic")) {// davinci's aggregator source and statistic source don't need wall filter
                     druidDataSource.setProxyFilters(Arrays.asList(new Filter[]{wallFilter}));
-                }
-
-                // druid wall filter not support some database so set type mysql
-                if (DatabaseTypeEnum.MOONBOX == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.MONGODB == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.ELASTICSEARCH == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.CASSANDRA == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.VERTICA == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.HANA == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.IMPALA == DatabaseTypeEnum.urlOf(url) ||
-                        DatabaseTypeEnum.TDENGINE == DatabaseTypeEnum.urlOf(url)) {
-                    wallFilter.setDbType(DatabaseTypeEnum.MYSQL.getFeature());
                 }
 
 				druidDataSource.init();

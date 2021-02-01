@@ -22,7 +22,7 @@ package edp.davinci.server.service.impl;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.DownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
@@ -118,7 +118,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
                     .customLogger(downloadLogger)
                     .build();
 
-            ExecutorUtil.submitWorkbookTask(workBookContext, downloadLogger);
+            ExecutorUtils.submitWorkbookTask(workBookContext, downloadLogger);
             log.info("Download task submit:{}", wrapper);
         } catch (Exception e) {
             log.error("Submit download task error", e);

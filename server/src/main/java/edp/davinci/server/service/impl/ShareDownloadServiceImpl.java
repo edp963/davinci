@@ -23,7 +23,7 @@ import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
 import edp.davinci.server.aspect.ShareAuthAspect;
 import edp.davinci.server.commons.ErrorMsg;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
@@ -75,7 +75,7 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
                     .resultLimit(resultLimit)
                     .taskKey("ShareDownload_" + uuid)
                     .build();
-            ExecutorUtil.submitWorkbookTask(workBookContext, null);
+            ExecutorUtils.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit:{}", wrapper);
             return true;
         } catch (Exception e) {

@@ -20,14 +20,29 @@
 package edp.davinci.data.util;
 
 import com.alibaba.druid.sql.SQLUtils;
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.enums.DatabaseTypeEnum;
 import edp.davinci.data.pojo.CustomDatabase;
+import edp.davinci.data.pojo.SourceProperty;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
 
 import static edp.davinci.commons.Constants.EMPTY;
 import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATTER;
 
+@Component
 public class SqlUtils {
+
+    private static String sqlTempDelimiter;
+
+    @Value("${sql-template-delimiter:$}")
+    public void setSqlTempDelimiter(String delimiter) {
+        this.sqlTempDelimiter = delimiter;
+    }
 
     public static String formatSql(String sql) {
         try {
@@ -96,5 +111,20 @@ public class SqlUtils {
             }
         }
         return StringUtils.isEmpty(aliasSuffix) ? EMPTY : aliasSuffix;
+    }
+
+    public static String getSqlTempDelimiter(List<SourceProperty> properties) {
+
+        if (CollectionUtils.isEmpty(properties)) {
+            return sqlTempDelimiter;
+        }
+
+        Optional<SourceProperty> optional = properties.stream().filter(d -> d.getKey().equalsIgnoreCase("davinci.sql-template" +
+                "-delimiter")).findFirst();
+        if (optional.isPresent()) {
+            return optional.get().getValue();
+        }
+
+        return sqlTempDelimiter;
     }
 }

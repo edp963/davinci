@@ -24,7 +24,7 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.*;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
@@ -282,7 +282,7 @@ public class EmailScheduleServiceImpl extends BaseScheduleService implements Sch
 			try {
 				String uuid = UUID.randomUUID().toString().replace("-", EMPTY);
 				context.setWrapper(new MsgWrapper(new MsgMailExcel(jobId), ActionEnum.MAIL, uuid));
-				excelPathFutureMap.put(name, ExecutorUtil.submitWorkbookTask(context, scheduleLogger));
+				excelPathFutureMap.put(name, ExecutorUtils.submitWorkbookTask(context, scheduleLogger));
 			} catch (Exception e) {
 				scheduleLogger.error("Cronjob({}) submit workbook task error, thread:{}", jobId, index.get());
 				scheduleLogger.error(e.toString(), e);

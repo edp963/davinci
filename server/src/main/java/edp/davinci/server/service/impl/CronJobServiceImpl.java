@@ -24,7 +24,7 @@ import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.core.dao.entity.CronJob;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.core.enums.CronJobStatusEnum;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.quartz.ScheduleService;
 import edp.davinci.server.config.SpringContextHolder;
 import edp.davinci.server.dao.CronJobExtendMapper;
@@ -55,7 +55,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static edp.davinci.server.commons.Constants.DAVINCI_TOPIC_CHANNEL;
 
@@ -79,8 +78,6 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 	@Autowired
 	private RedisUtils redisUtils;
 	
-	private static final ExecutorService jobExecutePool = Executors.newFixedThreadPool(4);
-
 	private static final CheckEntityEnum entity = CheckEntityEnum.CRONJOB;
 
 	@Override
@@ -377,9 +374,10 @@ public class CronJobServiceImpl extends BaseEntityService implements CronJobServ
 
 		checkWritePermission(entity, cronJob.getProjectId(), user, "execute");
 
-		ExecutorUtil.printThreadPoolStatusLog(jobExecutePool, "Cronjob_Executor", scheduleLogger);
+		ExecutorService executorService = ExecutorUtils.getJobWorkers();
+		ExecutorUtils.printThreadPoolStatus(executorService, "JOB_WORKERS", scheduleLogger);
 
-		jobExecutePool.submit(() -> {
+		executorService.submit(() -> {
 			String jobType = cronJob.getJobType().trim();
 			ScheduleService scheduleService = (ScheduleService) SpringContextHolder.getBean(jobType + "ScheduleService");
 			if (scheduleService == null) {

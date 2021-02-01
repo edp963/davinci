@@ -19,6 +19,7 @@
 
 package edp.davinci.server.component.quartz;
 
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.config.SpringContextHolder;
 import edp.davinci.server.enums.LogNameEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+
 @Slf4j
 public class QuartzJobExecutor implements Job {
 
@@ -35,21 +38,27 @@ public class QuartzJobExecutor implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
-        JobDetail jobDetail = jobExecutionContext.getJobDetail();
-        String jobId = (String) jobDetail.getJobDataMap().get("jobId");
-        String jobType = (String) jobDetail.getJobDataMap().get("jobType");
 
-        ScheduleService scheduleService = (ScheduleService) SpringContextHolder.getBean(jobType + "ScheduleService");
-        if (scheduleService == null) {
-            scheduleLogger.warn("ScheduleJob({}) unknown job type {}", jobId, jobType);
-            return;
-        }
+        ExecutorService executorService = ExecutorUtils.getJobWorkers();
+        ExecutorUtils.printThreadPoolStatus(executorService, "JOB_WORKERS", scheduleLogger);
 
-        try {
-            scheduleService.execute(Long.parseLong(jobId));
-        } catch (Exception e) {
-            scheduleLogger.error("ScheduleJob({}) execute error", jobId);
-            scheduleLogger.error(e.toString(), e);
-        }
+        executorService.submit(() -> {
+            JobDetail jobDetail = jobExecutionContext.getJobDetail();
+            String jobId = (String) jobDetail.getJobDataMap().get("jobId");
+            String jobType = (String) jobDetail.getJobDataMap().get("jobType");
+
+            ScheduleService scheduleService = (ScheduleService) SpringContextHolder.getBean(jobType + "ScheduleService");
+            if (scheduleService == null) {
+                scheduleLogger.warn("ScheduleJob({}) unknown job type {}", jobId, jobType);
+                return;
+            }
+
+            try {
+                scheduleService.execute(Long.parseLong(jobId));
+            } catch (Exception e) {
+                scheduleLogger.error("ScheduleJob({}) execute error", jobId);
+                scheduleLogger.error(e.toString(), e);
+            }
+        });
     }
 }

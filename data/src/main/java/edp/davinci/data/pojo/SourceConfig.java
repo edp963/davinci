@@ -19,13 +19,9 @@
 
 package edp.davinci.data.pojo;
 
-import java.util.List;
+import lombok.*;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Builder
 @Data
@@ -36,8 +32,6 @@ public class SourceConfig {
 	private String name;
 
 	private String url;
-
-    private String name;
 
     private String username;
 

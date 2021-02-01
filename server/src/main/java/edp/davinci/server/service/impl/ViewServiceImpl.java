@@ -39,7 +39,9 @@ import edp.davinci.data.pojo.PagingParam;
 import edp.davinci.data.pojo.Param;
 import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.data.provider.DataProviderFactory;
+import edp.davinci.data.util.JdbcSourceUtils;
 import edp.davinci.data.util.SqlParseUtils;
+import edp.davinci.data.util.SqlUtils;
 import edp.davinci.server.dao.RelRoleViewExtendMapper;
 import edp.davinci.server.dao.SourceExtendMapper;
 import edp.davinci.server.dao.ViewExtendMapper;
@@ -102,9 +104,6 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
     @Autowired
     private AuthVarUtils authVarUtils;
-
-    @Value("${sql_template_delimiter:$}")
-    private String sqlTempDelimiter;
 
     @Value("${encryption.type:Off}")
     public String encryptType;
@@ -294,7 +293,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             alertNameTaken(entity, name);
         }
 
-        Source source = getSource(view.getSourceId(), true);
+        Source source = getSource(viewUpdate.getSourceId(), true);
 
         // 测试连接
         if (!DataProviderFactory.getProvider(source.getType()).test(source, user)) {
@@ -943,6 +942,7 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         // aggregator original query sql with out aggregation
         String sql = "select * from " + table;
         String viewStatement = viewWithSource.getSql();
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(JdbcSourceUtils.getSourceConfig(source).getProperties());
         Set<String> expSet = SqlParseUtils.getAuthExpression(viewStatement, sqlTempDelimiter);
         if (!CollectionUtils.isEmpty(expSet)) {
             Map<String, String> expMap = SqlParseUtils.getAuthParsedExp(expSet, sqlTempDelimiter, authParams);
