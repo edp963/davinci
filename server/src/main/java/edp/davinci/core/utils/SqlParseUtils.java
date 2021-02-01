@@ -84,8 +84,6 @@ public class SqlParseUtils {
             return null;
         }
 
-        sqlStr = SqlUtils.filterAnnotate(sqlStr);
-        sqlStr = sqlStr.replaceAll(NEW_LINE_CHAR, SPACE).trim();
         sqlStr = replaceSystemVariables(sqlStr, user, isMaintainer);
 
         Pattern p = Pattern.compile(getPlaceholderReg(sqlTempDelimiter));
@@ -252,6 +250,13 @@ public class SqlParseUtils {
         return String.format(REG_AUTHVAR, delimiter, delimiter, delimiter, delimiter);
     }
 
+    /**
+     * 从view中获取查询和执行的sql, 统一入口
+     *
+     * @param sqlStr
+     * @param isQuery
+     * @return
+     */
     public List<String> getSqls(String sqlStr, boolean isQuery) {
 
         sqlStr = sqlStr.trim();
@@ -275,11 +280,12 @@ public class SqlParseUtils {
             for (String sql : sqls) {
                 boolean select = isQuery(sql);
                 if (isQuery) {
-                    if (select || isQuery(PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1"))) {
+                    if (select) {
                         list.add(sql);
                     }
                 } else {
-                    if (!select && !isQuery(PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1"))) {
+                    if (!select) {
+                        SqlUtils.checkSensitiveSql(sql);
                         list.add(sql);
                     }
                 }
@@ -290,7 +296,12 @@ public class SqlParseUtils {
     }
 
     private boolean isQuery(String sql) {
-        return sql.trim().toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH);
+        if (sql.toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH)) {
+            return true;
+        }
+
+        String temp = filterAnnotate(sql);
+        return temp.toLowerCase().startsWith(SELECT) || temp.toLowerCase().startsWith(WITH);
     }
 
     public static String rebuildSqlWithFragment(String sql) {
@@ -512,5 +523,17 @@ public class SqlParseUtils {
         }
 
         return sql;
+    }
+
+    /**
+     * 过滤sql中的注释
+     *
+     * @param sql
+     * @return
+     */
+    public static String filterAnnotate(String sql) {
+        String temp = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1").replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll("(;" +
+                "+\\s*)+", SEMICOLON);
+        return temp;
     }
 }

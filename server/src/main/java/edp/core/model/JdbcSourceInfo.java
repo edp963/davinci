@@ -30,7 +30,7 @@ public class JdbcSourceInfo {
 
     private String type;
 
-	private String jdbcUrl;
+    private String jdbcUrl;
 
     private String username;
 
@@ -46,6 +46,7 @@ public class JdbcSourceInfo {
 
     private JdbcSourceInfo(String name, String type, String jdbcUrl, String username, String password, String database, String dbVersion, List<Dict> properties, boolean ext) {
         this.name = name;
+        this.type = type;
         this.jdbcUrl = jdbcUrl;
         this.username = username;
         this.password = password;
