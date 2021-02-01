@@ -19,7 +19,6 @@
 
 package edp.davinci.core.enums;
 
-import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
 import org.apache.commons.lang.StringUtils;
 
@@ -69,8 +68,6 @@ public enum SqlVariableValueTypeEnum {
                                     String.join(EMPTY, APOSTROPHE, s, APOSTROPHE))
                             .collect(Collectors.toList());
                 case SQL:
-                    values.stream().map(String::valueOf).forEach(SqlUtils::checkSensitiveSql);
-                    return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case NUMBER:
                     return values.stream().map(String::valueOf).collect(Collectors.toList());
                 case BOOLEAN:

@@ -138,8 +138,6 @@ public class SqlUtils {
     }
 
     public void execute(String sql) throws ServerException {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
         if (isQueryLogEnable) {
             String md5 = MD5Util.getMD5(sql, true, 16);
             sqlLogger.info("{} execute for sql:{}", md5, formatSql(sql));
@@ -170,8 +168,6 @@ public class SqlUtils {
     }
 
     public List<Map<String, Object>> query4List(String sql, int limit) {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit > 0 ? limit : resultLimit);
 
@@ -188,9 +184,8 @@ public class SqlUtils {
     }
 
     public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit, Set<String> excludeColumns) {
+
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
 
         long before = System.currentTimeMillis();
 
@@ -905,18 +900,6 @@ public class SqlUtils {
         }
 
         return sqlTempDelimiter;
-    }
-
-    /**
-     * 过滤sql中的注释
-     *
-     * @param sql
-     * @return
-     */
-    public static String filterAnnotate(String sql) {
-        // sql = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1");
-        sql = sql.replaceAll(NEW_LINE_CHAR, SPACE).replaceAll("(;+\\s*)+", SEMICOLON);
-        return sql;
     }
 
     public static String formatSqlType(String type) throws ServerException {
