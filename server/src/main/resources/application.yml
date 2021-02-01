@@ -86,7 +86,7 @@ mapper:
   mappers: edp.davinci.server.dao
 
 
-sql_template_delimiter: $
+sql-template-delimiter: $
 
 
 custom-database-driver-path: ${DAVINCI_HOME}/config/database_driver.yml

@@ -512,12 +512,15 @@ export class SourceList extends React.PureComponent<
         <Helmet title="Source" />
         <ContainerTitle>
           <Row>
-            <Col span={24}>
+            <Col span={24} className={utilStyles.shortcut}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">Source</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
+              <Link to={`/account/organization/${currentProject.orgId}`}>
+                <i className='iconfont icon-organization' />
+              </Link>
             </Col>
           </Row>
         </ContainerTitle>

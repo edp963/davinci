@@ -37,6 +37,8 @@ public class SourceConfig {
 
 	private String url;
 
+    private String name;
+
     private String username;
 
     private String password;

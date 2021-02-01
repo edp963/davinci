@@ -291,12 +291,15 @@ const ScheduleList: React.FC<ScheduleListProps> = (props) => {
       <Helmet title="Schedule" />
       <ContainerTitle>
         <Row>
-          <Col span={24}>
+          <Col span={24} className={utilStyles.shortcut}>
             <Breadcrumb className={utilStyles.breadcrumb}>
               <Breadcrumb.Item>
                 <Link to="">Schedule</Link>
               </Breadcrumb.Item>
             </Breadcrumb>
+            <Link to={`/account/organization/${currentProject.orgId}`}>
+              <i className='iconfont icon-organization' />
+            </Link>
           </Col>
         </Row>
       </ContainerTitle>

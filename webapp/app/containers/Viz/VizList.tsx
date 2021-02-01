@@ -63,7 +63,7 @@ interface IVizStates {
 export class VizList extends React.Component<
   IVizProps & RouteComponentWithParams,
   IVizStates
-> {
+  > {
   public state: Readonly<IVizStates> = {
     collapse: {
       dashboard: true,
@@ -93,9 +93,8 @@ export class VizList extends React.Component<
     } = this.props
     const projectId = match.params.projectId
     const isToPreview = vizPermission === 1
-    const path = `/project/${projectId}/display/${displayId}${
-      isToPreview ? '/preview' : ''
-    }`
+    const path = `/project/${projectId}/display/${displayId}${isToPreview ? '/preview' : ''
+      }`
     this.props.history.push(path)
   }
 
@@ -138,12 +137,15 @@ export class VizList extends React.Component<
         <Helmet title="Viz" />
         <ContainerTitle>
           <Row>
-            <Col span={24}>
+            <Col span={24} className={utilStyles.shortcut}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">Viz</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
+              <Link to={`/account/organization/${currentProject.orgId}`}>
+                <i className='iconfont icon-organization' />
+              </Link>
             </Col>
           </Row>
         </ContainerTitle>
@@ -154,9 +156,8 @@ export class VizList extends React.Component<
                 <Row onClick={this.onCollapseChange('dashboard')}>
                   <Col span={20}>
                     <Icon
-                      type={`${
-                        this.state.collapse.dashboard ? 'down' : 'right'
-                      }`}
+                      type={`${this.state.collapse.dashboard ? 'down' : 'right'
+                        }`}
                     />
                     Dashboard
                   </Col>

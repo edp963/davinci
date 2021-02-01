@@ -28,6 +28,21 @@ import { errorHandler } from 'utils/util'
 import { IServerConfigurations } from 'app/containers/App/types'
 import api from 'utils/api'
 
+export function* getExternalAuthProviders() {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: api.externalAuthProviders
+    })
+    const providers = asyncData.payload
+    yield put(AppActions.gotExternalAuthProviders(providers))
+    return providers
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+
 export function* login(action: AppActionType) {
   if (action.type !== ActionTypes.LOGIN) {
     return
@@ -126,6 +141,7 @@ export function* getServerConfigurations(action: AppActionType) {
 
 export default function* rootAppSaga() {
   yield all([
+    takeLatest(ActionTypes.GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders),
     takeLatest(ActionTypes.LOGIN, login),
     takeEvery(ActionTypes.INTERCEPTOR_PREFLIGHT, interceptor),
     takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions),
