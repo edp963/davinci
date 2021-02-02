@@ -1,13 +1,13 @@
 package edp.davinci.server.model;
 
-import static edp.davinci.commons.Constants.*;
-
 import edp.davinci.server.enums.SqlOperatorEnum;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static edp.davinci.commons.Constants.*;
 
 @Data
 public class SqlFilter {
@@ -65,10 +65,10 @@ public class SqlFilter {
         }
 
         if(Type.relation.equalsIgnoreCase(type)){
-            List<SqlFilter> childs = filter.getChildren();
+            List<SqlFilter> children = filter.getChildren();
             condition.append(PARENTHESES_START);
-            for(int i=0; i<childs.size(); i++){
-                condition.append(i == 0 ? dealFilter(childs.get(i)) : SPACE + filter.getValue().toString() + SPACE + dealFilter(childs.get(i)));
+            for(int i=0; i<children.size(); i++){
+                condition.append(i == 0 ? dealFilter(children.get(i)) : SPACE + filter.getValue().toString() + SPACE + dealFilter(children.get(i)));
             }
             condition.append(PARENTHESES_CLOSE);
         }
@@ -94,10 +94,19 @@ public class SqlFilter {
     }
 
     private static String generator(Criterion criterion){
+
         StringBuilder whereClause = new StringBuilder();
+
         if(criterion.isSingleValue()){
             //column='value'
             String value = criterion.getValue().toString();
+
+            if (SqlOperatorEnum.LIKE.getValue().equalsIgnoreCase(criterion.getOperator()) ||
+                    SqlOperatorEnum.NOTLIKE.getValue().equalsIgnoreCase(criterion.getOperator())) {
+                value = value.substring(1, value.length() - 1);
+                value = "'%" + value + "%'";
+            }
+
             whereClause.append(criterion.getColumn() + SPACE + criterion.getOperator() + SPACE);
             if(criterion.isNeedApostrophe() && !Pattern.matches(pattern, value)){
                 whereClause.append(SINGLE_QUOTES + value + SINGLE_QUOTES);

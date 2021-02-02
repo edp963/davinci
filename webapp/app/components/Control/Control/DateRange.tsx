@@ -18,20 +18,23 @@
  * >>
  */
 
-import React, { FC, useCallback } from 'react'
-import { IControlBase } from '../types'
+import React, { FC, forwardRef } from 'react'
+import { IControl } from '../types'
 import { DatePicker } from 'antd'
 const { RangePicker } = DatePicker
 import { DatePickerFormats } from '../constants'
 
 interface IDateRangeProps {
-  control: IControlBase
-  value: any
-  size: 'large' | 'small' | 'default'
-  onChange: (value) => void
+  control: Omit<IControl, 'relatedItems' | 'relatedViews'>
+  value?: any
+  size?: 'large' | 'small' | 'default'
+  onChange?: (value) => void
 }
 
-const DateRange: FC<IDateRangeProps> = ({ control, value, size, onChange }) => {
+const DateRange: FC<IDateRangeProps> = (
+  { control, value, size, onChange },
+  ref
+) => {
   const { dateFormat } = control
   const placeholder: [string, string] = ['从', '到']
   const { Datetime, DatetimeMinute } = DatePickerFormats
@@ -41,13 +44,14 @@ const DateRange: FC<IDateRangeProps> = ({ control, value, size, onChange }) => {
     <RangePicker
       placeholder={placeholder}
       value={value}
-      size={size}
       showTime={isDatetimePicker}
       format={dateFormat}
+      {...(size && { size })}
       onChange={onChange}
       onOk={onChange}
+      ref={ref}
     />
   )
 }
 
-export default DateRange
+export default forwardRef(DateRange)

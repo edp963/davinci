@@ -22,7 +22,7 @@ import { IViewModel } from 'containers/View/types'
 
 import { Merge } from 'utils/types'
 
-import { IFilters } from 'app/components/Control/types'
+import { IFilter } from 'app/components/Control/types'
 
 import { IQueryVariableMap } from 'containers/Dashboard/types'
 
@@ -97,6 +97,7 @@ export default class WidgetAbstract {
   public pagination?: IPaginationParams
   public queryVariables?: IQueryVariableMap
   public controls: any[]
+  public limit: number
   public cache: boolean
   public expired: number
   public autoLoadData: boolean
@@ -106,7 +107,7 @@ export default class WidgetAbstract {
 export interface IDrillDetail {
   type: DrillType
   groups: string[]
-  filters: IFilters[]
+  filters: IFilter[]
   currentGroup: string // 对应原 name
   [WidgetDimensions.COL]?: IWidgetDimension[]
   [WidgetDimensions.ROW]?: IWidgetDimension[]
@@ -122,7 +123,6 @@ export interface ISourceDataFilter {
   value: string
 }
 
-
 export interface IDataDrillProps {
   widgetConfig: IWidgetConfig
   drillHistory?: IDrillDetail[]
@@ -135,7 +135,7 @@ export interface IDataDrillProps {
 }
 
 export interface IEnhancerPanel {
-  isDrillableChart: boolean
-  isSelectedfilter: boolean | object []
-  isSelectedGroup: boolean | string[]
+  isSelectedfilter: object[]
+  isSelectedGroup: string[]
+  chartStyle: number
 }

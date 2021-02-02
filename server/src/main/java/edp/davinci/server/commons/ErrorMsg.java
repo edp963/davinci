@@ -24,11 +24,12 @@ public class ErrorMsg {
     public static final String ERR_PERMISSION = "Error permission denied";
 
     public static final String ERR_INVALID_SHARE_TOKEN = "Invalid share token";
+
     public static final String ERR_INVALID_TOKEN = "Invalid token";
 
     public static final String ERR_INVALID_DATA_TOKEN = "Invalid data token";
 
-    public static final String ERR_EMPTY_PASSWORD = "Password cannot be empty";
+    public static final String ERR_EMPTY_SHARE_PASSWORD = "Password cannot be empty";
 
     public static final String ERR_INVALID_PASSWORD = "Invalid password";
 

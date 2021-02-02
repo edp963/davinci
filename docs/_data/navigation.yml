@@ -46,6 +46,8 @@ zh_docs_sidebar:
         url: "/docs/zh/3.4-project"
       - title: 3.5 用户设置
         url: "/docs/zh/3.5-user_setting"
+      - title: 3.6 重置密码
+        url: "/docs/zh/3.6-reset_password"
   - title: 其他
     children:
       - title: 4.1 使用统计

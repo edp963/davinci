@@ -31,7 +31,7 @@ import reducer from './reducer'
 import controlReducer from 'app/containers/ControlPanel/reducer'
 import saga from './sagas'
 
-import Container from 'components/Container'
+import Container, { ContainerTitle } from 'components/Container'
 import {
   getMappingLinkage,
   processLinkage,
@@ -42,7 +42,7 @@ import FullScreenPanel from './FullScreenPanel'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import { ChartTypes } from 'containers/Widget/config/chart/ChartTypes'
 import {
-  IFilters,
+  IFilter,
   IDistinctValueReqeustParams
 } from 'app/components/Control/types'
 import GlobalControlPanel from 'app/containers/ControlPanel/Global'
@@ -50,7 +50,7 @@ import DownloadList from 'components/DownloadList'
 import { getValidColumnValue } from 'app/components/Control/util'
 import HeadlessBrowserIdentifier from 'share/components/HeadlessBrowserIdentifier'
 import { Row, Col } from 'antd'
-
+import { querystring } from '../../util'
 import DashboardActions from './actions'
 import ControlActions from 'app/containers/ControlPanel/actions'
 const {
@@ -85,8 +85,7 @@ import {
   makeSelectDownloadList,
   makeSelectShareParams
 } from './selectors'
-import { makeSelectLoginLoading } from '../App/selectors'
-import { decodeMetricName } from 'app/containers/Widget/components/util'
+import { makeSelectLoginLoading, makeSelectVizType } from '../App/selectors'
 import {
   GRID_COLS,
   GRID_ROW_HEIGHT,
@@ -97,7 +96,6 @@ import {
 
 import styles from 'app/containers/Dashboard/Dashboard.less'
 
-import Login from 'share/components/Login'
 import {
   IQueryConditions,
   IDataRequestParams,
@@ -112,6 +110,7 @@ import {
   ControlPanelTypes
 } from 'app/components/Control/constants'
 import { IDrillDetail } from 'components/DataDrill/types'
+import { IShareFormedViews } from 'app/containers/View/types'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
@@ -121,11 +120,9 @@ type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 type IDashboardProps = MappedStates & MappedDispatches
 
 interface IDashboardStates {
-  type: string
   shareToken: string
   modalLoading: boolean
   interactingStatus: { [itemId: number]: boolean }
-  showLogin: boolean
   headlessBrowserRenderSign: boolean
 }
 
@@ -133,12 +130,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   constructor(props) {
     super(props)
     this.state = {
-      type: '',
       shareToken: '',
 
       modalLoading: false,
       interactingStatus: {},
-      showLogin: false,
 
       headlessBrowserRenderSign: false
     }
@@ -151,59 +146,40 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   private shareClientId: string = getShareClientId()
   private downloadListPollingTimer: number
 
-  /**
-   * object
-   * {
-   *  type: this.state.type,
-   *  shareToken: this.state.shareToken
-   * }
-   * @param qs
-   */
-  private loadShareContent = (qs) => {
+  private loadShareContent = (shareToken: string) => {
     const {
+      vizType,
       onLoadDashboard,
       onLoadWidget,
       onSetIndividualDashboard
     } = this.props
 
-    if (qs.type === 'dashboard') {
-      onLoadDashboard(qs.shareToken, (err) => {
-        if (err.response.status === 403) {
-          this.setState({
-            showLogin: true
-          })
-        }
-      })
-    } else {
-      onLoadWidget(
-        qs.shareToken,
-        (widget) => {
-          onSetIndividualDashboard(widget, qs.shareToken)
-        },
-        (err) => {
-          if (err.response.status === 403) {
-            this.setState({
-              showLogin: true
-            })
-          }
-        }
-      )
+    switch (vizType) {
+      case 'dashboard':
+        onLoadDashboard(shareToken, () => null)
+        break
+      case 'widget':
+        onLoadWidget(
+          shareToken,
+          (widget, formedViews) => {
+            onSetIndividualDashboard(widget, formedViews, shareToken)
+          },
+          () => null
+        )
+        break
     }
   }
 
   public componentDidMount() {
     // urlparse
-    const qs = this.querystring(window.location.search.substr(1))
+    const { shareToken, ...rest } = querystring(
+      window.location.search.substr(1)
+    )
 
-    this.setState({
-      type: qs.type,
-      shareToken: qs.shareToken
-    })
-    this.loadShareContent(qs)
-    this.initPolling(qs.shareToken)
-    delete qs.type
-    delete qs.shareToken
-    this.props.onSendShareParams(qs)
+    this.setState({ shareToken })
+    this.loadShareContent(shareToken)
+    this.initPolling(shareToken)
+    this.props.onSendShareParams(rest)
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -233,44 +209,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }
   }
 
-  private querystring = (str) => {
-    return str.split('&').reduce((o, kv) => {
-      const [key, value] = kv.split('=')
-      if (!value) {
-        return o
-      }
-      this.deep_set(
-        o,
-        key.split(/[\[\]]/g).filter((x) => x),
-        value
-      )
-      return o
-    }, {})
-  }
-
-  private deep_set(o, path, value) {
-    let i = 0
-    const val = decodeURIComponent(value)
-    for (; i < path.length - 1; i++) {
-        if (o[path[i]] === undefined) {
-            o[decodeURIComponent(path[i])] = path[i + 1].match(/^\d+$/) ? [] : {}
-        }
-        o = o[decodeURIComponent(path[i])]
-    }
-    if (o[decodeURIComponent(path[i])] && o[decodeURIComponent(path[i])].length) {
-        const isInclude =
-            Array.isArray(o[decodeURIComponent(path[i])]) &&
-            o[decodeURIComponent(path[i])].includes(val)
-
-        const isEqual = o[decodeURIComponent(path[i])] === val
-        if (!(isInclude || isEqual)) {
-            o[decodeURIComponent(path[i])] = [val].concat(o[decodeURIComponent(path[i])])
-        }
-    } else {
-        o[decodeURIComponent(path[i])] = val
-    }
-  }
-
   private initPolling = (token) => {
     this.props.onLoadDownloadList(this.shareClientId, token)
     this.downloadListPollingTimer = window.setInterval(() => {
@@ -295,21 +233,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       clearTimeout(this.resizeSign)
       this.resizeSign = 0
     }, 500)
-  }
-
-  private handleLegitimateUser = () => {
-    const { type, shareToken } = this.state
-    this.setState(
-      {
-        showLogin: false
-      },
-      () => {
-        this.loadShareContent({
-          type,
-          shareToken
-        })
-      }
-    )
   }
 
   private checkInteract = (itemId: number) => {
@@ -401,12 +324,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     if (useOptions) {
       this.props.onSetSelectOptions(controlKey, paramsOrOptions, itemId)
     } else {
-      this.props.onLoadSelectOptions(
-        controlKey,
-        this.state.shareToken,
-        paramsOrOptions,
-        itemId
-      )
+      this.props.onLoadSelectOptions(controlKey, paramsOrOptions, itemId)
     }
   }
 
@@ -483,13 +401,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     const {
       shareToken,
-      showLogin,
       interactingStatus,
       headlessBrowserRenderSign
     } = this.state
 
     let grids = null
-    let loginPanel = null
 
     if (currentItems) {
       const itemblocks: React.ReactNode[] = []
@@ -533,6 +449,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               itemId={id}
               widget={widget}
               widgets={widgets}
+              formedViews={formedViews}
               view={view}
               isTrigger={isTrigger}
               datasource={datasource}
@@ -599,22 +516,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       )
     }
 
-    loginPanel = showLogin ? (
-      <Login
-        loading={loginLoading}
-        shareToken={shareToken}
-        legitimateUser={this.handleLegitimateUser}
-      />
-    ) : (
-      ''
-    )
-
     const headlessBrowserRenderParentNode = document.getElementById('app')
 
     return (
       <Container>
         <Helmet title={title} />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col span={24}>
               <h2 className={styles.shareTitle}>{title}</h2>
@@ -630,14 +537,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           <GlobalControlPanel
             currentDashboard={dashboard}
             currentItems={currentItems}
+            formedViews={formedViews}
             layoutType={ControlPanelLayoutTypes.Dashboard}
             onGetOptions={this.getControlSelectOptions}
             onSearch={onLoadBatchDataWithControlValues}
           />
-        </Container.Title>
+        </ContainerTitle>
         {grids}
         <div className={styles.gridBottom} />
-        {loginPanel}
         <FullScreenPanel
           currentDashboard={dashboard}
           widgets={widgets}
@@ -658,6 +565,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 }
 
 const mapStateToProps = createStructuredSelector({
+  vizType: makeSelectVizType(),
   dashboard: makeSelectDashboard(),
   title: makeSelectTitle(),
   widgets: makeSelectWidgets(),
@@ -676,7 +584,7 @@ export function mapDispatchToProps(dispatch) {
       dispatch(getDashboard(token, reject)),
     onLoadWidget: (
       token: string,
-      resolve: (widget: IWidgetFormed) => void,
+      resolve: (widget: IWidgetFormed, formedViews: IShareFormedViews) => void,
       reject: (err) => void
     ) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (
@@ -693,8 +601,11 @@ export function mapDispatchToProps(dispatch) {
       dispatch(
         getBatchDataWithControlValues(type, relatedItems, formValues, itemId)
       ),
-    onSetIndividualDashboard: (widget: IWidgetFormed, token: string) =>
-      dispatch(setIndividualDashboard(widget, token)),
+    onSetIndividualDashboard: (
+      widget: IWidgetFormed,
+      formedViews: IShareFormedViews,
+      token: string
+    ) => dispatch(setIndividualDashboard(widget, formedViews, token)),
     onLoadWidgetCsv: (
       itemId: number,
       requestParams: IDataRequestParams,
@@ -702,11 +613,9 @@ export function mapDispatchToProps(dispatch) {
     ) => dispatch(loadWidgetCsv(itemId, requestParams, dataToken)),
     onLoadSelectOptions: (
       controlKey: string,
-      dataToken: string,
       reqeustParams: { [viewId: string]: IDistinctValueReqeustParams },
       itemId: number
-    ) =>
-      dispatch(loadSelectOptions(controlKey, dataToken, reqeustParams, itemId)),
+    ) => dispatch(loadSelectOptions(controlKey, reqeustParams, itemId)),
     onSetSelectOptions: (controlKey: string, options: any[], itemId?: number) =>
       dispatch(setSelectOptions(controlKey, options, itemId)),
     onResizeDashboardItem: (itemId: number) =>

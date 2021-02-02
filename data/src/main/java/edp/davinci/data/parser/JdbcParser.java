@@ -19,16 +19,6 @@
 
 package edp.davinci.data.parser;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
@@ -37,12 +27,17 @@ import edp.davinci.data.pojo.SqlQueryParam;
 import edp.davinci.data.util.JdbcSourceUtils;
 import edp.davinci.data.util.SqlParseUtils;
 import edp.davinci.data.util.SqlUtils;
+import org.springframework.stereotype.Component;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class JdbcParser extends StatementParser {
-
-    @Value("${sql_template_delimiter:$}")
-    private String sqlTempDelimiter;
 
     @Override
     public String getParserType() {
@@ -51,14 +46,13 @@ public class JdbcParser extends StatementParser {
 
     @Override
     public String parseSystemVars(String sql, SqlQueryParam param, Source source, User user) {
-        String statement = SqlParseUtils.parseAnnotations(sql);
-        statement = SqlParseUtils.parseSystemVars(statement, param.isMaintainer(), user);
-        return statement;
+        return SqlParseUtils.parseSystemVars(sql, param.isMaintainer(), user);
     }
 
     @Override
     public String parseQueryVars(String sql, SqlQueryParam param, Map<String, Object> queryParams,
             Map<String, List<String>> authParams, Source source, User user) {
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(JdbcSourceUtils.getSourceConfig(source).getProperties());
         char c = sqlTempDelimiter.charAt(0);
         ST st = new ST(sql, c, c);
         if (!CollectionUtils.isEmpty(authParams)) {
@@ -81,6 +75,7 @@ public class JdbcParser extends StatementParser {
     @Override
     public String parseAuthVars(String sql, SqlQueryParam param, Map<String, List<String>> authParams,
             Map<String, Object> queryParams, Source source, User user) {
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(JdbcSourceUtils.getSourceConfig(source).getProperties());
         String str = sql;
         Set<String> expSet = SqlParseUtils.getAuthExpression(sql, sqlTempDelimiter);
         if (!CollectionUtils.isEmpty(expSet)) {

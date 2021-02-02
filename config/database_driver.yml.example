@@ -1,7 +1,7 @@
 ##  <<
 ##  Davinci
 ##  ==
-##  Copyright (C) 2016 - 2019 EDP
+##  Copyright (C) 2016 - 2020 EDP
 ##  ==
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 ##  >>
 
 ## This file is used to add databases with jdbc drivers that are not supported by Davinci,
-## ignore this file if your datasource is already supported,
-## the datasource list that have been supported by Davinci:
+## ignore this file if your database is already supported,
+## the database list that have been supported by Davinci:
 ##     mysql:           com.mysql.jdbc.Driver
 ##     oracle:          oracle.jdbc.driver.OracleDriver
 ##     sqlserver:       com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -32,15 +32,15 @@
 ##     vertica:         com.vertica.jdbc.Driver
 ##     hana:            com.sap.db.jdbc.Driver
 ##     impala:          com.cloudera.impala.jdbc41.Driver
-## this means that if your datasource is in the above list, you don't need to use this way,
+## this means that if your database is in the above list, you don't need to use this way,
 ## unless you know what you are doing.
 
 ## How to use:
-##     1. configure your datasource like examples below,
+##     1. configure your database like examples below,
 ##     2. add the corresponding dependency file (jar) in lib package,
 ##     3. restart your Davinci server
 ##  In theory, all databases with jdbc drivers are supported,
-##  if you have problems during useing, please with contact us.
+##  if you have problems during using, please with contact us.
 
 ## Configuration is as follows:
 

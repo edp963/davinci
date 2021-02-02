@@ -34,7 +34,7 @@ public enum UserOrgRoleEnum {
 
     public static UserOrgRoleEnum roleOf(short role) {
         for (UserOrgRoleEnum userOrgRoleEnum : values()) {
-            if ((short) userOrgRoleEnum.getRole() == role) {
+            if (userOrgRoleEnum.getRole() == role) {
                 return userOrgRoleEnum;
             }
         }

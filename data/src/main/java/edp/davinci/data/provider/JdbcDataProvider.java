@@ -19,17 +19,18 @@
 
 package edp.davinci.data.provider;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.sql.DataSource;
-
+import com.google.common.base.Stopwatch;
+import edp.davinci.commons.util.MD5Utils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.Source;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.data.enums.DatabaseTypeEnum;
+import edp.davinci.data.exception.SourceException;
+import edp.davinci.data.pojo.*;
+import edp.davinci.data.source.JdbcDataSource;
+import edp.davinci.data.util.JdbcSourceUtils;
+import edp.davinci.data.util.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,23 +38,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Stopwatch;
-
-import edp.davinci.commons.util.MD5Utils;
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.Source;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.data.enums.DatabaseTypeEnum;
-import edp.davinci.data.exception.SourceException;
-import edp.davinci.data.pojo.DataColumn;
-import edp.davinci.data.pojo.DataResult;
-import edp.davinci.data.pojo.PagingParam;
-import edp.davinci.data.pojo.SourceConfig;
-import edp.davinci.data.pojo.TableType;
-import edp.davinci.data.source.JdbcDataSource;
-import edp.davinci.data.util.JdbcSourceUtils;
-import edp.davinci.data.util.SqlUtils;
-import lombok.extern.slf4j.Slf4j;
+import javax.sql.DataSource;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -82,18 +71,21 @@ public class JdbcDataProvider extends DataProvider {
 	@Override
 	public boolean test(Source source, User user) {
 		SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
-		DataSource dataSource = jdbcDataSource.getDataSource(config);
-		try (Connection connection = dataSource.getConnection();) {
-			if (connection == null) {
-				return false;
-			}
-		} catch (Exception e) {
-			log.error("Get connection fail, url:{}, e:{}", config.getUrl(), e.getMessage());
+
+		try {
+			Class.forName(JdbcSourceUtils.getDriverClassName(config.getUrl(), config.getVersion()));
+		} catch (ClassNotFoundException e) {
+			log.error(e.toString(), e);
 			return false;
-		} finally {
-			jdbcDataSource.releaseDatasource(config);
 		}
-		return true;
+
+		try (Connection con = DriverManager.getConnection(config.getUrl(), config.getUsername(), config.getPassword());) {
+			return con != null;
+		} catch (SQLException e) {
+			log.error(e.toString(), e);
+		}
+
+		return false;
 	}
 
 	@Override
@@ -102,7 +94,7 @@ public class JdbcDataProvider extends DataProvider {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
 			Stopwatch stopwatch = Stopwatch.createStarted();
-			getJdbcTemplate(dataSource).execute(sql);
+			getJdbcTemplate(dataSource, config.getDatabase()).execute(sql);
 			logSql(sql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 		} catch (Exception e) {
 			throw new SourceException(e.getMessage());
@@ -118,20 +110,16 @@ public class JdbcDataProvider extends DataProvider {
 			SourceConfig config = JdbcSourceUtils.getSourceConfig(source);
 			DataSource dataSource = jdbcDataSource.getDataSource(config);
 
-			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
+			JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource, config.getDatabase());
 
 			int maxRows = paging.getLimit();
-			if (maxRows > resultLimit || maxRows <= 0) {
-				maxRows = resultLimit;
-			}
-			jdbcTemplate.setMaxRows(maxRows);
 			DatabaseTypeEnum database = DatabaseTypeEnum.featureOf(config.getDatabase());
 			if (database == DatabaseTypeEnum.MYSQL) {
 				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
 			}
-			
-			int pageNo = paging.getPageNo();
-			int pageSize = paging.getPageSize();
+
+			int pageNo = Math.max(paging.getPageNo(), 1);
+			int pageSize = Math.max(paging.getPageSize(), 10);
 			int startRow = (pageNo - 1) * pageSize;
 			
 			// query by paging
@@ -140,24 +128,43 @@ public class JdbcDataProvider extends DataProvider {
 				String countSql = SqlUtils.getCountSql(sql);
 				int count = getCount(jdbcTemplate, countSql);
 				logSql(countSql, -1, stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
-				
+
+				if (maxRows > 0) {
+					if (maxRows < pageNo * pageSize) {
+						jdbcTemplate.setMaxRows(maxRows - startRow);
+					} else {
+						jdbcTemplate.setMaxRows(Math.min(maxRows, pageSize));
+					}
+				} else {
+					maxRows = resultLimit;
+					jdbcTemplate.setMaxRows(Math.min(pageNo * pageSize, resultLimit));
+				}
+
 				stopwatch = Stopwatch.createStarted();
 				// special for h2,mysql paging query you can extend other databases
 				switch(database) {
 					case H2:
 					case MYSQL:
-						sql = sql + " limit " + startRow + "," + pageSize;
+						if (maxRows > 0 && maxRows < pageNo * pageSize) {
+							sql = sql + " limit " + startRow + ", " + (maxRows - startRow);
+						} else {
+							sql = sql + " limit " + startRow + ", " + pageSize;
+						}
 						dataResult = getData(jdbcTemplate, sql);
 						break;
-				default:
-					dataResult = getData(jdbcTemplate, sql, startRow);
-					break;
+					default:
+						dataResult = getData(jdbcTemplate, sql, startRow);
+						break;
 				}
-				
-				dataResult.setCount(Math.min(count, maxRows));
+
+				dataResult.setCount(maxRows <= 0 ? Math.min(resultLimit, count) : Math.min(Math.min(maxRows, resultLimit), count));
 				logSql(sql, dataResult.getCount(), stopwatch.elapsed(TimeUnit.MILLISECONDS), user);
 
 			}else {
+				if (maxRows > resultLimit || maxRows <= 0) {
+					maxRows = resultLimit;
+				}
+				jdbcTemplate.setMaxRows(maxRows);
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				dataResult = getData(jdbcTemplate, sql);
 				dataResult.setCount(dataResult.getData().size());
@@ -258,8 +265,9 @@ public class JdbcDataProvider extends DataProvider {
 		});
 	}
 	
-	private JdbcTemplate getJdbcTemplate(DataSource dataSource) {
+	private JdbcTemplate getJdbcTemplate(DataSource dataSource, String database) {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+		jdbcTemplate.setDatabaseProductName(database);
 		jdbcTemplate.setFetchSize(10);
 		return jdbcTemplate;
 	}
@@ -363,7 +371,7 @@ public class JdbcDataProvider extends DataProvider {
 		
 		} catch (SQLException e) {
 			throw new SourceException(e.getMessage());
-		}finally {
+		} finally {
 			JdbcSourceUtils.closeResult(res);
 		}
 
@@ -404,10 +412,10 @@ public class JdbcDataProvider extends DataProvider {
 					databases.add(res.getString(1));
 				}
 			}
-		
+
 		} catch (SQLException e) {
 			throw new SourceException(e.getMessage());
-		}finally {
+		} finally {
 			JdbcSourceUtils.closeResult(res);
 		}
 

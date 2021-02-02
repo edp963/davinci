@@ -19,42 +19,6 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.commons.Constants.BACK_SLASH;
-import static edp.davinci.commons.Constants.COMMA;
-import static edp.davinci.commons.Constants.DOT;
-import static edp.davinci.commons.Constants.DOUBLE_QUOTES;
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.commons.Constants.PERCENT_SIGN;
-import static edp.davinci.commons.Constants.POUND_SIGN;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DataFormat;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.web.multipart.MultipartFile;
-
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -65,16 +29,25 @@ import edp.davinci.server.enums.NumericUnitEnum;
 import edp.davinci.server.enums.SqlColumnMappingEnum;
 import edp.davinci.server.enums.SqlColumnTypeEnum;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.model.DataUploadEntity;
-import edp.davinci.server.model.ExcelHeader;
-import edp.davinci.server.model.FieldCurrency;
-import edp.davinci.server.model.FieldCustom;
-import edp.davinci.server.model.FieldDate;
-import edp.davinci.server.model.FieldNumeric;
-import edp.davinci.server.model.FieldPercentage;
-import edp.davinci.server.model.FieldScientificNotation;
-import edp.davinci.server.model.QueryColumn;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import edp.davinci.server.model.*;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static edp.davinci.commons.Constants.*;
 
 public class ExcelUtils {
 
@@ -107,9 +80,9 @@ public class ExcelUtils {
 
             //前两行表示列名和类型
             if (sheet.getLastRowNum() < 1) {
-                throw new ServerException("EMPTY excel");
+                throw new ServerException("Empty excel");
             }
-            
+
             //列
             Row headerRow = sheet.getRow(0);
             Row typeRow = sheet.getRow(1);
@@ -121,7 +94,6 @@ public class ExcelUtils {
                     headers.add(new QueryColumn(headerRow.getCell(i).getStringCellValue(),
                             DataUtils.formatSqlType(typeRow.getCell(i).getStringCellValue())));
                 } catch (Exception e) {
-                    e.printStackTrace();
                     if (e instanceof NullPointerException) {
                         throw new ServerException("Unknown type");
                     }
@@ -144,7 +116,6 @@ public class ExcelUtils {
             dataUploadEntity.setValues(values);
 
         } catch (ServerException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
@@ -162,7 +133,6 @@ public class ExcelUtils {
                 throw new ServerException("Invalid excel file");
             }
         } catch (IOException e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
     }
@@ -203,11 +173,11 @@ public class ExcelUtils {
         //表头粗体居中
         Font font = workbook.createFont();
         font.setFontName("黑体");
-        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setBold(true);
         headerCellStyle.setFont(font);
         headerCellStyle.setDataFormat(format.getFormat("@"));
-        headerCellStyle.setAlignment(CellStyle.ALIGN_CENTER);
-        headerCellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
         boolean isTable = isTable(config);
 
@@ -460,12 +430,6 @@ public class ExcelUtils {
 
         } else if (fieldTypeObject instanceof FieldCustom) {
 
-        } else if (fieldTypeObject instanceof FieldDate) {
-
-            // TODO need to fix impossible cast
-            FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
-
-            formatExpr = fieldCustom.getFormat().toLowerCase();
         } else if (fieldTypeObject instanceof FieldPercentage) {
 
             FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
@@ -473,12 +437,12 @@ public class ExcelUtils {
             StringBuilder fmtSB = new StringBuilder("0");
             if (fieldPercentage.getDecimalPlaces() > 0) {
                 fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
-
             }
 
             fmtSB.append(PERCENT_SIGN);
 
             formatExpr = fmtSB.toString();
+
         } else if (fieldTypeObject instanceof FieldScientificNotation) {
 
             FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
@@ -492,6 +456,7 @@ public class ExcelUtils {
             fmtSB.append("E+00");
 
             formatExpr = fmtSB.toString();
+
         }
 
         return formatExpr;
@@ -546,47 +511,6 @@ public class ExcelUtils {
         return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(EMPTY));
     }
 
-
-    /**
-     * format cell value
-     *
-     * @param engine
-     * @param list
-     * @param json
-     * @return
-     */
-    private static List<Map<String, Object>> formatValue(ScriptEngine engine, List<Map<String, Object>> list, String json) {
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFormattedDataRows", json, list);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror som = (ScriptObjectMirror) obj;
-                if (som.isArray()) {
-                    final List<Map<String, Object>> convertList = new ArrayList<>();
-                    Collection<Object> values = som.values();
-                    values.forEach(v -> {
-                        Map<String, Object> map = new HashMap<>();
-                        ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                        for (String key : vsom.keySet()) {
-                            map.put(key, vsom.get(key));
-                        }
-                        convertList.add(map);
-                    });
-                    return convertList;
-                }
-            }
-
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-
     public static boolean isTable(String json) {
         if (!StringUtils.isEmpty(json)) {
             try {
@@ -607,12 +531,11 @@ public class ExcelUtils {
         return false;
     }
 
-
     public static void checkSheetName(String sheetName, String value) {
         if (!StringUtils.isEmpty(value)) {
-            if (value.length() > Constants.INVALID_SHEET_NAEM_LENGTH) {
+            if (value.length() > Constants.INVALID_SHEET_NAME_LENGTH) {
                 throw new ServerException(
-                        sheetName + " length cannot exceed " + Constants.INVALID_SHEET_NAEM_LENGTH + " digits");
+                        sheetName + " length cannot exceed " + Constants.INVALID_SHEET_NAME_LENGTH + " digits");
             }
             Matcher matcher = Constants.PATTERN_INVALID_SHEET_NAME.matcher(value);
             if (matcher.find()) {

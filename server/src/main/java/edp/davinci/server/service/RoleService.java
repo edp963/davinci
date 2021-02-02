@@ -23,7 +23,7 @@ import edp.davinci.core.dao.entity.Role;
 import edp.davinci.server.dto.role.*;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public interface RoleService {
      * @param user
      * @return
      */
-    Role createRole(RoleCreate roleCreate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Role createRole(RoleCreate roleCreate, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -48,7 +48,7 @@ public interface RoleService {
      * @param user
      * @return
      */
-    boolean deleteRole(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean deleteRole(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -59,7 +59,7 @@ public interface RoleService {
      * @param user
      * @return
      */
-    boolean updateRole(Long id, RoleUpdate roleUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean updateRole(Long id, RoleUpdate roleUpdate, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -69,10 +69,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    Role getRoleInfo(Long roleId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    Role getRoleInfo(Long roleId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     List<Role> getRoleInfos(Long orgId, Long userId);
 
@@ -84,10 +84,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     /**
      * 删除Role与User关联
@@ -96,10 +96,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    boolean deleteMember(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean deleteMember(Long relationId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -110,10 +110,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    List<RelRoleMember> updateMembers(Long roleId, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelRoleMember> updateMembers(Long roleId, List<Long> memberIds, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -123,10 +123,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    List<RelRoleMember> getMembers(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelRoleMember> getMembers(Long id, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     /**
      * 添加Role与Project关联
@@ -136,10 +136,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    RoleProject addProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    RoleProject addProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     /**
      * 删除Role与Project关联
@@ -149,10 +149,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    boolean deleteProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean deleteProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     /**
      * 修改Role与Project关联
@@ -163,10 +163,10 @@ public interface RoleService {
      * @param projectRoleDTO
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    boolean updateProject(Long roleId, Long projectId, User user, RelRoleProjectDTO projectRoleDTO) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean updateProject(Long roleId, Long projectId, User user, RelRoleProjectDTO projectRoleDTO) throws ServerException, UnAuthorizedException, NotFoundException;
 
 
     /**
@@ -176,10 +176,10 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     /**
      * 获取单个关联的Role列表
@@ -188,16 +188,16 @@ public interface RoleService {
      * @param user
      * @return
      * @throws ServerException
-     * @throws UnAuthorizedExecption
+     * @throws UnAuthorizedException
      * @throws NotFoundException
      */
-    List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
     RoleWithProjectPermission getRoleByProject(Long projectId, Long roleId, User user);
 
-    VizPermission getVizPermission(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    VizPermission getVizPermission(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    boolean postVizvisibility(Long roleId, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean postVizvisibility(Long roleId, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 
-    List<Role> getMemberRoles(Long orgId, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<Role> getMemberRoles(Long orgId, Long memberId, User user) throws ServerException, UnAuthorizedException, NotFoundException;
 }

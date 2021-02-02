@@ -6,18 +6,22 @@ import {
 } from 'app/containers/Dashboard/types'
 import { DashboardItemStatus } from './constants'
 import { IWidgetRaw, IWidgetFormed } from 'app/containers/Widget/types'
-import { IFormedView } from 'app/containers/View/types'
+import { IShareFormedViews, IView } from 'app/containers/View/types'
 import { IDownloadRecord } from 'app/containers/App/types'
 
 export interface IShareWidgetRaw extends IWidgetRaw {
   dataToken: string
-  model: string
-  variable: string
 }
 
 export interface IShareDashboardDetailRaw extends IDashboardRaw {
   widgets: IShareWidgetRaw[]
+  views: IView[]
   relations: IDashboardItem[]
+}
+
+export interface IShareWidgetDetailRaw {
+  widget: IShareWidgetRaw
+  views: IView[]
 }
 
 export interface IShareDashboardItemInfo
@@ -32,9 +36,7 @@ export interface IShareDashboardState {
   dashboard: IDashboard
   title: string
   widgets: IWidgetFormed[]
-  formedViews: {
-    [viewId: number]: Pick<IFormedView, 'model'>
-  }
+  formedViews: IShareFormedViews
   items: IDashboardItem[]
   itemsInfo: {
     [itemId: string]: IShareDashboardItemInfo

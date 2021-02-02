@@ -27,7 +27,7 @@ import React, {
   useRef,
   useImperativeHandle
 } from 'react'
-import * as classnames from 'classnames'
+import classnames from 'classnames'
 import { connect } from 'react-redux'
 import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button } from 'antd'
 const styles = require('../Organizations/Project.less')
@@ -363,7 +363,6 @@ const Projects: React.FC<
 
     const getProjectsBySearch = useMemo(() => {
       const { proIdList } = historyStack.getAll()
-
       function filterByKeyword(arr: IProject[]) {
         return (
           Array.isArray(arr) &&
@@ -374,7 +373,7 @@ const Projects: React.FC<
         )
       }
 
-      function filterByProjectType(arr: IProject[]) {
+      function filterByProjectType (arr: IProject[]) {
         if (Array.isArray(arr)) {
           switch (projectType) {
             case 'create':
@@ -388,7 +387,11 @@ const Projects: React.FC<
             case 'favorite':
               return arr.filter((pro) => pro.isFavorites)
             case 'history':
-              return arr.filter((pro) => proIdList.includes(pro.id))
+              return proIdList.reduce((iteratee, pid) => {
+                const pl = arr.find((pro) => pro.id === pid)
+                if (pl) {iteratee.push(pl) }
+                return iteratee
+              }, [])
             case 'all':
               return arr
             default:
@@ -417,6 +420,7 @@ const Projects: React.FC<
         filterByKeyword,
         pushForkTagProjects
       )(projects)
+
     }, [projects, projectType, searchKeywords, loginUserId, collectProjects])
 
     const ProjectItems: ReactElement[] = useMemo(() => {

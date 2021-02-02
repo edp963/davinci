@@ -35,9 +35,8 @@ const LayerItem: React.FC = () => (
     <LayerResizable>
       <LayerBox>
         <LayerTool />
-        <LayerTooltip>
-          <LayerCore />
-        </LayerTooltip>
+        <LayerTooltip />
+        <LayerCore />
       </LayerBox>
     </LayerResizable>
   </LayerDraggable>

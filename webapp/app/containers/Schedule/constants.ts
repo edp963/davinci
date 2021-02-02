@@ -89,7 +89,8 @@ export const EmptySchedule: ISchedule = {
     bcc: '',
     type: 'image',
     imageWidth: DefaultMailImageWidth,
-    contentList: []
+    contentList: [],
+    setCronExpressionManually: false
   }
 }
 
@@ -109,6 +110,7 @@ export const EmptyWeChatWorkSchedule: ISchedule = {
     webHookUrl: '',
     type: 'image',
     imageWidth: DefaultMailImageWidth,
-    contentList: []
+    contentList: [],
+    setCronExpressionManually: false
   }
 }

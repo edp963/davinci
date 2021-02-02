@@ -37,20 +37,20 @@ public class CronJobRunner implements ApplicationRunner {
     @Autowired
     private CronJobService cronJobService;
 
-    @Value("${start_all_jobs_when_server_start:true}")
-    private boolean startJob;
+    @Value("${cronjob.reload-all:false}")
+    private boolean reloadAll;
 
     /**
-     * 应用启动后开启已启动的cronjob
+     * 是否重新加载已启动的cronjob
      *
      * @param args
      * @throws Exception
      */
     @Override
     public void run(ApplicationArguments args) {
-        if (startJob) {
+        if (reloadAll) {
             try {
-                cronJobService.startAllJobs();
+                cronJobService.restartAllJobs();
             } finally {
                 log.info("Load cron job finish");
             }

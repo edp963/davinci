@@ -1,19 +1,27 @@
 import React, { ChangeEvent, FormEvent } from 'react'
 import { connect } from 'react-redux'
-import Helmet from 'react-helmet'
-import LoginForm from 'containers/Login/LoginForm'
-import styles from 'containers/Background/Background.less'
-import loginStyles from 'containers/Login/Login.less'
-
-import { login } from 'share/containers/App/actions'
-
-import { Icon } from 'antd'
-
+import { createStructuredSelector } from 'reselect'
+import { makeSelectOauth2Enabled } from 'share/containers/App/selectors'
+import LoginForm from 'app/containers/Login/LoginForm'
+import Background from 'share/components/Background'
+import ExternalLogin from 'share/components/ExternalLogin'
+import { AppActions } from 'share/containers/App/actions'
+import checkLogin from 'utils/checkLogin'
+import { setToken } from 'utils/request'
+import { message } from 'antd'
 interface ILoginProps {
   loading: boolean
-  shareToken: any,
-  legitimateUser: () => void
-  onLogin?: (username: string, password: string, shareToken: any, resolve: (res) => void) => void
+  shareToken: any
+  oauth2Enabled: boolean
+  loginCallback?: () => void
+  onLogin?: (
+    username: string,
+    password: string,
+    shareToken: any,
+    resolve: (res) => void,
+    reject?: () => void
+  ) => void
+  logged?: (user) => void
 }
 
 interface ILoginStates {
@@ -22,11 +30,31 @@ interface ILoginStates {
 }
 
 class Login extends React.PureComponent<ILoginProps, ILoginStates> {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       username: '',
       password: ''
+    }
+  }
+
+  public componentWillMount() {
+    this.checkNormalLogin()
+  }
+
+  private checkNormalLogin = () => {
+    const { oauth2Enabled, shareToken, loginCallback } = this.props
+    if (checkLogin()) {
+      const token = localStorage.getItem('TOKEN')
+      const loginUser = localStorage.getItem('loginUser')
+      setToken(token)
+      this.props.logged(JSON.parse(loginUser))
+      if (loginCallback) {
+        loginCallback()
+      }
+    } else if (oauth2Enabled) {
+      localStorage.setItem('shareToken', shareToken)
+      localStorage.setItem('shareRoute', window.location.hash)
     }
   }
 
@@ -44,42 +72,60 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
   private doLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const { onLogin, shareToken, legitimateUser } = this.props
+    const { onLogin, shareToken, loginCallback } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareToken, () => {
-        legitimateUser()
-      })
+      onLogin(
+        username,
+        password,
+        shareToken,
+        () => {
+          if (loginCallback) {
+            loginCallback()
+          }
+        },
+        () => {
+          message.error('该用户无权限')
+        }
+      )
     }
   }
 
-  public render () {
-    const { loading } = this.props
+  public render() {
+    const { loading, oauth2Enabled, shareToken } = this.props
     const { username, password } = this.state
     return (
-      <div className={`${styles.container} ${styles.share}`}>
-        <Helmet title="Login" />
-        <img className={styles.logo} src={require('assets/images/logo_light.svg')} />
-        <div className={`${styles.window} ${loginStyles.window}`}>
-          <LoginForm
-            username={username}
-            password={password}
-            loading={loading}
-            onChangeUsername={this.changeUsername}
-            onChangePassword={this.changePassword}
-            onLogin={this.doLogin}
-          />
-        </div>
-      </div>
+      <Background>
+        <LoginForm
+          username={username}
+          password={password}
+          loading={loading}
+          onChangeUsername={this.changeUsername}
+          onChangePassword={this.changePassword}
+          onLogin={this.doLogin}
+        />
+        {oauth2Enabled && <ExternalLogin />}
+      </Background>
     )
   }
 }
 
-export function mapDispatchToProps (dispatch) {
+const mapStateToProps = createStructuredSelector({
+  oauth2Enabled: makeSelectOauth2Enabled()
+})
+
+export function mapDispatchToProps(dispatch) {
   return {
-    onLogin: (username: string, password: string, shareToken: any, resolve: () => void) => dispatch(login(username, password, shareToken, resolve))
+    onLogin: (
+      username: string,
+      password: string,
+      shareToken: any,
+      resolve: () => void,
+      reject?: () => void
+    ) => dispatch(AppActions.login(username, password, shareToken, resolve, reject)),
+    logged: (user) => dispatch(AppActions.logged(user))
   }
 }
 
-export default connect<{}, {}, ILoginProps>(null, mapDispatchToProps)(Login)
+export default connect(mapStateToProps, mapDispatchToProps)(Login)

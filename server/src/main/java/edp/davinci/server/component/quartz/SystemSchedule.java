@@ -60,9 +60,9 @@ public class SystemSchedule {
     @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
 
-        //下载内容文件保留7天，记录保留1月
+        //下载内容文件保留7天
         String downloadDir = fileUtils.fileBasePath + Constants.DIR_DOWNLOAD + DateUtils.getAWeekBeforeYYYYMMDD();
-        String tempDir = fileUtils.fileBasePath + Constants.DIR_TEMPL + DateUtils.getAMonthBeforeYYYYMMDD();
+        String tempDir = fileUtils.fileBasePath + Constants.DIR_TEMP + DateUtils.getAMonthBeforeYYYYMMDD();
         String csvDir = fileUtils.fileBasePath + File.separator + FileTypeEnum.CSV.getType();
 
         final String download = fileUtils.formatFilePath(downloadDir);
@@ -76,7 +76,7 @@ public class SystemSchedule {
 
     @Scheduled(cron = "0 0/2 * * * *")
     public void stopCronJob() {
-        List<CronJob> jobs = cronJobExtendMapper.getStopedJob();
+        List<CronJob> jobs = cronJobExtendMapper.getStoppedJob();
         if (!CollectionUtils.isEmpty(jobs)) {
             for (CronJob job : jobs) {
                 try {
@@ -110,8 +110,8 @@ public class SystemSchedule {
 				return;
 			}
 
-			File[] childs = file.listFiles();
-			if (childs.length == 0) {
+			File[] children = file.listFiles();
+			if (children.length == 0) {
 				file.delete();
 				deleteFile(file.getParentFile());
 			} else {
@@ -120,8 +120,8 @@ public class SystemSchedule {
 
 		} else {
 			File parentDir = file.getParentFile();
-			File[] childs = parentDir.listFiles();
-			if (childs.length == 1) {
+			File[] children = parentDir.listFiles();
+			if (children.length == 1) {
 				file.delete();
 				deleteFile(parentDir);
 			} else {

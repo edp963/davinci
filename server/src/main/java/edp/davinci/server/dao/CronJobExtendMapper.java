@@ -34,7 +34,7 @@ import java.util.List;
 public interface CronJobExtendMapper extends CronJobMapper {
 
     @Select({"select * from cron_job where  job_status in ('stopped','failed') and update_time > (NOW() - INTERVAL 3 MINUTE)"})
-    List<CronJob> getStopedJob();
+    List<CronJob> getStoppedJob();
 
     @Update({
         "update cron_job set ",

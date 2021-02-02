@@ -19,17 +19,13 @@
 
 package edp.davinci.data.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.commons.Constants;
 import edp.davinci.data.pojo.CustomDatabase;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Getter;
 import org.yaml.snakeyaml.Yaml;
-
-import static edp.davinci.commons.Constants.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,6 +34,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static edp.davinci.commons.Constants.COLON;
+import static edp.davinci.commons.Constants.EMPTY;
 
 
 public class CustomDatabaseUtils {
@@ -108,23 +107,23 @@ public class CustomDatabaseUtils {
                 }
             }
 
-            List<String> versoins = null;
+            List<String> versions = null;
             if (databaseVersionMap.containsKey(database.getName())) {
-                versoins = databaseVersionMap.get(database.getName());
+                versions = databaseVersionMap.get(database.getName());
             } else {
-                versoins = new ArrayList<>();
+                versions = new ArrayList<>();
             }
             if (StringUtils.isEmpty(database.getVersion())) {
-                versoins.add(0, Constants.DATABASE_DEFAULT_VERSION);
+                versions.add(0, Constants.DATABASE_DEFAULT_VERSION);
             } else {
-                versoins.add(database.getVersion());
+                versions.add(database.getVersion());
             }
 
-            if (versoins.size() == 1 && versoins.get(0).equals(Constants.DATABASE_DEFAULT_VERSION)) {
-                versoins.remove(0);
+            if (versions.size() == 1 && versions.get(0).equals(Constants.DATABASE_DEFAULT_VERSION)) {
+                versions.remove(0);
             }
 
-            databaseVersionMap.put(database.getName(), versoins);
+            databaseVersionMap.put(database.getName(), versions);
             customDatabaseMap.put(getKey(database.getName(), database.getVersion()), database);
         }
     }

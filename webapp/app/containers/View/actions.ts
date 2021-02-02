@@ -23,12 +23,19 @@ import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
 import {
-  IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo,
-  IDacChannel, IDacTenant, IDacBiz, IViewQueryResponse
+  IViewBase,
+  IView,
+  IExecuteSqlParams,
+  IExecuteSqlResponse,
+  IViewInfo,
+  IDacChannel,
+  IDacTenant,
+  IDacBiz,
+  IViewQueryResponse
 } from './types'
 import { IDataRequestBody } from '../Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
-import { IDistinctValueReqeustParams, IControlOption } from 'app/components/Control/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 import { EExecuteType } from './Editor'
 const CancelToken = axios.CancelToken
 
@@ -66,7 +73,11 @@ export const ViewActions = {
       }
     }
   },
-  loadViewsDetail (viewIds: number[], resolve?: () => void, isEditing: boolean = false) {
+  loadViewsDetail (
+    viewIds: number[],
+    resolve?: (views: IView[]) => void,
+    isEditing: boolean = false
+  ) {
     return {
       type: ActionTypes.LOAD_VIEWS_DETAIL,
       payload: {
@@ -342,7 +353,7 @@ export const ViewActions = {
   },
   selectOptionsLoaded (
     controlKey: string,
-    values: IControlOption[],
+    values: object[],
     itemId?: number
   ) {
     return {
@@ -393,29 +404,17 @@ export const ViewActions = {
     }
   },
 
-  loadViewDistinctValue (viewId: number, params: Partial<IDistinctValueReqeustParams>, resolve?: any) {
+  loadColumnDistinctValue(
+    paramsByViewId: {
+      [viewId: string]: Omit<IDistinctValueReqeustParams, 'cache' | 'expired'>
+    },
+    callback: (options?: object[]) => void
+  ) {
     return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
+      type: ActionTypes.LOAD_COLUMN_DISTINCT_VALUE,
       payload: {
-        viewId,
-        params,
-        resolve
-      }
-    }
-  },
-  viewDistinctValueLoaded (data: any[]) {
-    return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS,
-      payload: {
-        data
-      }
-    }
-  },
-  loadViewDistinctValueFail (err) {
-    return {
-      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE,
-      payload: {
-        err
+        paramsByViewId,
+        callback
       }
     }
   },
@@ -461,7 +460,11 @@ export const ViewActions = {
       statistic
     }
   },
-  loadViewDataFromVizItemFail (itemId: number | [number, number], vizType: 'dashboard' | 'display', errorMessage: string) {
+  loadViewDataFromVizItemFail (
+    itemId: number | [number, number],
+    vizType: 'dashboard' | 'display',
+    errorMessage: string
+  ) {
     return {
       type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE,
       payload: {

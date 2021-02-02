@@ -27,10 +27,13 @@ import {
   IDataRequestParams
 } from 'app/containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
-import { IFormedView, IViewQueryResponse } from 'app/containers/View/types'
+import {
+  IShareFormedViews,
+  IViewQueryResponse
+} from 'app/containers/View/types'
 import { RenderType } from 'app/containers/Widget/components/Widget'
 import { ControlPanelTypes } from 'app/components/Control/constants'
-import { DownloadTypes } from 'app/containers/App/constants'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 
 export const DashboardActions = {
   getDashboard(token, reject) {
@@ -47,9 +50,7 @@ export const DashboardActions = {
     dashboard: IDashboard,
     items: IDashboardItem[],
     widgets: IWidgetFormed[],
-    formedViews: {
-      [viewId: string]: Pick<IFormedView, 'model'>
-    }
+    formedViews: IShareFormedViews
   ) {
     return {
       type: ActionTypes.LOAD_SHARE_DASHBOARD_SUCCESS,
@@ -79,12 +80,7 @@ export const DashboardActions = {
     }
   },
 
-  widgetGetted(
-    widget: IWidgetFormed,
-    formedViews: {
-      [viewId: string]: Pick<IFormedView, 'model'>
-    }
-  ) {
+  widgetGetted(widget: IWidgetFormed, formedViews: IShareFormedViews) {
     return {
       type: ActionTypes.LOAD_SHARE_WIDGET_SUCCESS,
       payload: {
@@ -153,11 +149,16 @@ export const DashboardActions = {
     }
   },
 
-  setIndividualDashboard(widget: IWidgetFormed, token: string) {
+  setIndividualDashboard(
+    widget: IWidgetFormed,
+    formedViews: IShareFormedViews,
+    token: string
+  ) {
     return {
       type: ActionTypes.SET_INDIVIDUAL_DASHBOARD,
       payload: {
         widget,
+        formedViews,
         token
       }
     }
@@ -192,12 +193,15 @@ export const DashboardActions = {
     }
   },
 
-  loadSelectOptions(controlKey, dataToken, requestParams, itemId) {
+  loadSelectOptions(
+    controlKey: string,
+    requestParams: { [viewId: string]: IDistinctValueReqeustParams },
+    itemId: number
+  ) {
     return {
       type: ActionTypes.LOAD_SELECT_OPTIONS,
       payload: {
         controlKey,
-        dataToken,
         requestParams,
         itemId
       }

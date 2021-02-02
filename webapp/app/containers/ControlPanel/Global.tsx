@@ -35,10 +35,12 @@ import {
   ControlPanelLayoutTypes
 } from 'app/components/Control/constants'
 import { IDashboard, IDashboardItem } from '../Dashboard/types'
+import { IFormedViews, IShareFormedViews } from '../View/types'
 
 interface IGlobalControlPanelBaseProps {
   currentDashboard: IDashboard
   currentItems: IDashboardItem[]
+  formedViews: IFormedViews | IShareFormedViews
   layoutType: ControlPanelLayoutTypes
   onGetOptions: OnGetControlOptions
   onSearch: (
@@ -86,10 +88,15 @@ class GlobalControlPanel extends Component<
   }
 
   private search = (formValues?: object) => {
-    const { currentDashboard, currentItems, onSearch, onMonitoredSearchDataAction } = this.props
+    const {
+      currentDashboard,
+      currentItems,
+      onSearch,
+      onMonitoredSearchDataAction
+    } = this.props
     const controls = currentDashboard.config.filters
     const relatedItems = formValues
-      ? getFormValuesRelatedItems(controls, formValues)
+      ? getFormValuesRelatedItems(controls, currentItems, formValues)
       : currentItems.map((item) => item.id)
     onSearch(ControlPanelTypes.Global, relatedItems, formValues)
     if (onMonitoredSearchDataAction) {
@@ -102,6 +109,7 @@ class GlobalControlPanel extends Component<
       layoutType,
       currentDashboard,
       currentItems,
+      formedViews,
       selectOptions,
       globalControlPanelFormValues,
       onGetOptions,
@@ -121,6 +129,7 @@ class GlobalControlPanel extends Component<
       currentDashboard && (
         <ControlPanelComponent
           controls={currentDashboard.config.filters}
+          formedViews={formedViews}
           items={items}
           type={ControlPanelTypes.Global}
           layoutType={layoutType}

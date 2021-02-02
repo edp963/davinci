@@ -19,22 +19,6 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.commons.Constants.*;
-import static edp.davinci.data.commons.Constants.DATABASE_DEFAULT_VERSION;
-import static edp.davinci.data.commons.Constants.EXT_LIB_PATH_FORMATER;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PATTERN;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATER;
-
-import java.io.File;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-
-import javax.sql.DataSource;
-
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.MD5Utils;
 import edp.davinci.commons.util.StringUtils;
@@ -48,6 +32,18 @@ import edp.davinci.data.pojo.SourceProperty;
 import edp.davinci.data.runner.LoadSupportDatabaseRunner;
 import edp.davinci.data.source.JdbcDataSource;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.sql.DataSource;
+import java.io.File;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+
+import static edp.davinci.commons.Constants.*;
+import static edp.davinci.data.commons.Constants.*;
 
 @Slf4j
 public class JdbcSourceUtils {
@@ -77,7 +73,7 @@ public class JdbcSourceUtils {
         
 		if (isExt && !StringUtils.isEmpty(version) && !DATABASE_DEFAULT_VERSION.equals(version)) {
 			String path = System.getenv("DAVINCI_HOME") + File.separator
-					+ String.format(EXT_LIB_PATH_FORMATER, databaseName, version);
+					+ String.format(EXT_LIB_PATH_FORMATTER, databaseName, version);
 			ExtendedJdbcClassLoader extendedJdbcClassLoader = ExtendedJdbcClassLoader.getExtJdbcClassLoader(path);
 			CustomDatabase database = CustomDatabaseUtils.getInstance(url, version);
 			try {
@@ -113,7 +109,7 @@ public class JdbcSourceUtils {
             throw new SourceException("Not supported database: url=" + url);
         }
 
-        String urlPrefix = String.format(JDBC_URL_PREFIX_FORMATER, database);
+        String urlPrefix = String.format(JDBC_URL_PREFIX_FORMATTER, database);
         String checkUrl = url.replaceFirst(DOUBLE_SLASH, EMPTY).replaceFirst(AT_SIGN, EMPTY);
         if (urlPrefix.equals(checkUrl)) {
             throw new SourceException("Communications link failure");
@@ -124,7 +120,7 @@ public class JdbcSourceUtils {
 
     public static String getDatabase(String url) {
         String dataSourceName = null;
-        url = url.replaceAll(NEW_LINE, EMPTY).replaceAll(SPACE, EMPTY).trim().toLowerCase();
+        url = url.replaceAll(NEW_LINE, EMPTY).replaceAll(SPACE, EMPTY).trim();
         Matcher matcher = JDBC_URL_PATTERN.matcher(url);
         if (matcher.find()) {
             dataSourceName = matcher.group().split(COLON)[1];
@@ -133,38 +129,31 @@ public class JdbcSourceUtils {
     }
 
     public static String getDriverClassName(String url, String version) {
-        
+
         String className = null;
-        
+
         try {
             className = DriverManager.getDriver(url.trim()).getClass().getName();
         } catch (SQLException e) {
 
         }
-        
+
         if (!StringUtils.isEmpty(className) && !className.contains("com.sun.proxy")
                 && !className.contains("net.sf.cglib.proxy")) {
             return className;
         }
-        
+
+        CustomDatabase customDatabase = CustomDatabaseUtils.getInstance(url, version);
+        if (customDatabase != null) {
+            return customDatabase.getDriver().trim();
+        }
+
         DatabaseTypeEnum dataTypeEnum = DatabaseTypeEnum.urlOf(url);
-        CustomDatabase customDatabase = null;
-        if (null == dataTypeEnum) {
-            try {
-                customDatabase = CustomDatabaseUtils.getInstance(url, version);
-            }
-            catch (Exception e) {
-                throw new SourceException(e.getMessage());
-            }
+        if (dataTypeEnum != null) {
+            return dataTypeEnum.getDriver();
         }
 
-        if (null == dataTypeEnum && null == customDatabase) {
-            throw new SourceException("Not supported data type: jdbcUrl=" + url);
-        }
-
-        return className = null != dataTypeEnum && !StringUtils.isEmpty(dataTypeEnum.getDriver())
-                ? dataTypeEnum.getDriver()
-                : customDatabase.getDriver().trim();
+        throw new SourceException("Not supported data type: jdbcUrl=" + url);
     }
 
 
@@ -181,12 +170,12 @@ public class JdbcSourceUtils {
     /**
      * get data source unique name
      * 
-     * @param projectId
+     * @param id
      * @param name
      * @return
      */
-	public static String getSourceUName(Long projectId, String name) {
-		return projectId + AT_SIGN + name;
+	public static String getSourceUName(Long id, String name) {
+		return id + AT_SIGN + name;
 	}
 
 	/**
@@ -205,9 +194,9 @@ public class JdbcSourceUtils {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append(AT_SIGN);
 		sb.append(url.trim()).append(AT_SIGN);
-		sb.append(version).append(AT_SIGN);
-		sb.append(username).append(AT_SIGN);
-		sb.append(password).append(AT_SIGN);
+        sb.append(StringUtils.isEmpty(version) ? "null" : version).append(AT_SIGN);
+		sb.append(StringUtils.isEmpty(username) ? "null" : username).append(AT_SIGN);
+		sb.append(StringUtils.isEmpty(password) ? "null" : password).append(AT_SIGN);
 
 		return MD5Utils.getMD5(sb.toString(), true, 64);
     }
@@ -261,12 +250,12 @@ public class JdbcSourceUtils {
     	
     	String version = null;
         try {
-            version = (String) JSONUtils.toObject(config, Map.class).get("versoin");
+            version = (String) JSONUtils.toObject(config, Map.class).get("version");
             if (DATABASE_DEFAULT_VERSION.equals(version)) {
                 return null;
             }
         } catch (Exception e) {
-        	log.error("Get jdbc versoin from source config({}) error, e={}", config, e.getMessage());
+        	log.error("Get jdbc version from source config({}) error, e={}", config, e.getMessage());
         }
         return version;
     }
@@ -322,7 +311,7 @@ public class JdbcSourceUtils {
         sourceConfig.setDatabase(getDatabase(sourceConfig.getUrl()));
         
         if (StringUtils.isEmpty(sourceConfig.getName())) {
-            sourceConfig.setName(getSourceUName(source.getProjectId(), source.getName()));
+            sourceConfig.setName(getSourceUName(source.getId(), source.getName()));
         }
 
         return sourceConfig;
@@ -332,7 +321,6 @@ public class JdbcSourceUtils {
         if (rs != null) {
             try {
                 rs.close();
-                rs = null;
             } catch (Exception e) {
                 log.error("ResultSet close error", e.getMessage());
             }

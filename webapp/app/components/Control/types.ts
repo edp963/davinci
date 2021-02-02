@@ -18,78 +18,83 @@
  * >>
  */
 
-import { ControlTypes, DatePickerFormats } from './constants'
+import {
+  ControlTypes,
+  DatePickerFormats,
+  ControlFieldTypes,
+  ControlOptionTypes,
+  ControlDefaultValueTypes,
+  ControlVisibilityTypes
+} from './constants'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { IQueryConditions } from 'containers/Dashboard/types'
-import { SqlTypes } from 'app/globalConstants'
-import { ViewVariableValueTypes } from 'app/containers/View/constants'
 
-export type InteractionType = 'column' | 'variable'
-
-export interface IGlobalControlRelatedItem {
+export interface IControlRelatedItem {
   viewId: number
   checked: boolean
 }
 
-export interface IControlRelatedField {
-  name: string
-  type: SqlTypes | ViewVariableValueTypes
-  optionsFromColumn?: boolean
-  column?: string
+export interface IControlRelatedView {
+  fieldType: ControlFieldTypes
+  fields: string[]
+}
+
+export interface IControlRelatedViewFormValue {
+  fieldType: ControlFieldTypes
+  fields: string | string[]
 }
 
 export interface IControlOption {
   text: string
   value: string
-  variable?: string
+  variables?: {
+    [viewId: string]: string
+  }
 }
 
-export interface IControlBase {
+export interface IControlCondition {
+  control: string
+  operator: OperatorTypes
+  value: string
+}
+
+export interface IControl {
   key: string
   name: string
   type: ControlTypes
-  interactionType: InteractionType
   operator: OperatorTypes
   dateFormat?: DatePickerFormats
   multiple?: boolean
+  radioType?: 'normal' | 'button'
+  min?: number
+  max?: number
+  step?: number
+  label?: boolean
   cache: boolean
   expired: number
-  customOptions?: boolean
-  options?: IControlOption[]
+  optionType?: ControlOptionTypes
+  valueViewId?: number
+  valueField?: string
+  textField?: string
+  parentField?: string
+  customOptions?: IControlOption[]
+  optionWithVariable?: boolean
   width: number
-  dynamicDefaultValue?: any
+  visibility: ControlVisibilityTypes
+  conditions?: IControlCondition[]
+  defaultValueType: ControlDefaultValueTypes
   defaultValue?: any
   parent?: string
-}
-
-export interface IGlobalControl extends IControlBase {
-  relatedItems: {
-    [itemId: string]: IGlobalControlRelatedItem
+  relatedItems?: {
+    [itemId: string]: IControlRelatedItem
   }
   relatedViews: {
-    [viewId: string]: IControlRelatedField | IControlRelatedField[]
+    [viewId: string]: IControlRelatedView
   }
 }
 
-export interface ILocalControl extends IControlBase {
-  fields: IControlRelatedField | IControlRelatedField[]
-}
-
-export interface IRenderTreeItem extends IControlBase {
+export interface IRenderTreeItem extends IControl {
   children?: IRenderTreeItem[]
-}
-
-export interface IGlobalRenderTreeItem extends IRenderTreeItem {
-  relatedItems: {
-    [itemId: string]: IGlobalControlRelatedItem
-  }
-  relatedViews: {
-    [viewId: string]: IControlRelatedField | IControlRelatedField[]
-  }
-}
-
-export interface ILocalRenderTreeItem extends IRenderTreeItem {
-  fields: IControlRelatedField | IControlRelatedField[]
 }
 
 export type ILocalControlConditions = Pick<
@@ -116,24 +121,21 @@ export interface IDistinctValueReqeustParams {
 export type OnGetControlOptions = (
   controlKey: string,
   userOptions: boolean,
-  paramsOrOptions: { [viewId: string]: IDistinctValueReqeustParams } | any[],
+  paramsOrOptions:
+    | { [viewId: string]: IDistinctValueReqeustParams }
+    | IControlOption[],
   itemId?: number
 ) => void
 
 export interface IMapControlOptions {
-  [controlKey: string]: IControlOption[]
+  [controlKey: string]: object[]
 }
 
-export interface IFilters {
+export interface IFilter {
   name: string
   type: string
-  value: string[]
+  value: string[] | string
   operator: string
   sqlType: string
-  children?: IFilters
-}
-
-export enum GlobalControlQueryMode {
-  Immediately,
-  Manually
+  children?: IFilter
 }

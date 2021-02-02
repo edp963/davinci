@@ -19,12 +19,11 @@
 
 package edp.davinci.server.dto.share;
 
+import edp.davinci.core.dao.entity.MemDashboardWidget;
 import lombok.Data;
 
 import java.util.List;
 import java.util.Set;
-
-import edp.davinci.core.dao.entity.MemDashboardWidget;
 
 @Data
 public class ShareDashboard {
@@ -34,7 +33,9 @@ public class ShareDashboard {
 
     private String config;
 
-    private Set<ShareWidget> widgets;
+    private Set<SimpleShareWidget> widgets;
 
     private List<MemDashboardWidget> relations;
+
+    private Set<ShareView> views;
 }

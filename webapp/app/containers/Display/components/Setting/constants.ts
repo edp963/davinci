@@ -20,7 +20,7 @@
 
 import { IDisplayParams } from 'containers/Viz/types'
 
-export const DisplayDefaultGridSize = 10
+export const DisplayDefaultGridSize = 1
 
 export const DefaultDisplayParams: IDisplayParams = {
   autoPlay: true,

@@ -100,7 +100,7 @@ function getWidgetDetailFieldsByOthers (action) {
       bootstrapFilters = bootstrapFilters.concat(globalFilters)
     }
 
-    // 全局 本地 联动  变量
+    // 全局 组件 联动  变量
     if (linkageVariables && linkageVariables.length) {
       bootstrapVariables = bootstrapVariables.concat(linkageVariables)
     }

@@ -20,35 +20,40 @@
 
 import omit from 'lodash/omit'
 import {
-  deserializeDefaultValue,
-  getModelValue,
-  getVariableValue
+  getPreciseDefaultValue,
+  getFilterParams,
+  getVariableParams,
+  getCustomOptionVariableParams
 } from 'app/components/Control/util'
-import { widgetDimensionMigrationRecorder } from 'app/utils/migrationRecorders'
 import { FieldSortTypes } from '../Widget/components/Config/Sort'
 import { decodeMetricName } from '../Widget/components/util'
 import {
   IDashboardItemInfo,
   IQueryConditions,
   IDataRequestParams,
-  IDataRequestBody
+  IDataRequestBody,
+  IDashboardItem
 } from './types'
 import { IWidgetFormed } from '../Widget/types'
 import ChartTypes from '../Widget/config/chart/ChartTypes'
 import {
-  IGlobalControl,
-  IControlRelatedField,
-  ILocalControl,
+  IControl,
   IGlobalControlConditionsByItem,
-  ILocalControlConditions
+  ILocalControlConditions,
+  IGlobalControlConditions
 } from 'app/components/Control/types'
-import { ControlPanelTypes } from 'app/components/Control/constants'
-import { IViewQueryResponse } from '../View/types'
+import {
+  ControlPanelTypes,
+  ControlFieldTypes
+} from 'app/components/Control/constants'
+import {
+  IFormedViews,
+  IShareFormedViews,
+  IViewQueryResponse
+} from '../View/types'
 import { IPaginationParams } from '../Widget/components/Widget'
 
-export function getInitialPagination(
-  widget: IWidgetFormed
-): IPaginationParams {
+export function getInitialPagination(widget: IWidgetFormed): IPaginationParams {
   const { mode, selectedChart, chartStyles } = widget.config
   if (mode === 'chart' && selectedChart === ChartTypes.Table) {
     const { withPaging, pageSize } = chartStyles.table
@@ -63,9 +68,7 @@ export function getInitialPagination(
   }
 }
 
-export function getInitialNativeQuery(
-  widget: IWidgetFormed
-): boolean {
+export function getInitialNativeQuery(widget: IWidgetFormed): boolean {
   const { mode, selectedChart, chartStyles } = widget.config
   if (mode === 'chart' && selectedChart === ChartTypes.Table) {
     return chartStyles.table.withNoAggregators
@@ -74,9 +77,7 @@ export function getInitialNativeQuery(
   }
 }
 
-export function getInitialPaginationAndNativeQuery(
-  widget: IWidgetFormed
-) {
+export function getInitialPaginationAndNativeQuery(widget: IWidgetFormed) {
   return {
     pagination: getInitialPagination(widget),
     nativeQuery: getInitialNativeQuery(widget)
@@ -93,13 +94,16 @@ export function getUpdatedPagination(
   const { pageNo, pageSize, totalCount } = result
   return {
     ...pagination,
-    pageNo,
-    pageSize,
+    pageNo: pagination.withPaging ? pageNo : 0,
+    pageSize: pagination.withPaging ? pageSize : 0,
     totalCount
   }
 }
 
-export function getInitialItemInfo(widget: IWidgetFormed): IDashboardItemInfo {
+export function getInitialItemInfo(
+  widget: IWidgetFormed,
+  formedViews: IFormedViews
+): IDashboardItemInfo {
   return {
     datasource: {
       columns: [],
@@ -110,13 +114,12 @@ export function getInitialItemInfo(widget: IWidgetFormed): IDashboardItemInfo {
     },
     loading: false,
     queryConditions: {
-      tempFilters: [], // @TODO combine widget static filters with local filters
       linkageFilters: [],
       globalFilters: [],
-      variables: [],
       linkageVariables: [],
       globalVariables: [],
       drillpathInstance: [],
+      ...getLocalControlInitialValues(widget.config.controls, formedViews),
       ...getInitialPaginationAndNativeQuery(widget)
     },
     shareToken: '',
@@ -132,45 +135,122 @@ export function getInitialItemInfo(widget: IWidgetFormed): IDashboardItemInfo {
 }
 
 interface IGlobalControlInitialValues {
-  [itemId: string]: Pick<IQueryConditions, 'globalFilters' | 'globalVariables'>
+  [itemId: string]: IGlobalControlConditions
 }
 
 export function getGlobalControlInitialValues(
-  controls: IGlobalControl[]
+  controls: IControl[],
+  formedViews: IFormedViews | IShareFormedViews
 ): IGlobalControlInitialValues {
   const initialValues: IGlobalControlInitialValues = {}
-  controls.forEach((control: IGlobalControl) => {
-    const { interactionType, relatedItems, relatedViews } = control
-    const defaultValue = deserializeDefaultValue(control)
+  controls.forEach((control: IControl) => {
+    const { optionWithVariable, relatedItems, relatedViews } = control
+    const defaultValue = getPreciseDefaultValue(control)
     if (defaultValue) {
       Object.entries(relatedItems).forEach(([itemId, config]) => {
-        Object.entries(relatedViews).forEach(([viewId, fields]) => {
-          if (config.checked && config.viewId === Number(viewId)) {
-            const filterValue =
-              interactionType === 'column'
-                ? getModelValue(
-                    control,
-                    fields as IControlRelatedField,
-                    defaultValue
-                  )
-                : getVariableValue(control, fields, defaultValue)
+        Object.entries(relatedViews).forEach(([viewId, relatedView]) => {
+          if (
+            config.checked &&
+            config.viewId === Number(viewId) &&
+            formedViews[viewId]
+          ) {
+            const { model, variable } = formedViews[viewId]
             if (!initialValues[itemId]) {
               initialValues[itemId] = {
                 globalFilters: [],
                 globalVariables: []
               }
             }
-            if (interactionType === 'column') {
-              initialValues[itemId].globalFilters = initialValues[
-                itemId
-              ].globalFilters.concat(filterValue)
-            } else {
+            if (optionWithVariable) {
+              const filterValue = getCustomOptionVariableParams(
+                control,
+                Number(viewId),
+                defaultValue,
+                variable
+              )
               initialValues[itemId].globalVariables = initialValues[
                 itemId
               ].globalVariables.concat(filterValue)
+            } else {
+              if (relatedView.fieldType === ControlFieldTypes.Column) {
+                const filterValue = getFilterParams(
+                  control,
+                  relatedView.fields,
+                  defaultValue,
+                  model
+                )
+                initialValues[itemId].globalFilters = initialValues[
+                  itemId
+                ].globalFilters.concat(filterValue)
+              } else {
+                const filterValue = getVariableParams(
+                  control,
+                  relatedView.fields,
+                  defaultValue,
+                  variable
+                )
+                initialValues[itemId].globalVariables = initialValues[
+                  itemId
+                ].globalVariables.concat(filterValue)
+              }
             }
           }
         })
+      })
+    }
+  })
+  return initialValues
+}
+
+export function getLocalControlInitialValues(
+  controls: IControl[],
+  formedViews: IFormedViews | IShareFormedViews
+): ILocalControlConditions {
+  const initialValues: ILocalControlConditions = {
+    tempFilters: [], // @TODO combine widget static filters with local filters
+    variables: []
+  }
+  controls.forEach((control: IControl) => {
+    const { optionWithVariable, relatedViews } = control
+    const defaultValue = getPreciseDefaultValue(control)
+    if (defaultValue) {
+      Object.entries(relatedViews).forEach(([viewId, relatedView]) => {
+        if (formedViews[viewId]) {
+          const { model, variable } = formedViews[viewId]
+          if (optionWithVariable) {
+            const filterValue = getCustomOptionVariableParams(
+              control,
+              Number(viewId),
+              defaultValue,
+              variable
+            )
+            initialValues.variables = initialValues.variables.concat(
+              filterValue
+            )
+          } else {
+            if (relatedView.fieldType === ControlFieldTypes.Column) {
+              const filterValue = getFilterParams(
+                control,
+                relatedView.fields,
+                defaultValue,
+                model
+              )
+              initialValues.tempFilters = initialValues.tempFilters.concat(
+                filterValue
+              )
+            } else {
+              const filterValue = getVariableParams(
+                control,
+                relatedView.fields,
+                defaultValue,
+                variable
+              )
+              initialValues.variables = initialValues.variables.concat(
+                filterValue
+              )
+            }
+          }
+        }
       })
     }
   })
@@ -193,13 +273,12 @@ export function getRequestParams(
     size,
     xAxis,
     tip,
+    limit,
     cache,
     expired
   } = widget.config
-  const updatedCols = cols.map((col) => widgetDimensionMigrationRecorder(col))
-  const updatedRows = rows.map((row) => widgetDimensionMigrationRecorder(row))
-  const customOrders = updatedCols
-    .concat(updatedRows)
+  const customOrders = cols
+    .concat(rows)
     .filter(({ sort }) => sort && sort.sortType === FieldSortTypes.Custom)
     .map(({ name, sort }) => ({
       name,
@@ -321,6 +400,7 @@ export function getRequestParams(
     linkageVariables,
     globalVariables,
     orders,
+    limit,
     cache,
     expired,
     flush,
@@ -369,14 +449,18 @@ export function getRequestBody(
 }
 
 export function getFormValuesRelatedItems(
-  controls: IGlobalControl[],
+  controls: IControl[],
+  currentItems: IDashboardItem[],
   formValues: object
 ): number[] {
   return Object.keys(formValues).reduce((items, key) => {
     const control = controls.find((c) => c.key === key)
     const { relatedItems } = control
     const checkedItems = Object.entries(relatedItems)
-      .filter(([itemId, config]) => config.checked)
+      .filter(
+        ([itemId, config]) =>
+          config.checked && currentItems.find((c) => c.id === Number(itemId))
+      )
       .map(([itemId]) => itemId)
     return Array.from(new Set([...items, ...checkedItems]))
   }, [])
@@ -384,9 +468,11 @@ export function getFormValuesRelatedItems(
 
 export function getCurrentControlValues(
   type: ControlPanelTypes,
-  controls: IGlobalControl[] | ILocalControl[],
+  controls: IControl[],
+  formedViews: IFormedViews | IShareFormedViews,
   allFormValues: object,
-  changedFormValues?: object
+  changedFormValues?: object,
+  currentItems?: IDashboardItem[]
 ): IGlobalControlConditionsByItem | ILocalControlConditions {
   const updatedFormValues = {
     ...allFormValues,
@@ -395,7 +481,8 @@ export function getCurrentControlValues(
 
   if (type === ControlPanelTypes.Global) {
     const changedFormValuesRelatedItems = getFormValuesRelatedItems(
-      controls as IGlobalControl[],
+      controls,
+      currentItems,
       changedFormValues || allFormValues
     )
 
@@ -403,36 +490,58 @@ export function getCurrentControlValues(
 
     changedFormValuesRelatedItems.forEach((itemId) => {
       Object.entries(updatedFormValues).forEach(([key, value]) => {
-        const control = (controls as IGlobalControl[]).find(
-          (c) => c.key === key
-        )
+        const control = controls.find((c) => c.key === key)
 
         if (control) {
-          const { interactionType, relatedViews, relatedItems } = control
+          const { optionWithVariable, relatedViews, relatedItems } = control
           const relatedItem = relatedItems[itemId]
 
-          if (relatedItem && relatedItem.checked) {
-            const fields = relatedViews[relatedItem.viewId]
+          if (
+            relatedItem &&
+            relatedItem.checked &&
+            relatedViews[relatedItem.viewId] &&
+            formedViews[relatedItem.viewId]
+          ) {
+            const relatedView = relatedViews[relatedItem.viewId]
+            const { model, variable } = formedViews[relatedItem.viewId]
             if (!conditionsByItem[itemId]) {
               conditionsByItem[itemId] = {
                 globalVariables: [],
                 globalFilters: []
               }
             }
-            if (interactionType === 'column') {
-              const controlFilters = getModelValue(
+            if (optionWithVariable) {
+              const controlVariables = getCustomOptionVariableParams(
                 control,
-                fields as IControlRelatedField,
-                value
+                relatedItem.viewId,
+                value,
+                variable
               )
-              conditionsByItem[itemId].globalFilters = conditionsByItem[
-                itemId
-              ].globalFilters.concat(controlFilters)
-            } else {
-              const controlVariables = getVariableValue(control, fields, value)
               conditionsByItem[itemId].globalVariables = conditionsByItem[
                 itemId
               ].globalVariables.concat(controlVariables)
+            } else {
+              if (relatedView.fieldType === ControlFieldTypes.Column) {
+                const controlFilters = getFilterParams(
+                  control,
+                  relatedView.fields,
+                  value,
+                  model
+                )
+                conditionsByItem[itemId].globalFilters = conditionsByItem[
+                  itemId
+                ].globalFilters.concat(controlFilters)
+              } else {
+                const controlVariables = getVariableParams(
+                  control,
+                  relatedView.fields,
+                  value,
+                  variable
+                )
+                conditionsByItem[itemId].globalVariables = conditionsByItem[
+                  itemId
+                ].globalVariables.concat(controlVariables)
+              }
             }
           }
         }
@@ -447,20 +556,43 @@ export function getCurrentControlValues(
     }
 
     Object.entries(updatedFormValues).forEach(([key, value]) => {
-      const control = (controls as ILocalControl[]).find((c) => c.key === key)
+      const control = controls.find((c) => c.key === key)
 
       if (control) {
-        const { interactionType, fields } = control
-        if (interactionType === 'column') {
-          const controlFilters = getModelValue(
-            control,
-            fields as IControlRelatedField,
-            value
-          )
-          conditions.tempFilters = conditions.tempFilters.concat(controlFilters)
-        } else {
-          const controlVariables = getVariableValue(control, fields, value)
-          conditions.variables = conditions.variables.concat(controlVariables)
+        const [viewId, relatedView] = Object.entries(control.relatedViews)[0]
+        if (formedViews[viewId]) {
+          const { model, variable } = formedViews[viewId]
+          if (control.optionWithVariable) {
+            const controlVariables = getCustomOptionVariableParams(
+              control,
+              Number(viewId),
+              value,
+              variable
+            )
+            conditions.variables = conditions.variables.concat(controlVariables)
+          } else {
+            if (relatedView.fieldType === ControlFieldTypes.Column) {
+              const controlFilters = getFilterParams(
+                control,
+                relatedView.fields,
+                value,
+                model
+              )
+              conditions.tempFilters = conditions.tempFilters.concat(
+                controlFilters
+              )
+            } else {
+              const controlVariables = getVariableParams(
+                control,
+                relatedView.fields,
+                value,
+                variable
+              )
+              conditions.variables = conditions.variables.concat(
+                controlVariables
+              )
+            }
+          }
         }
       }
     })

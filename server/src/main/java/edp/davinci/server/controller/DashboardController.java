@@ -27,6 +27,8 @@ import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.dashboard.*;
 import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.DashboardService;
 import edp.davinci.server.util.ExcelUtils;
@@ -123,7 +125,7 @@ public class DashboardController extends BaseController {
 
 
     /**
-     * 获取Dashboardportal 排除访问的团队列表
+     * 获取Dashboardportal 排除访问的角色列表
      *
      * @param id
      * @param user
@@ -378,9 +380,9 @@ public class DashboardController extends BaseController {
         }
 
         for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
-            
+
             ExcelUtils.checkSheetName("Alias", memDashboardWidgetCreate.getAlias());
-            
+
             if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -469,25 +471,38 @@ public class DashboardController extends BaseController {
      * 分享dashboard
      *
      * @param dashboardId
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share dashboard")
-    @GetMapping("/dashboards/{dashboardId}/share")
+    @ApiOperation(value = "share dashboard", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/dashboards/{dashboardId}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDashboard(@PathVariable Long dashboardId,
-                                         @RequestParam(required = false) String username,
+                                         @Valid @RequestBody ShareEntity shareEntity,
+                                         @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
 
         if (invalidId(dashboardId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid  id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = dashboardService.shareDashboard(dashboardId, username, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = dashboardService.shareDashboard(dashboardId, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
 }

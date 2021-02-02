@@ -19,6 +19,7 @@
 
 package edp.davinci.server.component.excel;
 
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.enums.NumericUnitEnum;
 import edp.davinci.server.enums.SqlColumnTypeEnum;
@@ -26,18 +27,18 @@ import edp.davinci.server.model.ExcelHeader;
 import edp.davinci.server.model.FieldCurrency;
 import edp.davinci.server.model.FieldNumeric;
 import edp.davinci.server.model.QueryColumn;
-import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.server.util.ExcelUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-
-import static edp.davinci.commons.Constants.*;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.EMPTY;
 
 /**
  * Created by IntelliJ IDEA.
@@ -77,11 +78,11 @@ public abstract class AbstractSheetWriter {
         headerStyle = context.getWorkbook().createCellStyle();
         Font font = context.getWorkbook().createFont();
         font.setFontName("黑体");
-        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setBold(true);
         headerStyle.setFont(font);
         headerStyle.setDataFormat(format.getFormat("@"));
-        headerStyle.setAlignment(CellStyle.ALIGN_CENTER);
-        headerStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
     }
 
     protected void writeHeader(SheetContext context) throws Exception {
@@ -213,7 +214,9 @@ public abstract class AbstractSheetWriter {
     }
 
     protected Boolean refreshHeightWidth(SheetContext context) {
-        context.getSheet().setDefaultRowHeight((short) (20 * 20));
+        SXSSFSheet sheet = (SXSSFSheet) context.getSheet();
+        sheet.setDefaultRowHeight((short) (20 * 20));
+        sheet.trackAllColumnsForAutoSizing();
         for (int i = 0; i < context.getQueryColumns().size(); i++) {
             context.getSheet().autoSizeColumn(i, true);
             QueryColumn queryColumn = context.getQueryColumns().get(i);

@@ -20,14 +20,16 @@
 package edp.davinci.server.controller;
 
 
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.view.ViewExecuteParam;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.dto.view.WidgetQueryParam;
 import edp.davinci.server.dto.widget.WidgetCreate;
 import edp.davinci.server.dto.widget.WidgetUpdate;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.Widget;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
 import edp.davinci.server.service.ViewService;
 import edp.davinci.server.service.WidgetService;
 import io.swagger.annotations.Api;
@@ -75,7 +77,7 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<Widget> widgets = widgetService.getWidgets(projectId, user);
+        List<WidgetWithViewName> widgets = widgetService.getWidgets(projectId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(widgets));
     }
 
@@ -196,7 +198,7 @@ public class WidgetController extends BaseController {
     @PostMapping("/{id}/{type}")
     public ResponseEntity downloadWidget(@PathVariable("id") Long id,
                                          @PathVariable("type") String type,
-                                         @Valid @RequestBody WidgetQueryParam executeParam,
+                                         @Valid @RequestBody WidgetQueryParam queryParam,
                                          @ApiIgnore BindingResult bindingResult,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
@@ -210,7 +212,7 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String filePath = widgetService.generationFile(id, executeParam, user, type);
+        String filePath = widgetService.generationFile(id, queryParam, user, type);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(filePath));
     }
 
@@ -219,28 +221,42 @@ public class WidgetController extends BaseController {
      * 分享widget
      *
      * @param id
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share widget")
-    @GetMapping("/{id}/share")
+    @ApiOperation(value = "share widget", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareWidget(@PathVariable Long id,
-                                      @RequestParam(required = false) String username,
+                                      @Valid @RequestBody ShareEntity shareEntity,
+                                      @ApiIgnore BindingResult bindingResult,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = widgetService.shareWidget(id, user, username);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = widgetService.shareWidget(id, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
     @ApiOperation(value = "show sql")
-    @GetMapping("/{id}/showSql")
+    @PostMapping("/{id}/showSql")
     public ResponseEntity showSql(@PathVariable Long id,
                                   @RequestBody(required = false) WidgetQueryParam queryParam,
                                   @ApiIgnore @CurrentUser User user,

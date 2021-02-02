@@ -113,8 +113,38 @@ const viewReducer = (
         break
       case ActionTypes.LOAD_VIEWS_SUCCESS:
         draft.views = action.payload.views
-        draft.formedViews = {}
+        draft.formedViews = Object.entries(draft.formedViews).reduce(
+          (obj, [viewId, formedView]) => {
+            const existView = action.payload.views.find(
+              (v) => v.id === Number(viewId)
+            )
+            if (existView) {
+              obj[viewId] = formedView
+            }
+            return obj
+          },
+          {}
+        )
         draft.loading.view = false
+        break
+      case ActionTypes.LOAD_VIEWS_DETAIL:
+        draft.formedViews = action.payload.viewIds.reduce((acc, id) => {
+          if (!acc[id]) {
+            acc[id] = {
+              id,
+              name: '',
+              description: '',
+              sql: '',
+              config: '',
+              sourceId: 0,
+              projectId: 0,
+              model: {},
+              variable: [],
+              roles: []
+            }
+          }
+          return acc
+        }, draft.formedViews)
         break
       case ActionTypes.LOAD_VIEWS_DETAIL_SUCCESS:
         const detailedViews = action.payload.views
@@ -227,16 +257,13 @@ const viewReducer = (
         break
       case ActionTypes.COPY_VIEW_SUCCESS:
         const fromViewId = action.payload.fromViewId
-        const copiedViewKeys: Array<keyof IViewBase> = [
-          'id',
-          'name',
-          'description'
-        ]
-        const copiedView: IViewBase = pick(
-          action.payload.result,
-          copiedViewKeys
-        )
-        copiedView.sourceName = action.payload.result.source.name
+        const { id, name, description, source } = action.payload.result
+        const copiedView: IViewBase = {
+          id,
+          name,
+          description,
+          sourceName: source.name
+        }
         draft.views.splice(
           draft.views.findIndex(({ id }) => id === fromViewId) + 1,
           0,
@@ -276,20 +303,9 @@ const viewReducer = (
         break
       case DashboardActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
       case DisplayActionTypes.LOAD_SLIDE_DETAIL_SUCCESS:
-        const updatedViews: IFormedViews = (action.payload.views || []).reduce(
-          (obj, view) => {
-            obj[view.id] = {
-              ...view,
-              model: JSON.parse(view.model || '{}'),
-              variable: JSON.parse(view.variable || '[]')
-            }
-            return obj
-          },
-          {}
-        )
         draft.formedViews = {
           ...draft.formedViews,
-          ...updatedViews
+          ...action.payload.formedViews
         }
         break
       case ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
@@ -309,4 +325,5 @@ const viewReducer = (
     }
   })
 
+export { initialState as viewInitialState }
 export default viewReducer

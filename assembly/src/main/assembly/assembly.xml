@@ -84,7 +84,7 @@
         </fileSet>
         <fileSet>
             <directory>
-                ${project.parent.basedir}/davinci-ui
+                ${project.parent.basedir}/webapp/build
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
         </fileSet>

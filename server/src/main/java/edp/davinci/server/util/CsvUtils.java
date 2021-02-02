@@ -27,17 +27,16 @@ import edp.davinci.server.enums.SqlColumnMappingEnum;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.DataUploadEntity;
 import edp.davinci.server.model.QueryColumn;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.web.multipart.MultipartFile;
 
-import static edp.davinci.commons.Constants.EMPTY;
-
 import java.io.*;
 import java.util.*;
+
+import static edp.davinci.commons.Constants.EMPTY;
 
 
 public class CsvUtils {
@@ -92,7 +91,6 @@ public class CsvUtils {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         }
 
@@ -163,7 +161,6 @@ public class CsvUtils {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ServerException(e.getMessage());
         } finally {
             flushFlushable(csvPrinter);

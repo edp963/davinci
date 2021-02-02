@@ -19,18 +19,29 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.*;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
+import edp.davinci.server.dto.dashboard.*;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.role.VizVisibility;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.dto.view.SimpleView;
+import edp.davinci.server.enums.*;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedException;
+import edp.davinci.server.service.DashboardService;
+import edp.davinci.server.service.ShareService;
+import edp.davinci.server.util.BaseLock;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -38,40 +49,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.Dashboard;
-import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.core.dao.entity.MemDashboardWidget;
-import edp.davinci.core.dao.entity.RelRoleDashboard;
-import edp.davinci.core.dao.entity.RelRoleDashboardWidget;
-import edp.davinci.core.dao.entity.Role;
-import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.ViewExtendMapper;
-import edp.davinci.server.dao.WidgetExtendMapper;
-import edp.davinci.server.dto.dashboard.DashboardCreate;
-import edp.davinci.server.dto.dashboard.DashboardDTO;
-import edp.davinci.server.dto.dashboard.DashboardWithMem;
-import edp.davinci.server.dto.dashboard.DashboardWithPortal;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetCreate;
-import edp.davinci.server.dto.dashboard.MemDashboardWidgetDTO;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.role.VizVisibility;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.enums.VizEnum;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.View;
-import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.server.service.DashboardService;
-import edp.davinci.server.service.ShareService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.COMMA;
 
 @Slf4j
 @Service("dashboardService")
@@ -86,13 +67,16 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     private MemDashboardWidgetExtendMapper memDashboardWidgetExtendMapper;
 
     @Autowired
-    private ViewExtendMapper viewMapper;
+    private ViewExtendMapper viewExtendMapper;
 
     @Autowired
-    private WidgetExtendMapper widgetMapper;
+    private WidgetExtendMapper widgetExtendMapper;
 
     @Autowired
     private ShareService shareService;
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     private static final CheckEntityEnum entity = CheckEntityEnum.DASHBOARD;
 
@@ -128,6 +112,35 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return dashboard;
     }
 
+    public Dashboard getDashboard(Long dashboardId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
+
+        Dashboard dashboard = getDashboard(dashboardId);
+        if (dashboard == null) {
+            return null;
+        }
+
+        DashboardPortal dashboardPortal = getDashboardPortal(dashboard.getDashboardPortalId(), false);
+        if (dashboardPortal == null) {
+            return null;
+        }
+
+        Long projectId = dashboardPortal.getProjectId();
+
+        ProjectPermission projectPermission = getProjectPermission(projectId, user);
+
+        List<Long> disablePortals = getDisableVizs(user.getId(), projectId, null, VizEnum.PORTAL);
+
+        boolean isDisable = isDisableVizs(projectPermission, disablePortals, dashboardPortal.getId());
+        boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+
+        if (hidden || isDisable || noPublish) {
+            throw new UnAuthorizedException();
+        }
+
+        return dashboard;
+    }
+
     /**
      * 获取dashboard列表
      *
@@ -136,7 +149,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * @return
      */
     @Override
-    public List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<Dashboard> getDashboards(Long portalId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         DashboardPortal dashboardPortal = getDashboardPortal(portalId, false);
         if (dashboardPortal == null) {
@@ -151,9 +164,9 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
         boolean isDisable = isDisableVizs(projectPermission, disablePortals, portalId);
         boolean hidden = projectPermission.getVizPermission() < UserPermissionEnum.READ.getPermission();
-        boolean noRublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
+        boolean noPublish = projectPermission.getVizPermission() < UserPermissionEnum.WRITE.getPermission() && !dashboardPortal.getPublish();
 
-		if (hidden || isDisable || noRublish) {
+		if (hidden || isDisable || noPublish) {
 			return null;
 		}
 
@@ -177,7 +190,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      * @return
      */
     @Override
-    public DashboardWithMem getDashboardMemWidgets(Long portalId, Long dashboardId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DashboardWithMem getDashboardMemWidgets(Long portalId, Long dashboardId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Dashboard dashboard = getDashboard(dashboardId);
 
@@ -210,17 +223,37 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         }
 
         Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
-        Set<View> views = new HashSet<>();
-        if (!CollectionUtils.isEmpty(widgetIds)) {
-            views = viewMapper.selectByWidgetIds(widgetIds);
+        // widget views
+        Set<SimpleView> simpleViews = CollectionUtils.isEmpty(widgetIds) ? new HashSet<>() : viewExtendMapper.selectSimpleByWidgetIds(widgetIds);
+
+        // global controller views
+        Map<String, Object> dashboardConfig = JSONUtils.toObject(dashboard.getConfig(), Map.class);
+        if (!CollectionUtils.isEmpty(dashboardConfig)) {
+            setControllerViews(simpleViews, (List<Map<String, Object>>) dashboardConfig.get("filters"));
         }
+
+        // widget controller views
+        memDashboardWidgets.forEach(mw -> {
+            Map<String, Object> widgetConfigMap = JSONUtils.toObject(widgetExtendMapper.selectByPrimaryKey(mw.getWidgetId()).getConfig(), Map.class);
+            if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                setControllerViews(simpleViews, (List<Map<String, Object>>)widgetConfigMap.get("controls"));
+            }
+        });
 
         DashboardWithMem dashboardWithMem = new DashboardWithMem();
         BeanUtils.copyProperties(dashboard, dashboardWithMem);
-        dashboardWithMem.setWidgets(memDashboardWidgets);
-        dashboardWithMem.setViews(views);
+        dashboardWithMem.setRelations(memDashboardWidgets);
+        dashboardWithMem.setViews(simpleViews);
 
         return dashboardWithMem;
+    }
+
+    private void setControllerViews(Set<SimpleView> views, List<Map<String, Object>> list) {
+        if (!CollectionUtils.isEmpty(list)) {
+            list.stream().filter(m -> m.containsKey("valueViewId")).collect(Collectors.toList()).forEach(m -> {
+                views.add(viewExtendMapper.getSimpleViewById(Long.parseLong(String.valueOf(m.get("valueViewId")))));
+            });
+        }
     }
 
     /**
@@ -232,7 +265,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Dashboard createDashboard(DashboardCreate dashboardCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         DashboardPortal dashboardPortal = getDashboardPortal(dashboardCreate.getDashboardPortalId(), true);
 
@@ -274,7 +307,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
     @Transactional
-    private void insertDashboard(Dashboard dashboard, List<Long> roleIds, User user) {
+    protected void insertDashboard(Dashboard dashboard, List<Long> roleIds, User user) {
 
     	if (dashboardExtendMapper.insertSelective(dashboard) != 1) {
         	throw new ServerException("Create dashboard fail");
@@ -311,7 +344,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public void updateDashboards(Long portalId, DashboardDTO[] dashboards, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public void updateDashboards(Long portalId, DashboardDTO[] dashboards, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
     	Long projectId = dashboardPortal.getProjectId();
@@ -340,7 +373,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         	String name = dashboardDTO.getName();
         	Long id = dashboardDTO.getId();
         	if (isDisableVizs(projectPermission, disableDashboards, id)) {
-                throw new UnAuthorizedExecption("You have not permission to update dashboard:\"" + name + "\"");
+                throw new UnAuthorizedException("You have not permission to update dashboard:\"" + name + "\"");
             }
 
             if (!dashboardDTO.getDashboardPortalId().equals(portalId)) {
@@ -381,7 +414,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
     @Transactional
-    private void updateDashboards(List<Dashboard> dashboardList,  Map<Long, List<Long>> rolesMap, User user) {
+    protected void updateDashboards(List<Dashboard> dashboardList,  Map<Long, List<Long>> rolesMap, User user) {
     	
     	if (dashboardExtendMapper.updateBatch(dashboardList) <= 0) {
         	throw new ServerException("Update dashboard fail");
@@ -445,7 +478,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     @SuppressWarnings("serial")
 	@Override
     @Transactional
-    public boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteDashboard(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(id, false);
 		if (null == dashboardWithPortal) {
@@ -490,7 +523,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
     }
     
 	private void checkWidgets(Long projectId, Set<Long> ids) {
-		List<Widget> widgets = widgetMapper.getByIds(ids);
+		List<Widget> widgets = widgetExtendMapper.getByIds(ids);
 		if (null == widgets || widgets.size() != ids.size()) {
 			throw new ServerException("Invalid widget id");
 		}
@@ -557,7 +590,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<MemDashboardWidget> createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
         if (!dashboardWithPortal.getDashboardPortalId().equals(portalId)) {
@@ -617,7 +650,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 	@Override
 	@Transactional
 	public boolean updateMemDashboardWidgets(Long portalId, User user, MemDashboardWidgetDTO[] memDashboardWidgets)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(portalId, true);
 		Long projectId = dashboardPortal.getProjectId();
@@ -631,7 +664,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 		List<MemDashboardWidgetDTO> dtoList = Arrays.asList(memDashboardWidgets);
 		Set<Long> dashboardIds = dashboardExtendMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getDashboardId).collect(Collectors.toSet()));
-		Set<Long> widgetIds = widgetMapper
+		Set<Long> widgetIds = widgetExtendMapper
 				.getIdSetByIds(dtoList.stream().map(MemDashboardWidgetDTO::getWidgetId).collect(Collectors.toSet()));
 		String before = dtoList.toString();
 		List<MemDashboardWidget> memDashboardWidgetList = new ArrayList<>(dtoList.size());
@@ -682,7 +715,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
      */
     @Override
     @Transactional
-    public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteMemDashboardWidget(Long relationId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         
     	MemDashboardWidget dashboardWidget = memDashboardWidgetExtendMapper.selectByPrimaryKey(relationId);
         
@@ -720,17 +753,21 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
         return true;
     }
 
-	/**
-	 * 分享dashboard
-	 *
-	 * @param dashboardId
-	 * @param username
-	 * @param user
-	 * @return
-	 */
+    /**
+     *
+     * 分享dashboard
+     *
+     * @param dashboardId
+     * @param user
+     * @param shareEntity
+     * @return
+     * @throws NotFoundException
+     * @throws UnAuthorizedException
+     * @throws ServerException
+     */
 	@Override
-	public String shareDashboard(Long dashboardId, String username, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+	public ShareResult shareDashboard(Long dashboardId, User user, ShareEntity shareEntity)
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardWithPortal dashboardWithPortal = getDashboardWithPortal(dashboardId, true);
 		if (dashboardWithPortal.getType() == 0) {
@@ -746,15 +783,25 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 			alertUnAuthorized(entity, user, "share");
 		}
 
-		return shareService.generateShareToken(dashboardId, username, user.getId());
+        shareService.formatShareParam(projectId, shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.DASHBOARD)
+                .withShareEntity(shareEntity)
+                .withEntityId(dashboardId)
+                .withSharerId(user.getId())
+                .withExpired(shareEntity.getExpired())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
 	}
 
     @Override
     @Transactional
     public void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException {
-        relRoleDashboardWidgetExtendMapper.deleteByProjectId(projectId);
+        relRoleDashboardWidgetExtendMapper.deleteByProject(projectId);
         memDashboardWidgetExtendMapper.deleteByProject(projectId);
-        relRoleDashboardExtendMapper.deleteByProjectId(projectId);
+        relRoleDashboardExtendMapper.deleteByProject(projectId);
         dashboardExtendMapper.deleteByProject(projectId);
         relRolePortalExtendMapper.deleteByProject(projectId);
         dashboardPortalExtendMapper.deleteByProject(projectId);
@@ -767,7 +814,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     @Transactional
-    public boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException {
         
     	DashboardWithPortal dashboard = getDashboardWithPortal(vizVisibility.getId(), true);
 
@@ -795,7 +842,7 @@ public class DashboardServiceImpl extends VizCommonService implements DashboardS
 
     @Override
     public boolean updateMemDashboardWidgetAlias(Long relationId, String alias, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
         MemDashboardWidget dashboardWidget = memDashboardWidgetExtendMapper.selectByPrimaryKey(relationId);
 
         if (null == dashboardWidget) {

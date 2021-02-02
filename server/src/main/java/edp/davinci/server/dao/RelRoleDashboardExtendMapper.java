@@ -27,10 +27,12 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
+@Component
 public interface RelRoleDashboardExtendMapper extends RelRoleDashboardMapper {
 
 	@Insert({
@@ -130,5 +132,12 @@ public interface RelRoleDashboardExtendMapper extends RelRoleDashboardMapper {
             "select d.id from dashboard d left join dashboard_portal p on p.id = d.dashboard_portal_id ",
             "where p.project_id = #{projectId})"
     })
-    int deleteByProjectId(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({
+		"delete from rel_role_dashboard where role_id = #{roleId} and dashboard_id in (",
+		"select d.id from dashboard d left join dashboard_portal p on p.id = d.dashboard_portal_id ",
+		"where p.project_id = #{projectId})"
+    })
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }

@@ -18,17 +18,37 @@
  * >>
  */
 
-import { call, put, all, takeLatest } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
-import { LOGIN } from './constants'
-import { logged, logonFail } from './actions'
+import { ActionTypes } from './constants'
+import { AppActions, AppActionType } from './actions'
 
-import request from 'utils/request'
+import request, { IDavinciResponse, setTokenExpired } from 'utils/request'
 import { errorHandler } from 'utils/util'
+import { IServerConfigurations } from 'app/containers/App/types'
 import api from 'utils/api'
 
-export function* login (action) {
-  const { username, password, shareToken, resolve } = action.payload
+export function* getExternalAuthProviders() {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: api.externalAuthProviders
+    })
+    const providers = asyncData.payload
+    yield put(AppActions.gotExternalAuthProviders(providers))
+    return providers
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+
+export function* login(action: AppActionType) {
+  if (action.type !== ActionTypes.LOGIN) {
+    return
+  }
+  const { username, password, shareToken, resolve, reject } = action.payload
+  const { logged, loginFail } = AppActions
   try {
     const userInfo = yield call(request, {
       method: 'post',
@@ -39,15 +59,92 @@ export function* login (action) {
       }
     })
     yield put(logged(userInfo.payload))
-    resolve()
+    localStorage.setItem('loginUser', JSON.stringify(userInfo.payload))
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
-    yield put(logonFail(err))
+    if (reject) {
+      return reject()
+    }
+    yield put(loginFail(err))
     errorHandler(err)
   }
 }
 
-export default function* rootAppSaga () {
+export function* interceptor(action: AppActionType) {
+  if (action.type !== ActionTypes.INTERCEPTOR_PREFLIGHT) {
+    return
+  }
+  const { token } = action.payload
+  const { interceptored, interceptorFail } = AppActions
+  try {
+    const check = yield call(request, {
+      method: 'get',
+      url: `${api.share}/preflight/${token}`
+    })
+    const { type, vizType } = check.payload
+
+    yield put(interceptored(type, vizType))
+  } catch (error) {
+    yield put(interceptorFail())
+    errorHandler(error)
+  }
+}
+
+export function* getPermissions(action: AppActionType) {
+  if (action.type !== ActionTypes.GET_PERMISSIONS) {
+    return
+  }
+  const { token, password, resolve, reject } = action.payload
+  const { getPermissionsSuccess, getPermissionsFail } = AppActions
+  try {
+    const check = yield call(request, {
+      method: 'get',
+      url: `${api.share}/permissions/${token}`,
+      params: { password }
+    })
+    yield put(getPermissionsSuccess(check?.payload?.download))
+    if (resolve) {
+      resolve()
+    }
+  } catch (error) {
+    if (reject) {
+      return reject()
+    }
+    yield put(getPermissionsFail())
+    errorHandler(error)
+  }
+}
+
+export function* getServerConfigurations(action: AppActionType) {
+  if (action.type !== ActionTypes.GET_SERVER_CONFIGURATIONS) {
+    return
+  }
+  const { serverConfigurationsGetted, getServerConfigurationsFail } = AppActions
+  try {
+    const result: IDavinciResponse<IServerConfigurations> = yield call(
+      request,
+      {
+        method: 'get',
+        url: api.configurations
+      }
+    )
+    const configurations = result.payload
+    setTokenExpired(configurations.jwtToken.timeout)
+    yield put(serverConfigurationsGetted(configurations))
+  } catch (err) {
+    yield put(getServerConfigurationsFail(err))
+    errorHandler(err)
+  }
+}
+
+export default function* rootAppSaga() {
   yield all([
-    takeLatest(LOGIN, login)
+    takeLatest(ActionTypes.GET_EXTERNAL_AUTH_PROVIDERS, getExternalAuthProviders),
+    takeLatest(ActionTypes.LOGIN, login),
+    takeEvery(ActionTypes.INTERCEPTOR_PREFLIGHT, interceptor),
+    takeEvery(ActionTypes.GET_PERMISSIONS, getPermissions),
+    takeLatest(ActionTypes.GET_SERVER_CONFIGURATIONS, getServerConfigurations)
   ])
 }

@@ -30,7 +30,7 @@ import edp.davinci.data.pojo.DatabaseType;
 import edp.davinci.data.util.CustomDatabaseUtils;
 
 import static edp.davinci.data.commons.Constants.DATABASE_DEFAULT_VERSION;
-import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATER;
+import static edp.davinci.data.commons.Constants.JDBC_URL_PREFIX_FORMATTER;
 import static edp.davinci.data.commons.Constants.ORACLE_JDBC_URL_PREFIX;
 
 import java.util.*;
@@ -64,7 +64,7 @@ public class LoadSupportDatabaseRunner implements ApplicationRunner {
 
         supportDatabaseList.forEach(s -> supportDatabaseMap.put(
                 s.getName(),
-                s.getName().equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_URL_PREFIX : String.format(JDBC_URL_PREFIX_FORMATER, s.getName())
+                s.getName().equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? ORACLE_JDBC_URL_PREFIX : String.format(JDBC_URL_PREFIX_FORMATTER, s.getName())
         ));
 
         supportDatabaseList.sort(Comparator.comparing(DatabaseType::getName));

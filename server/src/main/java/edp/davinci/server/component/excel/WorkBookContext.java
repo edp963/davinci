@@ -50,9 +50,4 @@ public class WorkBookContext implements Serializable {
     private String taskKey;
 
     private Logger customLogger;
-
-    /**
-     * 0.4 member variables
-     */
-    private String queryModel;
 }

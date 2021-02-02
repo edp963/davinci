@@ -1,4 +1,4 @@
-import { SettingTypes, ItemTypes, ISettingItem } from './type'
+import { SettingTypes, ItemTypes, ISettingItem } from './types'
 
 const Filters: ISettingItem = {
   key: 'filters',

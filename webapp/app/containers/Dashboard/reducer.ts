@@ -42,6 +42,8 @@ const initialState: IDashboardState = {
   currentDashboardLoading: false,
   currentDashboardShareToken: '',
   currentDashboardAuthorizedShareToken: '',
+  currentDashboardPasswordShareToken: '',
+  currentDashboardPasswordSharePassword: '',
   currentDashboardShareLoading: false,
   sharePanel: defaultSharePanelState,
   currentItems: null,
@@ -77,18 +79,20 @@ const dashboardReducer = (
         break
 
       case ActionTypes.LOAD_DASHBOARD_DETAIL_SUCCESS:
-        const { dashboard, widgets, items } = action.payload
+        const { dashboard, widgets, formedViews, items } = action.payload
         const globalControlsInitialValue = getGlobalControlInitialValues(
-          dashboard.config.filters
+          dashboard.config.filters,
+          formedViews
         )
         draft.currentDashboardLoading = false
         draft.currentDashboard = dashboard
         draft.currentDashboardShareToken = ''
+        draft.currentDashboardPasswordShareToken = ''
         draft.currentDashboardAuthorizedShareToken = ''
         draft.currentItems = items
         draft.currentItemsInfo = items.reduce((info, item) => {
           const relatedWidget = widgets.find((w) => w.id === item.widgetId)
-          const initialItemInfo = getInitialItemInfo(relatedWidget)
+          const initialItemInfo = getInitialItemInfo(relatedWidget, formedViews)
           const drillpathSetting =
             item.config && item.config.length ? JSON.parse(item.config) : void 0
 
@@ -122,7 +126,10 @@ const dashboardReducer = (
           const relatedWidget = action.payload.widgets.find(
             (w) => w.id === item.widgetId
           )
-          draft.currentItemsInfo[item.id] = getInitialItemInfo(relatedWidget)
+          draft.currentItemsInfo[item.id] = getInitialItemInfo(
+            relatedWidget,
+            action.payload.formedViews
+          )
         })
         break
 
@@ -271,7 +278,7 @@ const dashboardReducer = (
 
       case ActionTypes.LOAD_DASHBOARD_SHARE_LINK:
         draft.currentDashboardShareLoading = true
-        if (action.payload.authUser) {
+        if (action.payload.params.mode === 'AUTH') {
           draft.currentDashboardAuthorizedShareToken = ''
         }
         break
@@ -287,15 +294,22 @@ const dashboardReducer = (
         draft.currentDashboardShareLoading = false
         break
 
+      case ActionTypes.LOAD_DASHBOARD_PASSWORD_SHARE_LINK_SUCCESS:
+        draft.currentDashboardPasswordShareToken = action.payload.passwordShareToken
+        draft.currentDashboardPasswordSharePassword = action.payload.password
+        draft.currentDashboardShareLoading = false
+        break
+
       case ActionTypes.LOAD_DASHBOARD_SHARE_LINK_FAILURE:
         draft.currentDashboardShareLoading = false
         break
 
       case ActionTypes.LOAD_WIDGET_SHARE_LINK:
-        draft.currentItemsInfo[action.payload.itemId].shareLoading = true
-        if (action.payload.authUser) {
-          draft.currentItemsInfo[action.payload.itemId].authorizedShareToken =
-            ''
+        draft.currentItemsInfo[action.payload.params.itemId].shareLoading = true
+        if (action.payload.params.mode === 'AUTH') {
+          draft.currentItemsInfo[
+            action.payload.params.itemId
+          ].authorizedShareToken = ''
         }
         break
 
@@ -307,7 +321,15 @@ const dashboardReducer = (
 
       case ActionTypes.LOAD_WIDGET_AUTHORIZED_SHARE_LINK_SUCCESS:
         targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
-        targetItemInfo.authorizedShareToken = action.payload.shareToken
+        targetItemInfo.authorizedShareToken =
+          action.payload.authorizedShareToken
+        targetItemInfo.shareLoading = false
+        break
+
+      case ActionTypes.LOAD_WIDGET_PASSWORD_SHARE_LINK_SUCCESS:
+        targetItemInfo = draft.currentItemsInfo[action.payload.itemId]
+        targetItemInfo.passwordShareToken = action.payload.passwordShareToken
+        targetItemInfo.password = action.payload.password
         targetItemInfo.shareLoading = false
         break
 

@@ -60,21 +60,18 @@ const makeSelectLayersBySlide = () =>
   )
 
 const makeSelectLayerIdsBySlide = () =>
-  createSelector(
-    makeSelectLayersBySlide(),
-    (layers) => (!layers ? [] : Object.keys(layers).map((id) => +id))
+  createSelector(makeSelectLayersBySlide(), (layers) =>
+    !layers ? [] : Object.keys(layers).map((id) => +id)
   )
 
 const makeSelectCurrentLayerList = () =>
-  createSelector(
-    selectCurrentLayers,
-    (currentLayers) =>
-      Object.values(currentLayers).sort((l1, l2) => l2.index - l1.index)
+  createSelector(selectCurrentLayers, (currentLayers) =>
+    Object.values(currentLayers).sort((l1, l2) => l2.index - l1.index)
   )
+
 const makeSelectCurrentLayerIds = () =>
-  createSelector(
-    selectCurrentLayers,
-    (currentLayers) => Object.keys(currentLayers).map((id) => +id)
+  createSelector(selectCurrentLayers, (currentLayers) =>
+    Object.keys(currentLayers).map((id) => +id)
   )
 
 const makeSelectSlideLayerContextValue = () =>
@@ -98,19 +95,18 @@ const makeSelectSlideLayerContextValue = () =>
         layerInfo: slideLayersInfo[slideId][layerId]
       }
       if (editing) {
-        layerContextValue.operationInfo = slideLayersOperationInfo[slideId][layerId]
+        layerContextValue.operationInfo =
+          slideLayersOperationInfo[slideId][layerId]
       }
       return layerContextValue
     }
   )
 
 const makeSelectCurrentLayersMaxIndex = () =>
-  createSelector(
-    makeSelectCurrentLayerList(),
-    (currentLayerList) =>
-      currentLayerList.length
-        ? currentLayerList[currentLayerList.length - 1].index
-        : 0
+  createSelector(makeSelectCurrentLayerList(), (currentLayerList) =>
+    currentLayerList.length
+      ? currentLayerList[currentLayerList.length - 1].index
+      : 0
   )
 
 const makeSelectCurrentSelectedLayerList = () =>
@@ -122,6 +118,16 @@ const makeSelectCurrentSelectedLayerList = () =>
         ({ id }) => currentLayersOperationInfo[id].selected
       )
   )
+
+const makeSelectCurrentEditLayerOperationInfo = () =>
+  createSelector(
+    makeSelectCurrentLayersOperationInfo(),
+    (currentEditOperationInfo) =>
+      Object.values(currentEditOperationInfo).filter(
+        (layerInfo) => layerInfo.editing
+      )
+  )
+
 const makeSelectCurrentSelectedLayerIds = () =>
   createSelector(
     makeSelectCurrentLayersOperationInfo(),
@@ -163,10 +169,9 @@ const makeSelectCurrentOtherLayerList = () =>
     }
   )
 
-const makeSelectCurrentOperateItemParams = () => (state: { display: IDisplayState }) =>
-state.display
-  ? state.display.operateItemParams
-  : []
+const makeSelectCurrentOperateItemParams = () => (state: {
+  display: IDisplayState
+}) => (state.display ? state.display.operateItemParams : [])
 
 const makeSelectCurrentDisplayWidgets = () =>
   createSelector(
@@ -175,15 +180,23 @@ const makeSelectCurrentDisplayWidgets = () =>
   )
 
 const makeSelectClipboardLayers = () =>
-  createSelector(
-    selectDisplay,
-    (displayState) => displayState.clipboardLayers
-  )
+  createSelector(selectDisplay, (displayState) => displayState.clipboardLayers)
 
 const makeSelectCurrentDisplayShareToken = () =>
   createSelector(
     selectDisplay,
     (displayState) => displayState.currentDisplayShareToken
+  )
+
+const makeSelectCurrentDisplayPasswordShareToken = () =>
+  createSelector(
+    selectDisplay,
+    (dashboardState) => dashboardState.currentDisplayPasswordShareToken
+  )
+const makeSelectCurrentDisplayPasswordSharePassword = () =>
+  createSelector(
+    selectDisplay,
+    (dashboardState) => dashboardState.currentDisplayPasswordPassword
   )
 
 const makeSelectCurrentDisplayAuthorizedShareToken = () =>
@@ -193,22 +206,13 @@ const makeSelectCurrentDisplayAuthorizedShareToken = () =>
   )
 
 const makeSelectSharePanel = () =>
-  createSelector(
-    selectDisplay,
-    (displayState) => displayState.sharePanel
-  )
+  createSelector(selectDisplay, (displayState) => displayState.sharePanel)
 
 const makeSelectDisplayLoading = () =>
-  createSelector(
-    selectDisplay,
-    (displayState) => displayState.loading
-  )
+  createSelector(selectDisplay, (displayState) => displayState.loading)
 
 const makeSelectEditorBaselines = () =>
-  createSelector(
-    selectDisplay,
-    (displayState) => displayState.editorBaselines
-  )
+  createSelector(selectDisplay, (displayState) => displayState.editorBaselines)
 
 export {
   selectDisplay,
@@ -222,6 +226,7 @@ export {
   makeSelectCurrentLayersMaxIndex,
   makeSelectCurrentLayersOperationInfo,
   makeSelectCurrentSelectedLayerList,
+  makeSelectCurrentEditLayerOperationInfo,
   makeSelectCurrentSelectedLayerIds,
   //
   makeSelectCurrentOperatingLayerList,
@@ -234,5 +239,8 @@ export {
   makeSelectCurrentDisplayAuthorizedShareToken,
   makeSelectSharePanel,
   makeSelectDisplayLoading,
-  makeSelectEditorBaselines
+  makeSelectEditorBaselines,
+  makeSelectCurrentDisplayPasswordShareToken,
+  makeSelectCurrentDisplayPasswordSharePassword,
+  selectCurrentLayers
 }

@@ -21,16 +21,8 @@ package edp.davinci.server.dao;
 
 import edp.davinci.core.dao.ViewMapper;
 import edp.davinci.core.dao.entity.View;
-import edp.davinci.server.dto.view.ViewBaseInfo;
-import edp.davinci.server.dto.view.ViewWithProjectAndSource;
-import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.dto.view.ViewWithSourceBaseInfo;
-
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import edp.davinci.server.dto.view.*;
+import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -155,7 +147,7 @@ public interface ViewExtendMapper extends ViewMapper {
     int insertBatch(@Param("list") List<View> sourceList);
 
     @Delete({"delete from `view` where project_id = #{projectId}"})
-    int deleteByPorject(@Param("projectId") Long projectId);
+    int deleteByProject (@Param("projectId") Long projectId);
 
     @Select({
             "select ",
@@ -192,4 +184,27 @@ public interface ViewExtendMapper extends ViewMapper {
     	"</script>"
     })
     Set<View> selectByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
+
+	@Select({"select id, name, model, variable from `view` where id = #{id}"})
+	SimpleView getSimpleViewById(Long id);
+
+	@Select({
+		"<script>",
+		"	select id, name, model, variable from `view` where id in" +
+				"		(" +
+				"		select view_id from widget where" +
+				"		<if test='widgetIds != null and widgetIds.size > 0'>" +
+				"			id in" +
+				"			<foreach collection='widgetIds' index='index' item='item'" +
+				"				open='(' close=')' separator=','>" +
+				"				#{item}" +
+				"			</foreach>" +
+				"		</if>" +
+				"		<if test='widgetIds == null or widgetIds.size == 0'>" +
+				"			1=0" +
+				"		</if>" +
+				"		);",
+		"</script>"
+	})
+	Set<SimpleView> selectSimpleByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
 }

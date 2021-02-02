@@ -157,7 +157,13 @@ export interface IViewInfo {
 }
 
 export interface IFormedViews {
-  [viewId: number]: IFormedView
+  [viewId: string]: IFormedView
+}
+
+export interface IShareFormedViews {
+  [viewId: string]: Pick<IFormedView, 'name' | 'model' | 'variable'> & {
+    dataToken: string
+  }
 }
 
 export type IDacChannel = string

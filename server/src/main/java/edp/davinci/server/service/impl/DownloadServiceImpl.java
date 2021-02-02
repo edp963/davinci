@@ -22,7 +22,7 @@ package edp.davinci.server.service.impl;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.DownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
@@ -31,12 +31,14 @@ import edp.davinci.server.dao.UserExtendMapper;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.DownloadService;
+import edp.davinci.server.enums.LogNameEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -54,14 +56,13 @@ import java.util.List;
 @Slf4j
 public class DownloadServiceImpl extends DownloadCommonService implements DownloadService {
 
+    private static final Logger downloadLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_DOWNLOAD.getName());
+
     @Autowired
     private DownloadRecordExtendMapper downloadRecordExtendMapper;
 
     @Autowired
     private UserExtendMapper userMapper;
-
-    @Value("${source.query-model:0.3}")
-    private String queryModel;
 
     @Override
     public List<DownloadRecord> queryDownloadRecordPage(Long userId) {
@@ -69,25 +70,25 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
     }
 
     @Override
-    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedExecption {
+    public DownloadRecord downloadById(Long id, String token) throws UnAuthorizedException {
         if (StringUtils.isEmpty(token)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         String username = tokenUtils.getUsername(token);
         if (StringUtils.isEmpty(username)) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         User user = userMapper.selectByUsername(username);
         if (null == user) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         DownloadRecord record = downloadRecordExtendMapper.selectByPrimaryKey(id);
 
         if (!record.getUserId().equals(user.getId())) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException();
         }
 
         record.setLastDownloadTime(new Date());
@@ -98,9 +99,7 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
 
     @Override
     public Boolean submit(DownloadType type, Long id, User user, List<DownloadViewExecuteParam> params) {
-        
         try {
-        
             List<WidgetContext> widgetList = getWidgetContexts(type, id, user, params);
             DownloadRecord record = new DownloadRecord();
             record.setName(getDownloadFileName(type, id));
@@ -116,14 +115,13 @@ public class DownloadServiceImpl extends DownloadCommonService implements Downlo
                     .user(user)
                     .resultLimit(resultLimit)
                     .taskKey("DownloadTask_" + id)
-                    .queryModel("0.4")
+                    .customLogger(downloadLogger)
                     .build();
 
-            ExecutorUtil.submitWorkbookTask(workBookContext, null);
-
+            ExecutorUtils.submitWorkbookTask(workBookContext, downloadLogger);
             log.info("Download task submit:{}", wrapper);
         } catch (Exception e) {
-            log.error("Submit download task error, e=", e);
+            log.error("Submit download task error", e);
             return false;
         }
         return true;

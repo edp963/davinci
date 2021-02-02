@@ -19,51 +19,33 @@
 
 package edp.davinci.server.controller;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.core.dao.entity.Source;
-import edp.davinci.server.annotation.CurrentUser;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.dto.source.DbBaseInfo;
-import edp.davinci.server.dto.source.SourceCatalogInfo;
-import edp.davinci.server.dto.source.SourceCreate;
-import edp.davinci.server.dto.source.SourceDBInfo;
-import edp.davinci.server.dto.source.SourceDataUpload;
-import edp.davinci.server.dto.source.SourceInfo;
-import edp.davinci.server.dto.source.SourceTableInfo;
-import edp.davinci.server.dto.source.UploadMeta;
-import edp.davinci.server.model.DBTables;
-import edp.davinci.server.model.TableInfo;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.data.pojo.DatabaseType;
 import edp.davinci.data.pojo.SourceConfig;
+import edp.davinci.server.annotation.CurrentUser;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.dto.source.*;
+import edp.davinci.server.model.DBTables;
+import edp.davinci.server.model.TableInfo;
 import edp.davinci.server.service.SourceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/sources", tags = "sources", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "sources not found"))
@@ -197,7 +179,7 @@ public class SourceController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        sourceService.deleteSrouce(id, user);
+        sourceService.deleteSource(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -334,7 +316,7 @@ public class SourceController extends BaseController {
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -358,7 +340,7 @@ public class SourceController extends BaseController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -386,7 +368,7 @@ public class SourceController extends BaseController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid source id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

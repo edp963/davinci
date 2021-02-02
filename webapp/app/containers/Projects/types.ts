@@ -17,7 +17,7 @@
  * limitations under the License.
  * >>
  */
-import {IOrganization} from '../Organizations/types'
+import { IOrganization } from '../Organizations/types'
 
 export interface IProjectPermission {
   downloadPermission: boolean
@@ -30,7 +30,7 @@ export interface IProjectPermission {
 }
 
 export interface IProject {
-  createBy?: { avatar?: string, id?: number, username?: string, email: string}
+  createBy?: { avatar?: string; id?: number; username?: string; email: string }
   permission?: IProjectPermission
   initialOrgId?: number
   userId: number
@@ -50,11 +50,12 @@ export interface IProject {
 export interface IStarUser {
   avatar: string
   id: number
+  email?: string
   starTime: string
   username: string
 }
 
-interface IProjectRole {
+export interface IProjectRole {
   id: number
   name: string
   description: string
@@ -75,7 +76,6 @@ export interface IProjectState {
   projectRoles: IProjectRole[]
 }
 
-
 export interface IProjectFormFieldProps {
   id?: number
   orgId_hc?: string
@@ -93,19 +93,28 @@ export interface IProjectsFormProps {
   onModalOk?: () => any
   modalLoading: boolean
   currentPro: Partial<IProject>
-  onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onCheckUniqueName?: (
+    pathname: any,
+    data: any,
+    resolve: () => any,
+    reject: (error: string) => any
+  ) => any
 }
 
 export interface IEnhanceButtonProps {
   type?: string
 }
 
-
 export interface IProjectsProps {
   projects: IProject[]
   collectProjects: IProject[]
   loginUser: any
-  searchProject?: {list: any[], total: number, pageNum: number, pageSize: number}
+  searchProject?: {
+    list: any[]
+    total: number
+    pageNum: number
+    pageSize: number
+  }
   organizations: IOrganization[]
   starUserList: IStarUser[]
   onTransferProject: (id: number, orgId: number) => any
@@ -114,13 +123,26 @@ export interface IProjectsProps {
   onAddProject: (project: any, resolve: () => any) => any
   onLoadOrganizations: () => any
   onLoadCollectProjects: () => any
-  onClickCollectProjects: (isFavorite: boolean, proId: number, resolve: (id: number) => any) => any
+  onClickCollectProjects: (
+    isFavorite: boolean,
+    proId: number,
+    resolve: (id: number) => any
+  ) => any
   onDeleteProject: (id: number, resolve?: any) => any
   onLoadProjectDetail: (id: number) => any
-  onStarProject: (id: number, resolve: () => any) => any,
-  onGetProjectStarUser: (id: number) => any,
-  onSearchProject: (param: {keywords: string, pageNum: number, pageSize: number }) => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onStarProject: (id: number, resolve: () => any) => any
+  onGetProjectStarUser: (id: number) => any
+  onSearchProject: (param: {
+    keywords: string
+    pageNum: number
+    pageSize: number
+  }) => any
+  onCheckUniqueName: (
+    pathname: any,
+    data: any,
+    resolve: () => any,
+    reject: (error: string) => any
+  ) => any
 }
 
 export enum projectType {
@@ -166,7 +188,7 @@ export interface ItemToolbarProps {
 }
 
 export interface ITagProps {
-  type:  Array<'create'|'favorite'|'join'>
+  type: Array<'create' | 'favorite' | 'join'>
 }
 
 export enum eTag {
@@ -187,7 +209,11 @@ export interface ItemProps {
   favoritePro?: IFavoritePro
 }
 
-export type IShowProForm = (formType: string, project: Partial<IProject>, e: React.MouseEvent<HTMLElement>) => void
+export type IShowProForm = (
+  formType: string,
+  project: Partial<IProject>,
+  e: React.MouseEvent<HTMLElement>
+) => void
 export interface IContentProps {
   userId: number
   pType: string

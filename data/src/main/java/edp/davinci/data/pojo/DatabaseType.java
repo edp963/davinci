@@ -33,7 +33,7 @@ public class DatabaseType {
 
     public DatabaseType(String name, List<String> versions) {
         this.name = name;
-        this.prefix = name.equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? Constants.ORACLE_JDBC_URL_PREFIX : String.format(Constants.JDBC_URL_PREFIX_FORMATER, name);
+        this.prefix = name.equalsIgnoreCase(DatabaseTypeEnum.ORACLE.getFeature()) ? Constants.ORACLE_JDBC_URL_PREFIX : String.format(Constants.JDBC_URL_PREFIX_FORMATTER, name);
         this.versions = versions;
     }
 }

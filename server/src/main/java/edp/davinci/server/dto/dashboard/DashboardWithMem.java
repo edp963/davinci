@@ -19,19 +19,18 @@
 
 package edp.davinci.server.dto.dashboard;
 
+import edp.davinci.core.dao.entity.Dashboard;
+import edp.davinci.core.dao.entity.MemDashboardWidget;
+import edp.davinci.server.dto.view.SimpleView;
 import lombok.Data;
 import lombok.ToString;
 
 import java.util.List;
 import java.util.Set;
 
-import edp.davinci.core.dao.entity.Dashboard;
-import edp.davinci.core.dao.entity.MemDashboardWidget;
-import edp.davinci.core.dao.entity.View;
-
 @Data
 @ToString(callSuper = true)
 public class DashboardWithMem extends Dashboard {
-    List<MemDashboardWidget> widgets;
-    Set<View> views;
+    List<MemDashboardWidget> relations;
+    Set<SimpleView> views;
 }

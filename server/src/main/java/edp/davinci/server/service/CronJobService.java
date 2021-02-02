@@ -25,7 +25,7 @@ import edp.davinci.server.dto.cronjob.CronJobInfo;
 import edp.davinci.server.dto.cronjob.CronJobUpdate;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.core.dao.entity.User;
 
 import java.util.List;
@@ -33,19 +33,19 @@ import java.util.List;
 public interface CronJobService extends CheckEntityService {
     List<CronJob> getCronJobs(Long projectId, User user);
 
-    CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    CronJob getCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    CronJobInfo createCronJob(CronJobBaseInfo cronJobBaseInfo, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean updateCronJob(CronJobUpdate cronJobUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean updateCronJob(CronJobUpdate cronJobUpdate, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean deleteCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    CronJob startCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    CronJob stopCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 
-    void startAllJobs();
+    void restartAllJobs();
 
-    boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    boolean executeCronJob(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException;
 }

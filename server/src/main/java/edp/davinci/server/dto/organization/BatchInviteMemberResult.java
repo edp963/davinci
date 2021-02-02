@@ -33,6 +33,6 @@ public class BatchInviteMemberResult {
     private int status;
 
     private Set<UserBaseInfo> successes;
-    private Set<Long> notUsers;
+    private Set<String> notUsers;
     private Set<UserBaseInfo> exists;
 }

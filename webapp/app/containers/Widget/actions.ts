@@ -46,7 +46,7 @@ export const WidgetActions = {
     }
   },
 
-  addWidget(widget: IWidgetRaw, resolve) {
+  addWidget(widget: Omit<IWidgetRaw, 'id'>, resolve) {
     return {
       type: ActionTypes.ADD_WIDGET,
       payload: {

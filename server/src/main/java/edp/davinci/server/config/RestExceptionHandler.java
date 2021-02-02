@@ -21,10 +21,10 @@ package edp.davinci.server.config;
 
 import edp.davinci.server.controller.ResultMap;
 import edp.davinci.server.enums.HttpCodeEnum;
-import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.util.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap commonExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
 
@@ -53,23 +53,23 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap serverExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = ForbiddenExecption.class)
+    @ExceptionHandler(value = ForbiddenException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
     private ResultMap forbiddenExceptionHandler(HttpServletRequest request, Exception e) {
-        log.error(e.getMessage());
+        log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
     }
 
-    @ExceptionHandler(value = UnAuthorizedExecption.class)
+    @ExceptionHandler(value = UnAuthorizedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     private ResultMap unAuthorizedExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
     }
 
@@ -77,7 +77,7 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message(e.getMessage());
     }
 
@@ -85,7 +85,7 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap methodArgumentNotValidExceptionHandler(HttpServletRequest request, Exception e) {
-    	log.error(e.getMessage(), e);
+    	log.error(e.toString(), e);
         return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FAIL).message(e.getMessage());
     }
 

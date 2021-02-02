@@ -19,23 +19,42 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATER;
-import static edp.davinci.commons.Constants.*;
-
 import com.alibaba.druid.sql.SQLUtils;
-
+import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.data.enums.DatabaseTypeEnum;
 import edp.davinci.data.pojo.CustomDatabase;
+import edp.davinci.data.pojo.SourceProperty;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
+
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.data.commons.Constants.JDBC_COUNT_SQL_FORMATTER;
+
+@Component
 public class SqlUtils {
 
+    private static String sqlTempDelimiter;
+
+    @Value("${sql-template-delimiter:$}")
+    public void setSqlTempDelimiter(String delimiter) {
+        this.sqlTempDelimiter = delimiter;
+    }
+
     public static String formatSql(String sql) {
-    	return SQLUtils.formatMySql(sql);
+        try {
+            return SQLUtils.formatMySql(sql);
+        } catch (Exception e) {
+            // ignore
+        }
+        return sql;
     }
     
     public static String getCountSql(String sql) {
-    	return String.format(JDBC_COUNT_SQL_FORMATER, sql);
+    	return String.format(JDBC_COUNT_SQL_FORMATTER, sql);
     }
 
     public static String getKeywordPrefix(String jdbcUrl, String dbVersion) {
@@ -92,5 +111,20 @@ public class SqlUtils {
             }
         }
         return StringUtils.isEmpty(aliasSuffix) ? EMPTY : aliasSuffix;
+    }
+
+    public static String getSqlTempDelimiter(List<SourceProperty> properties) {
+
+        if (CollectionUtils.isEmpty(properties)) {
+            return sqlTempDelimiter;
+        }
+
+        Optional<SourceProperty> optional = properties.stream().filter(d -> d.getKey().equalsIgnoreCase("davinci.sql-template" +
+                "-delimiter")).findFirst();
+        if (optional.isPresent()) {
+            return optional.get().getValue();
+        }
+
+        return sqlTempDelimiter;
     }
 }

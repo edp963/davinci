@@ -30,16 +30,18 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
+@Component
 public interface RelRoleProjectExtendMapper extends RelRoleProjectMapper {
 
     @Delete({
             "delete from rel_role_project where project_id = #{projectId}"
     })
-    int deleteByProjectId(@Param("projectId") Long projectId);
+    int deleteByProject(@Param("projectId") Long projectId);
 
     @Select({
             "select * from rel_role_project where id = #{id,jdbcType=BIGINT}"

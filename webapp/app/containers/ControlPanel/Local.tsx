@@ -27,17 +27,16 @@ import {
   makeSelectLocalControlPanelFormValues,
   makeSelectLocalControlPanelSelectOptions
 } from './selectors'
-import {
-  GlobalControlQueryMode,
-  OnGetControlOptions
-} from 'app/components/Control/types'
+import { OnGetControlOptions } from 'app/components/Control/types'
 import {
   ControlPanelTypes,
   ControlPanelLayoutTypes
 } from 'app/components/Control/constants'
 import { IWidgetFormed } from 'app/containers/Widget/types'
+import { IFormedViews, IShareFormedViews } from '../View/types'
 
 interface ILocalControlPanelBaseProps {
+  formedViews: IFormedViews | IShareFormedViews
   itemId: number
   widget: IWidgetFormed
   layoutType: ControlPanelLayoutTypes
@@ -74,6 +73,7 @@ class LocalControlPanel extends PureComponent<ILocalControlPanelProps, {}> {
 
   public render() {
     const {
+      formedViews,
       itemId,
       widget,
       layoutType,
@@ -85,12 +85,13 @@ class LocalControlPanel extends PureComponent<ILocalControlPanelProps, {}> {
       !!widget.config.controls.length && (
         <ControlPanelComponent
           controls={widget.config.controls}
+          formedViews={formedViews}
           items={itemId.toString()}
           type={ControlPanelTypes.Local}
           layoutType={layoutType}
           reload={false}
           viewId={widget.viewId}
-          queryMode={GlobalControlQueryMode.Manually}
+          queryMode={widget.config.queryMode}
           formValues={formValues}
           mapOptions={selectOptions}
           onGetOptions={onGetOptions}
@@ -107,10 +108,7 @@ function makeMapStateToProps() {
   const mapStateToProps = (state, props) => {
     return {
       formValues: localControlPanelFormValuesSelector(state, props.itemId),
-      selectOptions: localControlPanelSelectOptionsSelector(
-        state,
-        props.itemId
-      )
+      selectOptions: localControlPanelSelectOptionsSelector(state, props.itemId)
     }
   }
   return mapStateToProps

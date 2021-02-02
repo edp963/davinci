@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { DropboxType, IDataParamSource } from './'
 import ColorPanel from '../ColorPanel'
 import { Icon } from 'antd'

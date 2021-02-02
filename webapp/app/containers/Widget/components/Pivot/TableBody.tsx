@@ -503,7 +503,6 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
           isDrilling={isDrilling}
           selectedChart={this.props.selectedChart}
           whichDataDrillBrushed={this.props.whichDataDrillBrushed}
-          // onHideDrillPanel={onHideDrillPanel}
           selectedItems={this.props.selectedItems}
           onSelectChartsItems={this.props.onSelectChartsItems}
         />

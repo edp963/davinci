@@ -47,7 +47,7 @@ public class CustomDatabaseRunner implements ApplicationRunner {
         try {
         	CustomDatabaseUtils.loadDatabase(databaseYamlPath);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.toString(), e);
             SpringApplication.exit(applicationContext);
             log.info("Server shutdown");
         }

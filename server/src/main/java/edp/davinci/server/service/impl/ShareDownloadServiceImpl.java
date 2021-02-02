@@ -21,16 +21,20 @@ package edp.davinci.server.service.impl;
 
 import edp.davinci.core.dao.entity.ShareDownloadRecord;
 import edp.davinci.core.enums.DownloadRecordStatusEnum;
-import edp.davinci.server.component.excel.ExecutorUtil;
+import edp.davinci.server.aspect.ShareAuthAspect;
+import edp.davinci.server.commons.ErrorMsg;
+import edp.davinci.server.component.excel.ExecutorUtils;
 import edp.davinci.server.component.excel.MsgWrapper;
 import edp.davinci.server.component.excel.WidgetContext;
 import edp.davinci.server.component.excel.WorkBookContext;
 import edp.davinci.server.dao.ShareDownloadRecordExtendMapper;
-import edp.davinci.server.dto.share.ShareInfo;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.share.ShareFactor;
 import edp.davinci.server.dto.view.DownloadViewExecuteParam;
 import edp.davinci.server.enums.ActionEnum;
 import edp.davinci.server.enums.DownloadType;
-import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.ShareDownloadService;
 import edp.davinci.server.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,34 +49,33 @@ import java.util.List;
 public class ShareDownloadServiceImpl extends DownloadCommonService implements ShareDownloadService {
 
     @Autowired
-    private ShareDownloadRecordExtendMapper shareDownloadRecordMapper;
+    private ShareDownloadRecordExtendMapper shareDownloadRecordExtendMapper;
 
     @Autowired
     private ShareService shareService;
 
     @Override
-    public boolean submit(DownloadType downloadType, String uuid, String token, User user, List<DownloadViewExecuteParam> params) {
-        ShareInfo shareInfo = shareService.getShareInfo(token, user);
-
+    public boolean submit(DownloadType downloadType, String uuid, List<DownloadViewExecuteParam> params) {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
         try {
-            List<WidgetContext> widgetList = getWidgetContexts(downloadType, shareInfo.getShareId(), user == null ? shareInfo.getShareUser() : user, params);
+            List<WidgetContext> widgetList = getWidgetContexts(downloadType, shareFactor.getEntityId(), shareFactor.getUser(), params);
 
             ShareDownloadRecord record = new ShareDownloadRecord();
             record.setUuid(uuid);
-            record.setName(getDownloadFileName(downloadType, shareInfo.getShareId()));
+            record.setName(getDownloadFileName(downloadType, shareFactor.getEntityId()));
             record.setStatus(DownloadRecordStatusEnum.PROCESSING.getStatus());
             record.setCreateTime(new Date());
-            shareDownloadRecordMapper.insertSelective(record);
+            shareDownloadRecordExtendMapper.insertSelective(record);
 
             MsgWrapper wrapper = new MsgWrapper(record, ActionEnum.SHAREDOWNLOAD, uuid);
             WorkBookContext workBookContext = WorkBookContext.builder()
                     .wrapper(wrapper)
                     .widgets(widgetList)
-                    .user(shareInfo.getShareUser())
+                    .user(shareFactor.getUser())
                     .resultLimit(resultLimit)
                     .taskKey("ShareDownload_" + uuid)
                     .build();
-            ExecutorUtil.submitWorkbookTask(workBookContext, null);
+            ExecutorUtils.submitWorkbookTask(workBookContext, null);
             log.info("Share download task submit:{}", wrapper);
             return true;
         } catch (Exception e) {
@@ -83,22 +86,35 @@ public class ShareDownloadServiceImpl extends DownloadCommonService implements S
 
 
     @Override
-    public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid, String token, User user) {
-        shareService.getShareInfo(token, user);
-
-        return shareDownloadRecordMapper.getByUuid(uuid);
+    public List<ShareDownloadRecord> queryDownloadRecordPage(String uuid) {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ProjectDetail projectDetail = shareFactor.getProjectDetail();
+        if (projectDetail == null) {
+            return null;
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
+        if (!projectPermission.getDownloadPermission()) {
+            return null;
+        }
+        return shareDownloadRecordExtendMapper.getByUuid(uuid);
     }
 
     @Override
-    public ShareDownloadRecord downloadById(String id, String uuid, String token, User user) {
-        shareService.getShareInfo(token, user);
-
-        ShareDownloadRecord record = shareDownloadRecordMapper.getByIdAndUuid(Long.valueOf(id), uuid);
-
+    public ShareDownloadRecord downloadById(String id, String uuid) throws UnAuthorizedException {
+        ShareFactor shareFactor = ShareAuthAspect.SHARE_FACTOR_THREAD_LOCAL.get();
+        ProjectDetail projectDetail = shareFactor.getProjectDetail();
+        if (projectDetail == null) {
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
+        }
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, shareFactor.getUser());
+        if (!projectPermission.getDownloadPermission()) {
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
+        }
+        ShareDownloadRecord record = shareDownloadRecordExtendMapper.getByIdAndUuid(Long.valueOf(id), uuid);
         if (record != null) {
             record.setLastDownloadTime(new Date());
             record.setStatus(DownloadRecordStatusEnum.DOWNLOADED.getStatus());
-            shareDownloadRecordMapper.update(record);
+            shareDownloadRecordExtendMapper.update(record);
             return record;
         } else {
             return null;

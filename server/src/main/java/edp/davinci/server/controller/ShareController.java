@@ -19,8 +19,7 @@
 
 package edp.davinci.server.controller;
 
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.annotation.AuthIgnore;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.annotation.AuthShare;
 import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
@@ -31,10 +30,10 @@ import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.user.UserLoginResult;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.enums.HttpCodeEnum;
+import edp.davinci.server.enums.ShareOperation;
+import edp.davinci.server.enums.ShareType;
 import edp.davinci.server.model.Paging;
 import edp.davinci.server.model.TokenEntity;
-import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.service.ShareService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +50,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 
@@ -65,6 +65,29 @@ public class ShareController extends BaseController {
     @Autowired
     private ShareService shareService;
 
+    @ApiOperation(value = "share preflight")
+    @AuthShare(type = ShareType.LOGIN)
+    @GetMapping(value = "/preflight/{token}")
+    public ResponseEntity preFlight(@PathVariable String token) {
+        Map<String, Object> result = shareService.checkShareToken();
+        return ResponseEntity.ok(new ResultMap().success().payload(result));
+    }
+
+    @ApiOperation(value = "get share permission")
+    @AuthShare(type = ShareType.PERMISSION, operation = ShareOperation.PERMISSION)
+    @GetMapping(value = "/permissions/{token}")
+    public ResponseEntity permission(@PathVariable(name = "token") String token,
+                                     @RequestParam(required = false) String password,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
+
+        Map<String, Object> result = shareService.getSharePermissions();
+        if (null == user || user.getId() == null) {
+            return ResponseEntity.ok(new ResultMap().success().payload(result));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(result));
+        }
+    }
 
     /**
      * share页登录
@@ -75,25 +98,20 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "share login")
-    @AuthIgnore
+    @AuthShare(type = ShareType.LOGIN)
     @PostMapping("/login/{token}")
     public ResponseEntity shareLogin(@PathVariable String token,
                                      @Valid @RequestBody UserLogin userLogin,
                                      @ApiIgnore BindingResult bindingResult) {
-
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
 
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        User user = shareService.shareLogin(token, userLogin);
-        TokenEntity tokenDetail = new TokenEntity(user.getUsername(), user.getPassword());
-        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenDetail)).payload(new UserLoginResult(user)));
+        User user = shareService.shareLogin(userLogin);
+        TokenEntity tokenEntity = new TokenEntity(user.getUsername(), user.getPassword());
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(tokenEntity)).payload(new UserLoginResult(user)));
     }
 
     /**
@@ -105,19 +123,15 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get share dashboard")
-    @AuthShare
+    @AuthShare(type = ShareType.DASHBOARD, operation = ShareOperation.READ)
     @GetMapping("/dashboard/{token}")
     public ResponseEntity getShareDashboard(@PathVariable String token,
+                                            @RequestParam(required = false) String password,
                                             @ApiIgnore @CurrentUser User user,
                                             HttpServletRequest request) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
 
-        ShareDashboard shareDashboard = shareService.getShareDashboard(token, user);
-
-        if (null == user) {
+        ShareDashboard shareDashboard = shareService.getShareDashboard(user);
+        if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDashboard));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDashboard));
@@ -133,19 +147,15 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get share display")
-    @AuthShare
+    @AuthShare(type = ShareType.DISPLAY, operation = ShareOperation.READ)
     @GetMapping("/display/{token}")
     public ResponseEntity getShareDisplay(@PathVariable String token,
+                                          @RequestParam(required = false) String password,
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
 
-        ShareDisplay shareDisplay = shareService.getShareDisplay(token, user);
-
-        if (null == user) {
+        ShareDisplay shareDisplay = shareService.getShareDisplay(user);
+        if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareDisplay));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDisplay));
@@ -161,19 +171,15 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get share widget")
-    @AuthShare
+    @AuthShare(type = ShareType.WIDGET, operation = ShareOperation.READ)
     @GetMapping("/widget/{token}")
     public ResponseEntity getShareWidget(@PathVariable String token,
+                                         @RequestParam(required = false) String password,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
 
-        ShareWidget shareWidget = shareService.getShareWidget(token, user);
-
-        if (null == user) {
+        ShareWidget shareWidget = shareService.getShareWidget(user);
+        if (null == user || user.getId() == null) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareWidget));
         } else {
             return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareWidget));
@@ -184,25 +190,21 @@ public class ShareController extends BaseController {
      * share页获取源数据
      *
      * @param token
-     * @param executeParam
+     * @param queryParam
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "get share data")
-    @AuthShare
+    @AuthShare(type = ShareType.DATA, operation = ShareOperation.LOAD_DATA)
     @PostMapping(value = "/data/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getShareData(@PathVariable String token,
-                                       @RequestBody(required = false) WidgetQueryParam executeParam,
+                                       @RequestParam(required = false) String password,
+                                       @RequestBody(required = false) WidgetQueryParam queryParam,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) throws SQLException {
 
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        Paging<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
+        Paging<Map<String, Object>> shareData = shareService.getShareData(queryParam, user);
         if (null == user) {
             return ResponseEntity.ok(new ResultMap().success().payload(shareData));
         } else {
@@ -212,10 +214,9 @@ public class ShareController extends BaseController {
 
 
     /**
-     * share 获取唯一值
+     * share获取控制器的值
      *
      * @param token
-     * @param viewId
      * @param param
      * @param bindingResult
      * @param user
@@ -223,68 +224,19 @@ public class ShareController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get share data")
-    @AuthShare
-    @PostMapping(value = "/data/{token}/distinctvalue/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @AuthShare(type = ShareType.DATA, operation = ShareOperation.LOAD_DISTINCT_DATA)
+    @PostMapping(value = "/data/{token}/distinctvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable("token") String token,
-                                           @PathVariable("viewId") Long viewId,
                                            @Valid @RequestBody WidgetDistinctParam param,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
 
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        if (invalidId(viewId)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid view id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        try {
-            ResultMap resultMap = shareService.getDistinctValue(token, viewId, param, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
-
-
-    /**
-     * share页获取csv信息
-     *
-     * @param token
-     * @param executeParam
-     * @param user
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "get share data csv")
-    @AuthShare
-    @PostMapping(value = "/csv/{token}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity generationShareDataCsv(@PathVariable String token,
-                                                 @RequestBody(required = false) WidgetQueryParam executeParam,
-                                                 @ApiIgnore @CurrentUser User user,
-                                                 HttpServletRequest request) {
-
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        String filePath = shareService.generationShareDataCsv(executeParam, user, token);
-        if (null == user) {
-            return ResponseEntity.ok(new ResultMap().success().payload(filePath));
+        List<Map<String, Object>> resultList = shareService.getDistinctValue(param, user);
+        if (null == user || user.getId() == null) {
+            return ResponseEntity.ok(new ResultMap().success().payloads(resultList));
         } else {
-            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(filePath));
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(resultList));
         }
     }
 }

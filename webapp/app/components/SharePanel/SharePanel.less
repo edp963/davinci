@@ -1,3 +1,4 @@
+@import "~assets/less/variable";
 .sharePanel {
 
   .panelHead {
@@ -6,25 +7,33 @@
   }
 
   .panelContent {
-    padding: 16px 0;
-    text-align: center;
+    padding: 16px 0 4px 0;
+
+    .footer {
+      margin-top: 16px;
+    }
+  }
+
+  :global {
+    .ant-form-item {
+      margin-bottom: 8px;
+    }
   }
 }
 
-.shareRow {
-  margin-bottom: 16px;
+.generate {
+  margin-bottom: 8px;
+}
 
-  &:last-child {
-    margin-bottom: 0;
-  }
+.copy {
+  cursor: pointer;
+}
 
-  .shareText {
-    text-align: right;
-    line-height: 32px;
-    display: block;
-  }
-
-  .shareInput {
-    height: 32px;
+.options {
+  .name,
+  .email {
+    margin-left: 4px;
+    font-size: 12px;
+    color: @light-text-color;
   }
 }

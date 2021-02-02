@@ -21,7 +21,6 @@ package edp.davinci.server.util;
 
 import edp.davinci.commons.util.DateUtils;
 import edp.davinci.core.dao.entity.CronJob;
-import static edp.davinci.commons.Constants.*;
 import edp.davinci.server.component.quartz.QuartzJobExecutor;
 import edp.davinci.server.enums.LogNameEnum;
 import edp.davinci.server.exception.ServerException;
@@ -44,11 +43,9 @@ public class QuartzHandler {
     @Autowired
     private SchedulerFactoryBean schedulerFactoryBean;
 
-    private static final String JOB_NAME_PREFIX = "CRONJOB_";
-
-    public static String getJobDataKey(TriggerKey triggerKey) {
-        return triggerKey.getGroup() + DOT + triggerKey.getName();
-    }
+    public static final String TRIGGER_PREFIX = "TRIGGER_";
+    public static final String JOB_PREFIX = "JOB_";
+    public static final String GROUP_PREFIX = "GROUP_";
 
     public void addJob(CronJob cronJob) throws ServerException, SchedulerException {
 
@@ -64,24 +61,27 @@ public class QuartzHandler {
                     DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()),
                     cronJob.getCronExpression()
             };
-            log.warn("ScheduleJob({}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
-            scheduleLogger.warn("ScheduleJob({}), current time [{}] is not within the planned execution time, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+            log.warn("ScheduleJob({}), currentTime:{} is not within the planned execution time, startTime:{}, endTime:{}, cronExpression:{}", args);
+            scheduleLogger.warn("ScheduleJob({}), currentTime:{} is not within the planned execution time, startTime:{}, endTime:{}, cronExpression:{}", args);
             throw new ServerException("Current time is not within the planned execution time!");
         }
 
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME_PREFIX + cronJob.getId());
+        String id = String.valueOf(cronJob.getId());
+        String group = GROUP_PREFIX + cronJob.getProjectId();
+
+        TriggerKey triggerKey = TriggerKey.triggerKey(TRIGGER_PREFIX + id, group);
         CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
         if (null != trigger) {
-            log.warn("ScheduleJob({}) already started!", cronJob.getId());
-            scheduleLogger.warn("ScheduleJob({}) already started!", cronJob.getId());
+            log.warn("ScheduleJob({}) already started!", id);
+            scheduleLogger.warn("ScheduleJob({}) already started!", id);
             throw new ServerException("Job already started!");
         }
 
         JobDetail jobDetail = JobBuilder
-                .newJob(QuartzJobExecutor.class).withIdentity(JOB_NAME_PREFIX + cronJob.getId()).build();
-        jobDetail.getJobDataMap().put(getJobDataKey(triggerKey), cronJob);
-
+                .newJob(QuartzJobExecutor.class).withIdentity(JOB_PREFIX + id, group).build();
+        jobDetail.getJobDataMap().put("jobId", id);
+        jobDetail.getJobDataMap().put("jobType", cronJob.getJobType());
 
         TriggerBuilder<CronTrigger> triggerBuilder = TriggerBuilder
                 .newTrigger()
@@ -99,8 +99,8 @@ public class QuartzHandler {
                 DateUtils.toyyyyMMddHHmmss(cronJob.getEndDate()),
                 cronJob.getCronExpression()
         };
-        log.info("ScheduleJob({}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
-        scheduleLogger.info("ScheduleJob({}) is added to the scheduler, StartTime: [{}], EndTime: [{}], Cron Expression: [{}]", args);
+        log.info("ScheduleJob({}) is added to the scheduler, startTime:{}, endTime:{}, cronExpression:{}", args);
+        scheduleLogger.info("ScheduleJob({}) is added to the scheduler, startTime:{}, endTime:{}, cronExpression:{}", args);
 
         if (!scheduler.isStarted()) {
             scheduler.start();
@@ -110,19 +110,23 @@ public class QuartzHandler {
 
     public void removeJob(CronJob cronJob) throws ServerException {
 
+        String id = String.valueOf(cronJob.getId());
+        String group = GROUP_PREFIX + cronJob.getProjectId();
+
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
-            TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME_PREFIX + cronJob.getId());
+            TriggerKey triggerKey = TriggerKey.triggerKey(TRIGGER_PREFIX + id, group);
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
+            JobKey jobKey = JobKey.jobKey(JOB_PREFIX + id, group);
             if (null != trigger) {
                 scheduler.pauseTrigger(triggerKey);
                 scheduler.unscheduleJob(triggerKey);
-                scheduler.deleteJob(JobKey.jobKey(cronJob.getId().toString()));
-                log.info("ScheduleJob({}) removed finish!", triggerKey.getName());
-                scheduleLogger.info("ScheduleJob({}) removed finish!", triggerKey.getName());
+                scheduler.deleteJob(jobKey);
+                log.info("ScheduleJob({}) removed finish!", jobKey.toString());
+                scheduleLogger.info("ScheduleJob({}) removed finish!", jobKey.toString());
             } else {
-                log.info("ScheduleJob({}) not found", triggerKey.getName());
-                scheduleLogger.info("ScheduleJob({}) not found", triggerKey.getName());
+                log.info("ScheduleTrigger({}) not found", triggerKey.toString());
+                scheduleLogger.info("ScheduleTrigger({}) not found", triggerKey.toString());
             }
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
@@ -130,16 +134,24 @@ public class QuartzHandler {
     }
 
     public void modifyJob(CronJob cronJob) throws ServerException {
+
+        String id = String.valueOf(cronJob.getId());
+        String group = GROUP_PREFIX + cronJob.getProjectId();
+
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
-            TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME_PREFIX + cronJob.getId());
+            TriggerKey triggerKey = TriggerKey.triggerKey(TRIGGER_PREFIX + id, group);
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
             if (null == trigger) {
                 return;
             }
 
-            String oldExp = trigger.getCronExpression();
-            if (!oldExp.equalsIgnoreCase(cronJob.getCronExpression())) {
+            String exp = trigger.getCronExpression();
+            Date startTime = trigger.getStartTime();
+            Date endTime = trigger.getEndTime();
+            if (!exp.equalsIgnoreCase(cronJob.getCronExpression()) ||
+                    startTime.getTime() != cronJob.getStartDate().getTime() ||
+                    endTime.getTime() != cronJob.getEndDate().getTime()) {
                 removeJob(cronJob);
                 addJob(cronJob);
             }
@@ -158,9 +170,13 @@ public class QuartzHandler {
     }
 
     public boolean isStarted(CronJob cronJob) throws ServerException {
+
+        String id = String.valueOf(cronJob.getId());
+        String group = GROUP_PREFIX + cronJob.getProjectId();
+
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
-            TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME_PREFIX + cronJob.getId());
+            TriggerKey triggerKey = TriggerKey.triggerKey(TRIGGER_PREFIX + id, group);
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
             if (null != trigger) {
                 return true;

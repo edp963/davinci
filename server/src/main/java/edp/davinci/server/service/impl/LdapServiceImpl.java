@@ -104,7 +104,7 @@ public class LdapServiceImpl implements LdapService {
 						LdapPerson person = new LdapPerson();
 						person.setName(attributes.get("cn").get().toString());
 						person.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
-						person.setEmail(userDn);
+						person.setEmail(attributes.get("mail").get().toString());
 						return person;
 					});
 
@@ -112,7 +112,7 @@ public class LdapServiceImpl implements LdapService {
 				ldapPerson = search.get(0);
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			log.error(e.toString(), e);
 		} finally {
 			if (null != ctx) {
 				LdapUtils.closeContext(ctx);

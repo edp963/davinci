@@ -22,6 +22,8 @@ import React, { useContext } from 'react'
 
 import { LayerContext } from '../../util'
 
+import { VIDEO_REG, IFRAME_REG, MEDIA_SRC_REG } from './constants'
+
 const Video: React.FC = () => {
   const {
     layer: { params }
@@ -40,18 +42,33 @@ const Video: React.FC = () => {
   }, {})
 
   let srcWithParams = src
-  if (srcWithParams && (start || end)) {
-    srcWithParams = `${srcWithParams}#t=${start ? start : 0}`
-    if (end) {
-      srcWithParams = `${srcWithParams},${end}`
-    }
+
+  const videoRegExp = src && VIDEO_REG.test(src)
+  const iframeRegExp = src && IFRAME_REG.test(src)
+
+  if(src && videoRegExp){
+    const startParams = `#t=${start ? start : 0}`
+    const endParams = end ? `,${end}` : ''
+    srcWithParams = start ? `${srcWithParams}${startParams}` : `${srcWithParams}${endParams}`
   }
 
-  return (
-    <video src={srcWithParams} preload="auto" {...setting}>
-      你的浏览器不支持 <code>video</code> 标签.
-    </video>
-  )
+  if(src && iframeRegExp){
+    const iframeSrc = src.match(MEDIA_SRC_REG)
+    srcWithParams = iframeRegExp ? iframeSrc[0] + '&autoplay=true' : src
+  }
+  
+  const mediaType = videoRegExp ? 'video' : 'iframe'
+
+  switch (mediaType) {
+    case 'video':
+      return (
+        <video src={srcWithParams} preload="auto" {...setting}>
+          你的浏览器不支持 <code>video</code> 标签.
+        </video>
+      )
+    default:
+      return <iframe src={srcWithParams} frameBorder="0" allow="autoplay" />
+  }
 }
 
 export default Video

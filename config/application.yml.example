@@ -23,7 +23,7 @@ server:
   servlet:
     context-path: /
 
-## Userd for mail and download services, can be empty, careful configuration
+## Used for mail and download services, can be empty, careful configuration
 ## By default, 'server.address' and 'server.port' is used as the string value.
 # access:
 #  address:
@@ -38,16 +38,25 @@ jwtToken:
   algorithm: HS512
 
 
-##your datasouce config
+## your datasource config
 source:
-  initial-size: 2
+  initial-size: 1
   min-idle: 1
-  max-wait: 6000
+  max-wait: 30000
   max-active: 10
-  break-after-acquire-failure: true
-  connection-error-retry-attempts: 0
-  query-timeout: 600000
-  validationQueryTimeout: 30000
+  break-after-acquire-failure: false
+  connection-error-retry-attempts: 1
+  time-between-eviction-runs-millis: 2000
+  min-evictable-idle-time-millis: 600000
+  max-evictable-idle-time-millis: 900000
+  time-between-connect-error-millis: 60000
+  test-while-idle: true
+  test-on-borrow: false
+  test-on-return: false
+  validation-query: select 1
+  validation-query-timeout: 10
+  keep-alive: false
+  filters: stat
 
   enable-query-log: true
   result-limit: 1000000
@@ -56,28 +65,49 @@ source:
 aggregator:
   name: h2
   url: jdbc:h2:file:~/h2/data/davinci;DB_CLOSE_DELAY=-1;COMPRESS=true;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=true;DATABASE_TO_UPPER=false
-  username:  
-  password: 
-  keyword_prefix: '"' 
+  username:
+  password:
+  keyword_prefix: '"'
   keyword_suffix: '"'
   ttl: 60000
   result-limit: 300000
+
 
 spring:
   mvc:
     async:
       request-timeout: 30s
+  rest:
+    proxy-host:
+    proxy-port:
+    proxy-ignore:
 
-  ## davinci datasouce config
+
+  ## davinci datasource config
   datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
     username: root
     password: root
     driver-class-name: com.mysql.jdbc.Driver
-    initial-size: 2
+    initial-size: 1
     min-idle: 1
-    max-wait: 60000
+    max-wait: 30000
     max-active: 10
+    break-after-acquire-failure: false
+    connection-error-retry-attempts: 1
+    time-between-eviction-runs-millis: 2000
+    min-evictable-idle-time-millis: 600000
+    max-evictable-idle-time-millis: 900000
+    time-between-connect-error-millis: 60000
+    test-while-idle: true
+    test-on-borrow: false
+    test-on-return: false
+    validation-query: select 1
+    validation-query-timeout: 10
+    keep-alive: false
+    filters: stat
+
 
 ## redis config
 ## please choose either of the two ways
@@ -89,8 +119,8 @@ spring:
     port: 6379
 
 ## cluster config
-#    cluster:
-#      nodes:
+#  cluster:
+#    nodes:
 
     password:
     database: 0
@@ -101,6 +131,7 @@ spring:
         max-wait: 1
         max-idle: 8
         min-idle: 0
+
 
 ## mail is one of the important configuration of the application
 ## mail config cannot be null or empty
@@ -132,6 +163,7 @@ spring:
 ## domainName is enterprise mailbox suffix, such as enterprise mailbox is: "xxx@example.com", the value here is "@example.com"
     domainName:
 
+
   security:
     oauth2:
       enable: false
@@ -157,18 +189,44 @@ spring:
 #              name: "attributes.CnName1"
 #              avatar: "attributes.Avatar"
 
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+      schema: classpath:quartz_table.sql
+    properties:
+      org:
+        quartz:
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 8
+          scheduler:
+            instanceName: DavinciScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: true
+
+
+cronjob:
+  reload-all: false
+
+
 screenshot:
-  default_browser: PHANTOMJS                    # PHANTOMJS or CHROME
+  default_browser: CHROME
   timeout_second: 600
-  phantomjs_path: $your_phantomjs_path$
   chromedriver_path: $your_chromedriver_path$
   remote_webdriver_url: $your_remote_webdriver_url$
+
 
 data-auth-center:
   channels:
     - name:
       base-url:
       auth-code:
+
 
 statistic:
   enable: false
@@ -189,3 +247,9 @@ statistic:
   java.security.krb5.conf:
   java.security.keytab:
   java.security.principal:
+
+
+# Source password encrypt
+encryption:
+  maxEncryptSize: 1024
+  type: Off # Off is to turn off encryption, to enable encryption, please select AES or RSA

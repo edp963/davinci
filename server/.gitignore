@@ -5,4 +5,5 @@
 /.apt_generated/
 /.apt_generated_tests/
 .factorypath
+*.iml
 /src/test/

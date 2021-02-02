@@ -36,13 +36,13 @@ import java.util.Set;
 @Component
 public interface ProjectExtendMapper extends ProjectMapper {
 
-    List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
+    List<ProjectWithCreateBy> getProjectsByUser(@Param("userId") Long userId);
 
     List<ProjectWithCreateBy> getFavoriteProjects(@Param("userId") Long userId);
 
     List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("keyword") String keyword);
 
-    List<ProjectWithCreateBy> getProjectsByKewordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
+    List<ProjectWithCreateBy> getProjectsByKeywordsWithUser(@Param("keywords") String keywords, @Param("userId") Long userId, @Param("orgList") List<OrganizationInfo> list);
 
     int deleteAllRel(@Param("projectId") Long projectId, @Param("orgId") Long orgId);
     

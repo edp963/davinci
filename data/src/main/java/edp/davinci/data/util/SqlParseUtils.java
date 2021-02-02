@@ -19,28 +19,7 @@
 
 package edp.davinci.data.util;
 
-import static edp.davinci.commons.Constants.*;
-// import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import com.sun.tools.javac.util.ListBuffer;
-
-import org.springframework.beans.BeanUtils;
-
-import edp.davinci.commons.exception.ServerException;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.commons.util.StringUtils;
@@ -59,40 +38,55 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.springframework.beans.BeanUtils;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.*;
+
+//import static edp.davinci.data.commons.Constants.PATTERN_SENSITIVE_SQL;
 
 @Slf4j
 public class SqlParseUtils {
 
     private static final String SELECT = "select";
-	private static final String WITH = "with";
-	private static final String OR = "or";
+    private static final String WITH = "with";
+    private static final String OR = "or";
 
     private static final String QUERY_WHERE_TRUE = "1=1";
-	private static final String QUERY_WHERE_FALSE = "1=0";
-	private static final String QUERY_WHERE_VALUE = "'%s'";
+    private static final String QUERY_WHERE_FALSE = "1=0";
+    private static final String QUERY_WHERE_VALUE = "'%s'";
 
     public static final String REG_IGNORE_CASE = "(?i)";
-    
-    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
-    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
+
+    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-`\"'\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
+    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-`\"'[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
     public static final String REG_CRITERION = "^'.*?'$";
-    
+
     public static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
     public static final Pattern PATTERN_WITH_SQL_FRAGMENT = Pattern.compile(REG_WITH_SQL_FRAGMENT);
-    
+
     public static final String REG_SQL_ANNOTATION = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
     public static final Pattern PATTERN_SQL_ANNOTATION = Pattern.compile(REG_SQL_ANNOTATION);
-    
+
     public static String parseAnnotations(String sql) {
-        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replaceAll("(;+\\s*)+", SEMICOLON);
+        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replace(NEW_LINE, EMPTY).replaceAll("(;+\\s*)+",
+                SEMICOLON);
     }
 
     public static String parseSystemVars(String sql, boolean isMaintainer, User user) {
-        
+
+        if (isMaintainer) {
+            return replaceSystemVars(sql, QUERY_WHERE_TRUE, null);
+        }
+
         if (user == null) {
             return replaceSystemVars(sql, QUERY_WHERE_FALSE, null);
         }
-        
+
         return replaceSystemVars(sql, null, user);
     }
 
@@ -107,24 +101,28 @@ public class SqlParseUtils {
             String repl = user == null ? condition : user.getId().toString();
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_NAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_NAME.getRegex())
                     : SystemVariableEnum.USER_NAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getName());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_USERNAME.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_USERNAME.getRegex())
                     : SystemVariableEnum.USER_USERNAME.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_EMAIL.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_EMAIL.getRegex())
                     : SystemVariableEnum.USER_EMAIL.getRegex();
             String repl = user == null ? condition : String.format(QUERY_WHERE_VALUE, user.getUsername());
             sql = sql.replaceAll(REG_IGNORE_CASE + regex, repl);
         }
+
         if (sql.toUpperCase().contains(SystemVariableEnum.USER_DEPARTMENT.getKey())) {
             String regex = condition != null ? String.format(REG_SYSVAR, SystemVariableEnum.USER_DEPARTMENT.getRegex())
                     : SystemVariableEnum.USER_DEPARTMENT.getRegex();
@@ -184,9 +182,7 @@ public class SqlParseUtils {
     
     private static String getAuthRegExp(String express, String sqlTempDelimiter) {
         String arg = sqlTempDelimiter;
-        if (DOLLAR_SIGN.equals(sqlTempDelimiter)) {
-            arg = "\\" + arg;
-        }
+        arg = "\\" + arg;
         return String.format(express, arg, arg, arg, arg);
     }
 
@@ -222,7 +218,7 @@ public class SqlParseUtils {
 			exp = exp.substring(1, exp.length() - 1);
 		}
 
-		String sql = String.format(Constants.JDBC_SELECT_SQL_FORMATER, exp);
+		String sql = String.format(Constants.JDBC_SELECT_SQL_FORMATTER, exp);
 		Select select = (Select) CCJSqlParserUtil.parse(sql);
 		PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
 		Expression where = plainSelect.getWhere();
@@ -285,7 +281,7 @@ public class SqlParseUtils {
 								break;
 
 							case NOTEQUALSTO:
-								expBuilder.append(left).append(SPACE).append(SqlOperatorEnum.NoTIN.getValue())
+								expBuilder.append(left).append(SPACE).append(SqlOperatorEnum.NOTIN.getValue())
 										.append(SPACE).append(collect.stream().collect(
 												Collectors.joining(COMMA, PARENTHESES_START, PARENTHESES_CLOSE)));
 								break;
@@ -376,14 +372,14 @@ public class SqlParseUtils {
             StringBuilder sb = new StringBuilder();
             if ("COUNTDISTINCT".equals(func.trim().toUpperCase())) {
                 sb.append("COUNT").append(PARENTHESES_START).append("DISTINCT").append(SPACE);
-                sb.append(getColumn(column, jdbcUrl, dbVersion));
+                sb.append(getColumn(column, SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion), SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion)));
                 sb.append(PARENTHESES_CLOSE);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion)).append("COUNTDISTINCT").append(PARENTHESES_START);
                 sb.append(column);
                 sb.append(PARENTHESES_CLOSE).append(SqlUtils.getAliasSuffix(jdbcUrl, dbVersion));
             } else {
                 sb.append(func.trim()).append(PARENTHESES_START);
-                sb.append(getColumn(column, jdbcUrl, dbVersion));
+                sb.append(getColumn(column, SqlUtils.getKeywordPrefix(jdbcUrl, dbVersion), SqlUtils.getKeywordSuffix(jdbcUrl, dbVersion)));
                 sb.append(PARENTHESES_CLOSE);
                 sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl, dbVersion));
                 sb.append(func.trim()).append(PARENTHESES_START);
@@ -442,10 +438,10 @@ public class SqlParseUtils {
         }
 
         if(Filter.TYPE_RELATION.equalsIgnoreCase(type)){
-            List<Filter> childs = filter.getChildren();
+            List<Filter> children = filter.getChildren();
             condition.append(PARENTHESES_START);
-            for(int i=0; i<childs.size(); i++){
-                condition.append(i == 0 ? parseFilter(childs.get(i), keywordPrefix, keywordSuffix) : SPACE + filter.getValue().toString() + SPACE + parseFilter(childs.get(i), keywordPrefix, keywordSuffix));
+            for(int i=0; i<children.size(); i++){
+                condition.append(i == 0 ? parseFilter(children.get(i), keywordPrefix, keywordSuffix) : SPACE + filter.getValue().toString() + SPACE + parseFilter(children.get(i), keywordPrefix, keywordSuffix));
             }
             condition.append(PARENTHESES_CLOSE);
         }
@@ -454,10 +450,10 @@ public class SqlParseUtils {
     }
 
     private static String parseOperator(Filter filter, String keywordPrefix, String keywordSuffix){
-        String name     = filter.getName();
-        Object value    = filter.getValue();
+        String name = filter.getName();
+        Object value = filter.getValue();
         String operator = filter.getOperator();
-        String sqlType  = filter.getSqlType();
+        String sqlType = filter.getSqlType();
 
         Criterion criterion;
         if (SqlOperatorEnum.BETWEEN.getValue().equalsIgnoreCase(operator)) {
@@ -545,10 +541,9 @@ public class SqlParseUtils {
 		if (strArr.length > 0) {
 			list = new ArrayList<>();
 			for (String s : strArr) {
-				boolean select = s.toLowerCase().startsWith(SELECT) || s.toLowerCase().startsWith(WITH);
+				boolean select = isQuerySql(s);
 				if (isQuery) {
 					if (select) {
-                        checkSensitiveSql(s);
 						list.add(s);
 					}
 				} else {
@@ -562,13 +557,18 @@ public class SqlParseUtils {
 		return list;
     }
 
-    private static void checkSensitiveSql(String sql) throws ServerException {
-        // Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
-        // if (matcher.find()) {
-        //     String group = matcher.group();
-        //     log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
-        //     throw new ServerException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
-        // }
+    private static boolean isQuerySql(String sql) {
+        String temp = parseAnnotations(sql);
+        return temp.toLowerCase().startsWith(SELECT) || temp.toLowerCase().startsWith(WITH);
+    }
+
+    private static void checkSensitiveSql(String sql) {
+//         Matcher matcher = PATTERN_SENSITIVE_SQL.matcher(sql.toLowerCase());
+//         if (matcher.find()) {
+//             String group = matcher.group();
+//             log.warn("Sensitive SQL operations are not allowed:{}", group.toUpperCase());
+//             throw new RuntimeException("Sensitive SQL operations are not allowed:" + group.toUpperCase());
+//         }
     }
     
     public static String parseSqlWithFragment(String sql) {

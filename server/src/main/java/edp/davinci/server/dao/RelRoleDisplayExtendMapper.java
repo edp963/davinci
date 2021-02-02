@@ -27,9 +27,11 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RelRoleDisplayExtendMapper extends RelRoleDisplayMapper {
 
 	@Insert({
@@ -108,5 +110,8 @@ public interface RelRoleDisplayExtendMapper extends RelRoleDisplayMapper {
     int copyRoleRelation(@Param("originDisplayId") Long originDisplayId, @Param("copyDisplayId") Long copyDisplayId, @Param("userId") Long userId);
 
     @Delete({"delete from rel_role_display where display_id in (select id from display where project_id = #{projectId})"})
-    int deleteByProjectId(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({"delete from rel_role_display where role_id = #{roleId} and display_id in (select id from display where project_id = #{projectId})"})
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }

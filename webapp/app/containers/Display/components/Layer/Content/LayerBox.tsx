@@ -18,7 +18,14 @@
  * >>
  */
 
-import React, { useContext, useMemo, useCallback, useState } from 'react'
+import React, {
+  useContext,
+  useMemo,
+  useCallback,
+  useState,
+  memo,
+  ReactNode
+} from 'react'
 import classnames from 'classnames'
 
 import { LayerListContext, LayerContext } from '../util'
@@ -26,13 +33,18 @@ import { DraggableProxyContext } from '../Draggable'
 import { ContextMenuProxyContext } from '../ContextMenu'
 import { useSelector } from 'react-redux'
 import { makeSelectCurrentOperateItemParams } from 'app/containers/Display/selectors'
+import { SecondaryGraphTypes } from '../../Setting'
 
-const LayerBox: React.FC = (props) => {
-  const { onSelectionChange } = useContext(LayerListContext)
+interface ILayerBoxProps {
+  children?: ReactNode
+}
+
+const LayerBox: React.FC = (props: ILayerBoxProps) => {
+  const { onSelectionChange, onEditLabelChange } = useContext(LayerListContext)
 
   const { layer, operationInfo } = useContext(LayerContext)
 
-  const { id: layerId, index } = layer
+  const { id: layerId, index, subType } = layer
 
   const operateItemParams = useSelector(makeSelectCurrentOperateItemParams())
 
@@ -44,6 +56,11 @@ const LayerBox: React.FC = (props) => {
         ? operateItemParams.find((_) => _.id === layerId)?.params
         : layer.params,
     [dragging, operateItemParams, layer.params]
+  )
+  
+  const labelText = useMemo(
+    (): boolean => subType === SecondaryGraphTypes.Label,
+    [subType]
   )
 
   const { style: draggableStyle, ...restDraggableProps } = useContext(
@@ -72,7 +89,6 @@ const LayerBox: React.FC = (props) => {
 
     const style: React.CSSProperties = {
       transform: `translate(${positionX}px, ${positionY}px)`,
-      willChange: 'transform',
       width: `${width}px`,
       height: `${height}px`,
       zIndex: index,
@@ -88,6 +104,9 @@ const LayerBox: React.FC = (props) => {
       style.background = `url("${backgroundImage}") 0% 0% / ${backgroundSize} ${backgroundRepeat}`
     } else if (backgroundColor) {
       style.backgroundColor = `rgba(${backgroundColor.join()})`
+    }
+    if(labelText) {
+      style.height = 'auto'
     }
     return style
   }, [params, index, draggableStyle])
@@ -130,10 +149,20 @@ const LayerBox: React.FC = (props) => {
     ]
   )
 
+  const editLabelChange = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.stopPropagation()
+      if(labelText && onEditLabelChange){
+        onEditLabelChange(layerId, { editing: true })
+      }
+    },
+    [onEditLabelChange, layerId]
+  )
+
   const boxCls = classnames({
     'display-slide-layer': true,
-    'display-slide-layer-editing': operationInfo,
-    'display-slide-layer-selected': operationInfo && operationInfo.selected,
+    'display-slide-layer-editing': operationInfo && !operationInfo.editing,
+    'display-slide-layer-selected': operationInfo && !operationInfo.editing && operationInfo.selected,
     [className]: !!className
   })
 
@@ -144,10 +173,11 @@ const LayerBox: React.FC = (props) => {
       {...restContextMenuProps}
       {...restDraggableProps}
       onClick={selectionChange}
+      onDoubleClick={editLabelChange}
     >
       {props.children}
     </div>
   )
 }
 
-export default LayerBox
+export default memo<ILayerBoxProps>(LayerBox)

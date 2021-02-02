@@ -22,6 +22,6 @@ package edp.davinci.server.model;
 import lombok.Data;
 
 @Data
-public class FieldCustom {
-    private String format;
+public class FieldCustom extends FieldFormat {
+
 }

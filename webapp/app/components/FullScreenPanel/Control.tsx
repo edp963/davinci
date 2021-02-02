@@ -24,8 +24,12 @@ import GlobalControlPanel from 'containers/ControlPanel/Global'
 import LocalControlPanel from 'containers/ControlPanel/Local'
 import { IDashboardItem, IDashboard } from '../../containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
-import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Control/constants'
+import {
+  ControlPanelLayoutTypes,
+  ControlPanelTypes
+} from 'app/components/Control/constants'
 import { OnGetControlOptions } from 'app/components/Control/types'
+import { IFormedViews, IShareFormedViews } from 'app/containers/View/types'
 import styles from './FullScreenPanel.less'
 
 interface IControlProps {
@@ -36,6 +40,7 @@ interface IControlProps {
   hasLocalControls: boolean
   currentDashboard: IDashboard
   currentItems: IDashboardItem[]
+  formedViews: IFormedViews | IShareFormedViews
   onGetOptions: OnGetControlOptions
   onSearch: (
     type: ControlPanelTypes,
@@ -55,6 +60,7 @@ const FullScreenControl: React.FC<IControlProps> = memo(
     hasLocalControls,
     currentDashboard,
     currentItems,
+    formedViews,
     onGetOptions,
     onSearch,
     onMonitoredSearchDataAction
@@ -102,7 +108,7 @@ const FullScreenControl: React.FC<IControlProps> = memo(
               全局控制器
             </div>
             <div className={ctrlLocalStyle} onClick={checkCtrlStyle('local')}>
-              本地控制器
+              组件控制器
             </div>
           </div>
         </div>
@@ -111,6 +117,7 @@ const FullScreenControl: React.FC<IControlProps> = memo(
             <GlobalControlPanel
               currentDashboard={currentDashboard}
               currentItems={currentItems}
+              formedViews={formedViews}
               layoutType={ControlPanelLayoutTypes.Fullscreen}
               onGetOptions={onGetOptions}
               onSearch={onSearch}
@@ -118,6 +125,7 @@ const FullScreenControl: React.FC<IControlProps> = memo(
             />
           ) : (
             <LocalControlPanel
+              formedViews={formedViews}
               itemId={itemId}
               widget={widget}
               layoutType={ControlPanelLayoutTypes.Fullscreen}

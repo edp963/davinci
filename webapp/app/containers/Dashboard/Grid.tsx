@@ -18,7 +18,7 @@
  * >>
  */
 
-import React from 'react'
+import React, { createRef, RefObject } from 'react'
 import { findDOMNode } from 'react-dom'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
@@ -27,8 +27,6 @@ import { Link } from 'react-router-dom'
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
-import widgetReducer from 'containers/Widget/reducer'
-import widgetSaga from 'containers/Widget/sagas'
 import viewReducer from 'containers/View/reducer'
 import viewSaga from 'containers/View/sagas'
 import controlReducer from 'app/containers/ControlPanel/reducer'
@@ -38,22 +36,20 @@ import {
   IDashboardItem,
   QueryVariable,
   IQueryConditions,
-  SharePanelType
+  TShareVizsType
 } from './types'
 import { RouteComponentWithParams } from 'utils/types'
 
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import Toolbar from './components/Toolbar'
 import DashboardItemForm from './components/DashboardItemForm'
-import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IDistinctValueReqeustParams, IFilters } from 'app/components/Control/types'
+import { IDistinctValueReqeustParams } from 'app/components/Control/types'
 import { ControlPanelLayoutTypes, ControlPanelTypes } from 'app/components/Control/constants'
-import {getValidColumnValue} from 'app/components/Control/util'
 import GlobalControlPanel from '../ControlPanel/Global'
-import GlobalControlConfig from 'app/components/Control/Config/Global'
+import GlobalControlConfig from 'app/components/Control/Config'
 import SharePanel from './SharePanel'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
@@ -61,9 +57,7 @@ import { hasVizEditPermission } from '../Account/components/checkUtilPermission'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 import { Row, Col, Button, Modal, Breadcrumb, Menu, message } from 'antd'
-import { uuid } from 'utils/util'
 import FullScreenPanel from './FullScreenPanel'
-import { decodeMetricName } from 'containers/Widget/components/util'
 import { DashboardActions } from './actions'
 const {
   loadDashboardDetail,
@@ -101,7 +95,12 @@ import { makeSelectCurrentPortal, makeSelectCurrentDashboards } from 'containers
 import ViewActions from 'containers/View/actions'
 import { ControlActions } from 'containers/ControlPanel/actions'
 
-const { loadViewsDetail, loadSelectOptions } = ViewActions
+const {
+  loadViews,
+  loadViewsDetail,
+  loadSelectOptions,
+  loadColumnDistinctValue
+} = ViewActions
 const { setSelectOptions } = ControlActions
 import { makeSelectWidgets } from 'containers/Widget/selectors'
 import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
@@ -115,13 +114,13 @@ import {
   GRID_ROW_HEIGHT
 } from 'app/globalConstants'
 import { RenderType } from '../Widget/components/Widget'
-import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 import { DownloadTypes } from '../App/constants'
 import { statistic, IVizData } from 'utils/statistic/statistic.dv'
 const utilStyles = require('assets/less/util.less')
 const styles = require('./Dashboard.less')
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 import { IDrillDetail } from 'components/DataDrill/types'
+import { IView } from '../View/types'
 type MappedStates = ReturnType<typeof mapStateToProps>
 type MappedDispatches = ReturnType<typeof mapDispatchToProps>
 
@@ -139,7 +138,7 @@ interface IGridStates {
   polling: boolean
   linkageConfigVisible: boolean
   interactingStatus: { [itemId: number]: boolean }
-  globalFilterConfigVisible: boolean
+  globalControlConfigVisible: boolean
   nextMenuTitle: string
 }
 
@@ -165,12 +164,15 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
 
       linkageConfigVisible: false,
       interactingStatus: {},
-      globalFilterConfigVisible: false,
+      globalControlConfigVisible: false,
 
       nextMenuTitle: ''
     }
 
   }
+
+  private containerBody: RefObject<HTMLDivElement> = createRef()
+  private containerBodyScrollThrottle: boolean = false
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
@@ -180,17 +182,11 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     dashboardItemForm: (f) => { this.dashboardItemForm = f }
   }
 
-  private containerBody: any = null
-  private containerBodyScrollThrottle: boolean = false
-
   public componentWillMount () {
-    const {
-      onLoadDashboardDetail,
-      match
-    } = this.props
-    const { projectId, portalId, dashboardId } = match.params
-    if (dashboardId && Number(dashboardId) !== -1) {
-      onLoadDashboardDetail(+projectId, +portalId, Number(dashboardId))
+    const { match, widgets, onLoadDashboardDetail } = this.props
+    const { portalId, dashboardId } = match.params
+    if (dashboardId && Number(dashboardId) !== -1 && widgets) {
+      onLoadDashboardDetail(+portalId, Number(dashboardId))
     }
   }
 
@@ -220,9 +216,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       currentDashboardLoading,
       currentItems,
       currentPortal,
-      match: { params: nextParams }
+      match: { params: nextParams },
+      onLoadDashboardDetail
     } = nextProps
-    const { onLoadDashboardDetail } = this.props
     const { layoutInitialized } = this.state
 
     const { match, currentProject} = this.props
@@ -260,7 +256,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
 
       if (nextParams.dashboardId && Number(nextParams.dashboardId) !== -1) {
-        onLoadDashboardDetail(+nextParams.projectId, +nextParams.portalId, +nextParams.dashboardId)
+        onLoadDashboardDetail(+nextParams.portalId, +nextParams.dashboardId)
       }
 
       statistic.setDurations({
@@ -281,8 +277,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           mounted: true
         }, () => {
           this.lazyLoad()
-          this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
-          this.containerBody.addEventListener('scroll', this.lazyLoad, false)
+          this.containerBody.current.removeEventListener('scroll', this.lazyLoad, false)
+          this.containerBody.current.addEventListener('scroll', this.lazyLoad, false)
         })
       }
     }
@@ -381,7 +377,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     window.removeEventListener('mousemove', this.statisticTimeFuc, false)
     window.removeEventListener('visibilitychange', this.onVisibilityChanged, false)
     window.removeEventListener('keydown', this.statisticTimeFuc, false)
-    this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+    this.containerBody.current.removeEventListener('scroll', this.lazyLoad, false)
     this.props.onClearCurrentDashboard()
     statistic.resetClock()
   }
@@ -394,7 +390,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
         const waitingItems = currentItems.filter((item) => !currentItemsInfo[item.id].rendered)
 
         if (waitingItems.length) {
-          const { offsetHeight, scrollTop } = this.containerBody
+          const { offsetHeight, scrollTop } = this.containerBody.current
           waitingItems.forEach((item) => {
             const itemTop = this.calcItemTop(item.y)
 
@@ -403,8 +399,8 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
             }
           })
         } else {
-          if (this.containerBody) {
-            this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          if (this.containerBody.current) {
+            this.containerBody.current.removeEventListener('scroll', this.lazyLoad, false)
           }
         }
         this.containerBodyScrollThrottle = false
@@ -414,6 +410,12 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
   }
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
+
+  private loadViews = () => {
+    const { match, onLoadViews } = this.props
+    const { projectId } = match.params
+    onLoadViews(Number(projectId))
+  }
 
   private initiateWidgetDownloadTask = (itemId: number) => {
     this.props.onInitiateDownloadTask(DownloadTypes.Widget, void 0, itemId)
@@ -654,30 +656,35 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     })
   }
 
-  private toggleLinkageConfig = (visible) => () => {
+  private openLinkageConfig = () => {
     this.setState({
-      linkageConfigVisible: visible
+      linkageConfigVisible: true
+    })
+  }
+
+  private closeLinkageConfig = () => {
+    this.setState({
+      linkageConfigVisible: false
     })
   }
 
   private saveLinkageConfig = (linkages: any[]) => {
     const { currentDashboard, onEditCurrentDashboard } = this.props
 
-    try {
-      onEditCurrentDashboard({
+    onEditCurrentDashboard(
+      {
         ...currentDashboard,
         config: {
           ...currentDashboard.config,
           linkages
         }
-      }, () => {
-        this.toggleLinkageConfig(false)()
+      },
+      'linkage',
+      () => {
+        this.closeLinkageConfig()
         this.clearAllInteracts()
-      })
-    } catch (err) {
-      message.error(err.message)
-      throw err
-    }
+      }
+    )
   }
 
   private checkInteract = (itemId: number) => {
@@ -758,9 +765,15 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     }
   }
 
-  private toggleGlobalFilterConfig = (visible) => () => {
+  private openGlobalControlConfig = () => {
     this.setState({
-      globalFilterConfigVisible: visible
+      globalControlConfigVisible: true
+    })
+  }
+
+  private closeGlobalControlConfig = () => {
+    this.setState({
+      globalControlConfigVisible: false
     })
   }
 
@@ -770,24 +783,20 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       onEditCurrentDashboard
     } = this.props
 
-    try {
-      onEditCurrentDashboard(
-        {
-          ...currentDashboard,
-          config: {
-            ...currentDashboard.config,
-            filters: controls,
-            queryMode
-          }
-        },
-        () => {
-          this.toggleGlobalFilterConfig(false)()
+    onEditCurrentDashboard(
+      {
+        ...currentDashboard,
+        config: {
+          ...currentDashboard.config,
+          filters: controls,
+          queryMode
         }
-      )
-    } catch (err) {
-      message.error(err.message)
-      throw err
-    }
+      },
+      'control',
+      () => {
+        this.closeGlobalControlConfig()
+      }
+    )
   }
 
   private getControlSelectOptions = (controlKey: string, useOptions: boolean, paramsOrOptions, itemId?: number) => {
@@ -856,15 +865,17 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       widgets,
       currentDashboard,
       currentDashboardLoading,
-      onOpenSharePanel,
       currentItems,
       currentItemsInfo,
       views,
       formedViews,
       currentProject,
       currentLinkages,
+      onLoadViewsDetail,
+      onOpenSharePanel,
       onLoadDashboardItemData,
       onLoadBatchDataWithControlValues,
+      onLoadColumnDistinctValue,
       onResizeDashboardItem,
       onRenderChartError,
       onSetFullScreenPanelItemId,
@@ -883,12 +894,9 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       dashboardItemFormStep,
       linkageConfigVisible,
       interactingStatus,
-      globalFilterConfigVisible
+      globalControlConfigVisible
     } = this.state
-    let dashboardType: number
-    if (currentDashboard) {
-      dashboardType = currentDashboard.type
-    }
+
     let navDropdown = (<span />)
     let grids = void 0
 
@@ -923,10 +931,12 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       )
     }
 
-    if (currentProject && currentItems) {
+    let gridEditable = false
+
+    if (currentProject && currentItems && widgets) {
       const itemblocks = []
       const layouts = { lg: [] }
-      const gridEditable = hasVizEditPermission(currentProject.permission)
+      gridEditable = hasVizEditPermission(currentProject.permission)
 
       currentItems.forEach((dashboardItem) => {
         const { id, x, y, width, height, widgetId, polling, frequency, alias } = dashboardItem
@@ -955,6 +965,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               itemId={id}
               alias={alias}
               widgets={widgets}
+              formedViews={formedViews}
               widget={widget}
               isTrigger={isTrigger}
               datasource={datasource}
@@ -1008,8 +1019,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
       })
       grids = (
         <ResponsiveReactGridLayout
-          className="layout"
-          style={{marginTop: '-14px'}}
+          className={styles.grid}
           rowHeight={GRID_ROW_HEIGHT}
           margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
           breakpoints={GRID_BREAKPOINTS}
@@ -1069,7 +1079,7 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
     return (
       <Container>
         <Helmet title={currentDashboard && currentDashboard.name} />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
             <Col sm={12}>
               <Breadcrumb className={utilStyles.breadcrumb}>
@@ -1089,76 +1099,25 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
               currentDashboard={currentDashboard}
               showAddDashboardItem={this.showAddDashboardItemForm}
               onOpenSharePanel={this.openDashboardSharePanel}
-              onToggleGlobalFilterVisibility={this.toggleGlobalFilterConfig}
-              onToggleLinkageVisibility={this.toggleLinkageConfig}
+              onOpenGlobalControlConfig={this.openGlobalControlConfig}
+              onOpenLinkageConfig={this.openLinkageConfig}
               onDownloadDashboard={this.initiateDashboardDownloadTask}
             />
           </Row>
           <GlobalControlPanel
             currentDashboard={currentDashboard}
             currentItems={currentItems}
+            formedViews={formedViews}
             layoutType={ControlPanelLayoutTypes.Dashboard}
             onGetOptions={this.getControlSelectOptions}
             onSearch={onLoadBatchDataWithControlValues}
             onMonitoredSearchDataAction={onMonitoredSearchDataAction}
           />
-        </Container.Title>
-        {
-          dashboardType === 1 ? (
-            <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
-              {grids}
-              <div className={styles.gridBottom} />
-            </Container.Body>
-          ) : (
-            <Container.Body report ref={(f) => this.containerBody = findDOMNode(f)}>
-              {grids}
-            </Container.Body>
-          )
-        }
-        <Modal
-          title={`${dashboardItemFormType === 'add' ? '新增' : '修改'} Widget`}
-          wrapClassName="ant-modal-large"
-          visible={dashboardItemFormVisible}
-          footer={modalButtons}
-          onCancel={this.hideDashboardItemForm}
-          afterClose={this.afterDashboardItemFormClose}
-        >
-          <DashboardItemForm
-            type={dashboardItemFormType}
-            widgets={widgets || []}
-            selectedWidgets={selectedWidgets}
-            currentDashboard={this.props.currentDashboard}
-            polling={polling}
-            step={dashboardItemFormStep}
-            onWidgetSelect={this.widgetSelect}
-            onPollingSelect={this.pollingSelect}
-            wrappedComponentRef={this.refHandles.dashboardItemForm}
-          />
-        </Modal>
-        <DashboardLinkageConfig
-          currentDashboard={currentDashboard}
-          currentItems={currentItems}
-          currentItemsInfo={currentItemsInfo}
-          views={formedViews}
-          widgets={widgets}
-          visible={linkageConfigVisible}
-          loading={currentDashboardLoading}
-          onGetWidgetInfo={this.getWidgetInfo}
-          onSave={this.saveLinkageConfig}
-          onCancel={this.toggleLinkageConfig(false)}
-          linkages={currentLinkages}
-        />
-        <GlobalControlConfig
-          currentDashboard={currentDashboard}
-          currentItems={currentItems}
-          views={formedViews}
-          widgets={widgets}
-          visible={globalFilterConfigVisible}
-          loading={currentDashboardLoading}
-          onCancel={this.toggleGlobalFilterConfig(false)}
-          onSave={this.saveControls}
-          onGetOptions={this.getControlSelectOptions}
-        />
+        </ContainerTitle>
+        <ContainerBody grid ref={this.containerBody}>
+          {grids}
+          <div className={styles.gridBottom} />
+        </ContainerBody>
         <FullScreenPanel
           currentDashboard={currentDashboard}
           widgets={widgets}
@@ -1171,6 +1130,59 @@ export class Grid extends React.Component<IGridProps & RouteComponentWithParams,
           onMonitoredSearchDataAction={onMonitoredSearchDataAction}
         />
         <SharePanel />
+        {gridEditable && (
+          <>
+            <Modal
+              title={`${dashboardItemFormType === 'add' ? '新增' : '修改'} Widget`}
+              wrapClassName="ant-modal-large"
+              visible={dashboardItemFormVisible}
+              footer={modalButtons}
+              onCancel={this.hideDashboardItemForm}
+              afterClose={this.afterDashboardItemFormClose}
+            >
+              <DashboardItemForm
+                type={dashboardItemFormType}
+                widgets={widgets || []}
+                selectedWidgets={selectedWidgets}
+                currentDashboard={this.props.currentDashboard}
+                polling={polling}
+                step={dashboardItemFormStep}
+                onWidgetSelect={this.widgetSelect}
+                onPollingSelect={this.pollingSelect}
+                wrappedComponentRef={this.refHandles.dashboardItemForm}
+              />
+            </Modal>
+            <DashboardLinkageConfig
+              currentDashboard={currentDashboard}
+              currentItems={currentItems}
+              currentItemsInfo={currentItemsInfo}
+              views={formedViews}
+              widgets={widgets}
+              visible={linkageConfigVisible}
+              loading={currentDashboardLoading}
+              onGetWidgetInfo={this.getWidgetInfo}
+              onSave={this.saveLinkageConfig}
+              onCancel={this.closeLinkageConfig}
+              linkages={currentLinkages}
+            />
+            <GlobalControlConfig
+              type={ControlPanelTypes.Global}
+              originalControls={currentDashboard.config.filters}
+              currentItems={currentItems}
+              views={views}
+              formedViews={formedViews}
+              widgets={widgets}
+              visible={globalControlConfigVisible}
+              loading={currentDashboardLoading}
+              queryMode={currentDashboard.config.queryMode}
+              onCancel={this.closeGlobalControlConfig}
+              onSave={this.saveControls}
+              onLoadViews={this.loadViews}
+              onLoadViewDetail={onLoadViewsDetail}
+              onGetOptions={onLoadColumnDistinctValue}
+            />
+          </>
+        )}
       </Container>
     )
   }
@@ -1193,19 +1205,19 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboardDetail: (
-      projectId: number,
       portalId: number,
       dashboardId: number
-    ) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
+    ) => dispatch(loadDashboardDetail(portalId, dashboardId)),
     onAddDashboardItems: (
       portalId: number,
-      items: Array<Omit<Omit<IDashboardItem, 'id'>, 'config'>>,
+      items: Array<Omit<IDashboardItem, 'id' | 'config'>>,
       resolve: (items: IDashboardItem[]) => void
     ) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (
       dashboard: IDashboard,
+      type: 'linkage' | 'control',
       resolve: () => void
-    ) => dispatch(VizActions.editCurrentDashboard(dashboard, resolve)),
+    ) => dispatch(VizActions.editCurrentDashboard(dashboard, type, resolve)),
     onEditDashboardItem: (
       portalId: number,
       item: IDashboardItem,
@@ -1230,9 +1242,16 @@ export function mapDispatchToProps (dispatch) {
       formValues?: object,
       itemId?: number
     ) => dispatch(loadBatchDataWithControlValues(type, relatedItems, formValues, itemId)),
+    onLoadColumnDistinctValue: (
+      paramsByViewId: {
+        [viewId: string]: Omit<IDistinctValueReqeustParams, 'cache' | 'expired'>
+      },
+      callback: (options?: object[]) => void
+    ) => dispatch(loadColumnDistinctValue(paramsByViewId, callback)),
+    onLoadViews: (projectId: number) => dispatch(loadViews(projectId)),
     onLoadViewsDetail: (
       viewIds: number[],
-      resolve: () => void
+      resolve: (views: IView[]) => void
     ) => dispatch(loadViewsDetail(viewIds, resolve)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onInitiateDownloadTask: (
@@ -1257,7 +1276,7 @@ export function mapDispatchToProps (dispatch) {
       dispatch(renderChartError(itemId, error)),
     onOpenSharePanel: (
       id: number,
-      type: SharePanelType,
+      type: TShareVizsType,
       title: string,
       itemId?: number
     ) => dispatch(openSharePanel(id, type, title, itemId)),
@@ -1287,19 +1306,14 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withWidgetReducer = injectReducer({ key: 'widget', reducer: widgetReducer })
-const withWidgetSaga = injectSaga({ key: 'widget', saga: widgetSaga })
-
 const withViewReducer = injectReducer({ key: 'view', reducer: viewReducer })
 const withViewSaga = injectSaga({ key: 'view', saga: viewSaga })
 
 const withControlReducer = injectReducer({ key: 'control', reducer: controlReducer })
 
 export default compose(
-  withWidgetReducer,
   withViewReducer,
   withControlReducer,
-  withWidgetSaga,
   withViewSaga,
   withConnect
 )(Grid)

@@ -18,6 +18,8 @@
  * >>
  */
 
+import 'intersection-observer'
+
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
@@ -31,7 +33,7 @@ import zh_CN from 'antd/es/locale/zh_CN'
 import LanguageProvider from 'app/containers/LanguageProvider'
 import { translationMessages } from 'app/i18n'
 import moment from 'moment'
-import 'moment/src/locale/zh-cn'
+import 'moment/dist/locale/zh-cn'
 moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'

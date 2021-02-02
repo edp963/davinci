@@ -27,9 +27,11 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RelRolePortalExtendMapper extends RelRolePortalMapper {
 
 	@Insert({
@@ -81,7 +83,7 @@ public interface RelRolePortalExtendMapper extends RelRolePortalMapper {
     List<RoleDisableViz> getDisablePortalByUser(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
     @Delete({"delete from rel_role_portal where portal_id = #{portalId}"})
-    int deleteByProtalId(@Param("portalId") Long portalId);
+    int deleteByPortalId(@Param("portalId") Long deleteByPortalId);
 
     @Select("select role_id from rel_role_portal where portal_id = #{portalId} and visible = 0")
     List<Long> getExcludeRoles(@Param("portalId") Long portalId);
@@ -101,5 +103,8 @@ public interface RelRolePortalExtendMapper extends RelRolePortalMapper {
     int deleteByRoleId(Long roleId);
 
     @Delete({"delete from rel_role_portal where portal_id in (select id from dashboard_portal where project_id = #{projectId})"})
-    int deleteByProject(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({"delete from rel_role_portal where role_id = #{roleId} and portal_id in (select id from dashboard_portal where project_id = #{projectId})"})
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }

@@ -19,42 +19,72 @@
  */
 
 import omit from 'lodash/omit'
-import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
+import { call, select, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
 import ShareDisplayActions, { ShareDisplayActionType } from './actions'
-
+import { getPasswordUrl } from 'share/util'
+import {
+  makeSelectShareType
+} from 'share/containers/App/selectors'
+import { displayParamsMigrationRecorder, widgetConfigMigrationRecorder } from 'app/utils/migrationRecorders'
+import { SecondaryGraphTypes } from 'app/containers/Display/components/Setting'
+import { ILayerRaw, ILayerParams } from 'app/containers/Display/components/types'
+import { IWidgetConfig } from 'app/containers/Widget/components/Widget'
 export function* getDisplay (action: ShareDisplayActionType) {
   if (action.type !== ActionTypes.LOAD_SHARE_DISPLAY) { return }
 
   const { token, resolve, reject } = action.payload
   const { loadDisplayFail, displayLoaded } = ShareDisplayActions
+
+  const shareType = yield select(makeSelectShareType())
+  const baseUrl = `${api.share}/display/${token}`
+  const requestUrl = getPasswordUrl(shareType, token, baseUrl)
+
+
   try {
-    const asyncData = yield call(request, `${api.share}/display/${token}`)
+    const asyncData = yield call(request, requestUrl)
     const { header, payload } = asyncData
     if (header.code === 401) {
       reject(header.msg)
       yield put(loadDisplayFail(header.msg))
       return
     }
-    const { slides, widgets, ...display } = payload
+    const { slides, widgets, views, ...display } = payload
     display.config = JSON.parse(display.config || '{}')
     slides.sort((s1, s2) => s1.index - s2.index).forEach((slide) => {
       slide.config = JSON.parse(slide.config)
-      slide.relations.forEach((layer) => {
-        layer.params = JSON.parse(layer.params)
+      slide.relations.forEach((layer: ILayerRaw) => {
+        const { subType } = layer
+        const parsedParams: ILayerParams = JSON.parse(layer.params)
+        layer.params = SecondaryGraphTypes.Label === subType ? displayParamsMigrationRecorder(parsedParams) : parsedParams
       })
     })
-    if (Array.isArray(widgets)) {
-      widgets.forEach((widget) => {
-        widget.config = JSON.parse(widget.config)
-        widget.model = JSON.parse(widget.model)
-      })
-    }
-    yield put(displayLoaded(display, slides, widgets || [])) // @FIXME should return empty array in response
+    const formedWidgets = widgets.map((widget) => {
+      const { config, ...rest } = widget
+      const parsedConfig: IWidgetConfig = JSON.parse(config)
+      return {
+        ...rest,
+        config: widgetConfigMigrationRecorder(parsedConfig, {
+          viewId: widget.viewId
+        })
+      }
+    })
+    const formedViews = views.reduce(
+      (obj, { id, model, variable }) => ({
+        ...obj,
+        [id]: {
+          model: JSON.parse(model),
+          variable: JSON.parse(variable)
+        }
+      }),
+      {}
+    )
+
+    yield put(displayLoaded(display, slides, formedWidgets, formedViews))
     resolve(display, slides, widgets)
   } catch (err) {
     message.destroy()
@@ -94,16 +124,15 @@ export function* getData (action: ShareDisplayActionType) {
         pageNo
       }
     })
-    let responsePayload = response.payload || { resultList: [] }
-    const { resultList } = responsePayload
-    responsePayload.resultList = (resultList && resultList.slice(0, 600)) || []
+    const responsePayload = response.payload || { resultList: [] }
+    responsePayload.resultList = responsePayload.resultList || []
     yield put(layerDataLoaded(renderType, slideNumber, layerId, responsePayload, requestParams))
   } catch (err) {
     yield put(loadLayerDataFail(slideNumber, layerId, err))
   }
 }
 
-export default function* rootDisplaySaga (): IterableIterator<any> {
+export default function* rootDisplaySaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
     takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)

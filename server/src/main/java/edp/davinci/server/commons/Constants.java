@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * 常量
  */
 public class Constants {
-	
+
     /**
      * 当前用户
      */
@@ -67,30 +67,19 @@ public class Constants {
      */
     public static final String TOKEN_CREATE_TIME = "token_create_time";
 
-    public static final String SCHEDULE_JOB_DATA_KEY = "scheduleJobs";
-
     public static final String DEFAULT_COPY_SUFFIX = "_COPY";
 
     /**
      * 常用图片格式
      */
     public static final String REG_IMG_FORMAT = "^.+(.JPEG|.jpeg|.JPG|.jpg|.PNG|.png|.GIF|.gif)$";
-    public static final Pattern PATTERN_IMG_FROMAT = Pattern.compile(REG_IMG_FORMAT);
+    public static final Pattern PATTERN_IMG_FORMAT = Pattern.compile(REG_IMG_FORMAT);
 
     /**
      * 邮箱格式
      */
     public static final String REG_EMAIL_FORMAT = "^[a-zA-Z_0-9.-]{1,64}@([a-zA-Z0-9-]{1,200}.){1,5}[a-zA-Z]{1,6}$";
     public static final Pattern PATTERN_EMAIL_FORMAT = Pattern.compile(Constants.REG_EMAIL_FORMAT);
-
-    private static final String REG_WITH_SQL_FRAGMENT = "((?i)WITH[\\s\\S]+(?i)AS?\\s*\\([\\s\\S]+\\))\\s*(?i)SELECT";
-    public static final Pattern WITH_SQL_FRAGMENT = Pattern.compile(REG_WITH_SQL_FRAGMENT);
-
-    /**
-     * sql 常见聚合函数
-     */
-    public static final String REGEX_SQL_AGGREGATE = "sum\\(.*\\)|avg\\(.*\\)|count\\(.*\\)|COUNTDISTINCT\\(.*\\)|max\\(.*\\)|min\\(.*\\)";
-    public static final Pattern PATTERN_SQL_AGGREGATE = Pattern.compile(REGEX_SQL_AGGREGATE);
 
     public static final Pattern PATTERN_DB_COLUMN_TYPE = Pattern.compile("^.*\\s*\\(.*\\)$");
 
@@ -100,7 +89,7 @@ public class Constants {
 
     public static final String DIR_EMAIL = File.separator + "email" + File.separator;
 
-    public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
+    public static final String DIR_TEMP = File.separator + "tempFiles" + File.separator;
 
     public static final String HTTP_PROTOCOL = "http";
 
@@ -108,11 +97,7 @@ public class Constants {
 
     public static final String PROTOCOL_SEPARATOR = "://";
 
-    public static final String SCREENSHOT_BASE64_CONTENT_PNG_HEAD = "data:image/png;base64, ";
-
     public static final String JDBC_DATASOURCE_DEFAULT_VERSION = "Default";
-
-    public static final String PATH_EXT_FORMATER = "lib" + File.separator + "ext" + File.separator + "%s" + File.separator + "%s" + File.separator;
 
     /**
      * api基本路径
@@ -129,7 +114,7 @@ public class Constants {
      */
     public static final String USER_ACTIVATE_EMAIL_TEMPLATE = "mail/userActivateEmailTemplate";
 
-    public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emaiDefaultTemplate";
+    public static final String EMAIL_DEFAULT_TEMPLATE = "mail/emailDefaultTemplate";
 
     /**
      * 用户重置密码邮件模板
@@ -147,11 +132,6 @@ public class Constants {
     public static final String USER_REST_PASSWORD_EMAIL_SUBJECT = "[Davinci] 重置密码";
 
     /**
-     * 用户默认Organization描述
-     */
-    public static final String DEFAULT_ORGANIZATION_DES = "my default organization";
-
-    /**
      * 用户头像上传地址
      */
     public static final String USER_AVATAR_PATH = "/image/user/";
@@ -165,11 +145,6 @@ public class Constants {
      * display封面图地址
      */
     public static final String DISPLAY_AVATAR_PATH = "/image/display/";
-
-    /**
-     * CSV地址
-     */
-    public static final String SOURCE_CSV_PATH = "/source/csv/";
 
     /**
      * 邀请组织成员邮件主题
@@ -206,12 +181,7 @@ public class Constants {
     /**
      * 定时任务发送邮件模板
      */
-    public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";
-
-    /**
-     * select 表达式
-     */
-    public static final String SELECT_EXEPRESSION = "SELECT * FROM TABLE WHERE %s";
+    public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmailTemplate";
 
     /**
      * 点赞project
@@ -220,31 +190,15 @@ public class Constants {
 
     public static final String REG_USER_PASSWORD = ".{6,20}";
 
-    public static final String EXCEL_FORMAT_KEY = "format";
-
-    public static final String EXCEL_FORMAT_TYPE_KEY = "formatType";
-
-    public static final String REG_SQL_PLACEHOLDER = "%s.+%s";
-
-    public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.\\-[\\u4e00-\\u9fa5]*]+\\s*[\\s\\w<>!=]*\\s*[a-zA-Z0-9_.\\-]*((\\(%s[a-zA-Z0-9_]+%s\\))|(%s[a-zA-Z0-9_]+%s))+\\s*\\)";
-
-    public static final String REG_SYSVAR = "[a-zA-Z0-9_.\\-\\u4e00-\\u9fa5]+\\s*[\\!=]{1,2}\\s*['\"\\[]?%s['\"\\]]?";
-
-    public static final String REG_IGNORE_CASE = "(?i)";
-
-    public static final String REG_CHINESE = "[\\u4e00-\\u9fa5]+";
-
-    public static final Pattern REG_CHINESE_PATTERN = Pattern.compile(REG_CHINESE);
-
     public static final String LDAP_USER_PASSWORD = "LDAP";
 
     public static final String NO_AUTH_PERMISSION = "@DAVINCI_DATA_ACCESS_DENIED@";
 
     public static final String DAVINCI_TOPIC_CHANNEL = "DAVINCI_TOPIC_CHANNEL";
 
-    public static final int INVALID_SHEET_NAEM_LENGTH = 28;
-    
+    public static final int INVALID_SHEET_NAME_LENGTH = 28;
+
     private static final String REG_INVALID_SHEET_NAME = "[\\!\\\\\\/\\?\\*\\[\\]\\:]";
-    
+
     public static final Pattern PATTERN_INVALID_SHEET_NAME = Pattern.compile(REG_INVALID_SHEET_NAME);
 }

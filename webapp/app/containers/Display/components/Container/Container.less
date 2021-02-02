@@ -84,6 +84,10 @@
           z-index: 999999;
         }
 
+        & > span:nth-last-child(2) {
+          z-index: 999999;
+        }
+
         &-tools {
           display: none;
           position: absolute;
@@ -106,6 +110,32 @@
 
         &:hover &-tools {
           display: inline-block;
+        }
+        &-tooltips {
+          display: none;
+          position: absolute;
+          top: -40px;
+          left: 0;
+          z-index: 999998;
+          font-size: 24px;
+          color: #fff;
+          background-color: @black;
+          padding: 0 8px;
+          border-radius: 4px;
+          .ellipsis;
+        }
+        &:hover &-tooltips {
+          display: block;
+        }
+        &-editor {
+          border-radius: @border-radius-base;
+          .richtext {
+            &-toolbar {
+              border: @border-width-base @border-style-base @border-color-base;
+              user-select: none;
+              border-radius: 4px;
+            }
+          }
         }
       }
     }

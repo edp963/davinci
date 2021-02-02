@@ -31,7 +31,7 @@ import {
   IDashboardItem
 } from '../../containers/Dashboard/types'
 import { IWidgetFormed } from 'app/containers/Widget/types'
-import { IFormedViews, IFormedView } from 'app/containers/View/types'
+import { IFormedViews, IShareFormedViews } from 'app/containers/View/types'
 import { OnGetControlOptions } from 'app/components/Control/types'
 import { ControlPanelTypes } from 'app/components/Control/constants'
 import { IShareDashboardItemInfo } from 'share/containers/Dashboard/types'
@@ -41,11 +41,7 @@ interface IFullScreenPanelProps {
   itemId: number
   currentDashboard: IDashboard
   widgets: IWidgetFormed[]
-  formedViews:
-    | IFormedViews
-    | {
-        [viewId: string]: Pick<IFormedView, 'model'>
-      }
+  formedViews: IFormedViews | IShareFormedViews
   currentItems: IDashboardItem[]
   currentItemsInfo: {
     [itemId: string]: IDashboardItemInfo | IShareDashboardItemInfo
@@ -181,6 +177,7 @@ const FullScreenPanel: React.FC<IFullScreenPanelProps> = memo(
                 hasLocalControls={hasLocalControls}
                 currentDashboard={currentDashboard}
                 currentItems={currentItems}
+                formedViews={formedViews}
                 onGetOptions={onGetOptions}
                 onSearch={onSearch}
                 onMonitoredSearchDataAction={onMonitoredSearchDataAction}

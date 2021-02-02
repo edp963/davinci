@@ -26,14 +26,14 @@ public class Constants {
 
 	public static final String DATABASE_DEFAULT_VERSION = "Default";
 
-	public static final String EXT_LIB_PATH_FORMATER = "lib" + File.separator + "ext" + File.separator + "%s"
+	public static final String EXT_LIB_PATH_FORMATTER = "lib" + File.separator + "ext" + File.separator + "%s"
 			+ File.separator + "%s" + File.separator;
 
-	public static final String JDBC_URL_PREFIX_FORMATER = "jdbc:%s:";
+	public static final String JDBC_URL_PREFIX_FORMATTER = "jdbc:%s:";
 
-	public static final String JDBC_COUNT_SQL_FORMATER = "SELECT COUNT(*) FROM (%s) CT";
+	public static final String JDBC_COUNT_SQL_FORMATTER = "SELECT COUNT(*) FROM (%s) CT";
 
-	public static final String JDBC_SELECT_SQL_FORMATER = "SELECT * FROM TABLE WHERE %s";
+	public static final String JDBC_SELECT_SQL_FORMATTER = "SELECT * FROM TABLE WHERE %s";
 
 	public static final String ORACLE_JDBC_URL_PREFIX = "jdbc:oracle:thin:";
 

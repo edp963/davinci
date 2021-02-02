@@ -21,15 +21,11 @@ package edp.davinci.server.dao;
 
 import edp.davinci.core.dao.WidgetMapper;
 import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.server.dto.share.ShareWidget;
+import edp.davinci.server.dto.share.SimpleShareWidget;
 import edp.davinci.server.dto.widget.WidgetWithRelationDashboardId;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
 import edp.davinci.server.dto.widget.WidgetWithVizId;
-
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -72,8 +68,8 @@ public interface WidgetExtendMapper extends WidgetMapper {
 	})
 	int insert(Widget widget);
 
-    @Select({"select w.*,v.model from widget w left join `view` v on v.id = w.view_id where w.id = #{id}"})
-    ShareWidget getShareWidgetById(@Param("id") Long id);
+	@Select({"select id, name, description, view_id, type, config from widget where id = #{id}"})
+	SimpleShareWidget getShareWidgetById(@Param("id") Long id);
 
     @Insert({
     	"<script>",
@@ -147,34 +143,36 @@ public interface WidgetExtendMapper extends WidgetMapper {
     List<WidgetWithVizId> queryByDisplayId(@Param("displayId") Long displayId);
 
     @Select({
-            "select w.*, v.model, v.variable from widget w ",
+            "select w.* from widget w ",
             "left join mem_display_slide_widget m on w.id = m.widget_id",
             "left join display_slide s on m.display_slide_id = s.id",
-            "left join `view` v on v.id = w.view_id",
-            "where s.display_id = #{displayId}",
+            "where s.display_id = #{displayId}"
     })
-    Set<ShareWidget> getShareWidgetsByDisplayId(@Param("displayId") Long displayId);
+    Set<SimpleShareWidget> getShareWidgetsByDisplayId(@Param("displayId") Long displayId);
 
     @Select({"select id from widget where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
-    @Select({"select * from widget where project_id = #{projectId}"})
-    List<Widget> getByProject(@Param("projectId") Long projectId);
+	@Select({"select w.*, v.name as 'viewName' from widget w",
+			"left join view v on v.id = w.view_id",
+			"where w.project_id = #{projectId}"})
+    List<WidgetWithViewName> getByProject(@Param("projectId") Long projectId);
 
     @Select({"select w.*, m.id as 'relationId' from mem_dashboard_widget m left join widget w on w.id = m.widget_id where m.dashboard_id = #{dashboardId} order by m.create_time"})
     List<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
 
-    @Select({"select w.*, v.model from mem_dashboard_widget m ",
+    @Select({
+			"select w.* from mem_dashboard_widget m ",
             "left join widget w on w.id = m.widget_id ",
-            "left join `view` v on v.id = w.view_id",
-            "where m.dashboard_id = #{dashboardId}"})
-    Set<ShareWidget> getShareWidgetsByDashboard(@Param("dashboardId") Long dashboardId);
+            "where m.dashboard_id = #{dashboardId}"
+    })
+    Set<SimpleShareWidget> getShareWidgetsByDashboard(@Param("dashboardId") Long dashboardId);
 
     @Delete({"delete from widget where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
 
     @Select({"select * from widget where view_id = #{viewId}"})
-    List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
+    List<Widget> getWidgetsByView(@Param("viewId") Long viewId);
 
     @Update({
     	"<script>",

@@ -27,6 +27,8 @@ import edp.davinci.server.annotation.CurrentUser;
 import edp.davinci.server.commons.Constants;
 import edp.davinci.server.dto.display.*;
 import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareResult;
 import edp.davinci.server.service.DisplayService;
 import edp.davinci.server.service.DisplaySlideService;
 import io.swagger.annotations.Api;
@@ -201,7 +203,7 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        displaySlideService.updateDisplaySildes(displayId, displaySlides, user);
+        displaySlideService.updateDisplaySlides(displayId, displaySlides, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -501,7 +503,7 @@ public class DisplayController extends BaseController {
         }
 
         if (null == ids || ids.length < 1) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("nothing be deleted");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Nothing be deleted");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -518,7 +520,7 @@ public class DisplayController extends BaseController {
      * @return
      */
     @ApiOperation(value = "upload avatar")
-    @PostMapping(value = "/upload/coverImage")
+    @PostMapping(value = "/upload/coverImage", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity uploadAvatar(@RequestParam("coverImage") MultipartFile file,
                                        HttpServletRequest request) {
 
@@ -597,24 +599,38 @@ public class DisplayController extends BaseController {
      * 共享display
      *
      * @param id
-     * @param username
+     * @param shareEntity
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "share display")
-    @GetMapping("/{id}/share")
+    @ApiOperation(value = "share display", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/share", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity shareDisplay(@PathVariable Long id,
-                                       @RequestParam(required = false) String username,
+                                       @Valid @RequestBody ShareEntity shareEntity,
+                                       @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        String shareToken = displayService.shareDisplay(id, user, username);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
+        try {
+            shareEntity.valid();
+        } catch (IllegalArgumentException e) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ShareResult shareResult = displayService.shareDisplay(id, user, shareEntity);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareResult));
     }
 
 
@@ -655,22 +671,23 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<Long> excludeRoles = displaySlideService.getSlideExecludeRoles(id);
+        List<Long> excludeRoles = displaySlideService.getSlideExcludeRoles(id);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeRoles));
     }
 
     @ApiOperation(value = "copy a display", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/copy/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity copyDisplay(@PathVariable Long id,
-    														@Valid @RequestBody DisplayCopy copy,
-    														@ApiIgnore BindingResult bindingResult,
-    														@ApiIgnore @CurrentUser User user,
-    														HttpServletRequest request) {
+                                      @Valid @RequestBody DisplayCopy copy,
+                                      @ApiIgnore BindingResult bindingResult,
+                                      @ApiIgnore @CurrentUser User user,
+                                      HttpServletRequest request) {
+
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        
+
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

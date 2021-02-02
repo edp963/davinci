@@ -19,18 +19,11 @@
 
 package edp.davinci.server.service.impl;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.core.dao.entity.DashboardPortal;
+import edp.davinci.core.dao.entity.RelRolePortal;
+import edp.davinci.core.dao.entity.Role;
+import edp.davinci.core.dao.entity.User;
 import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
 import edp.davinci.server.dao.RelRoleDashboardWidgetExtendMapper;
 import edp.davinci.server.dto.dashboard.DashboardPortalCreate;
@@ -43,16 +36,22 @@ import edp.davinci.server.enums.UserPermissionEnum;
 import edp.davinci.server.enums.VizEnum;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.core.dao.entity.User;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.service.DashboardPortalService;
 import edp.davinci.server.service.ProjectService;
 import edp.davinci.server.util.BaseLock;
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.core.dao.entity.DashboardPortal;
-import edp.davinci.core.dao.entity.RelRolePortal;
-import edp.davinci.core.dao.entity.Role;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
@@ -94,7 +93,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      * @return
      */
     @Override
-    public List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         if (!checkReadPermission(entity, projectId, user)) {
             return null;
@@ -146,7 +145,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      */
     @Override
     @Transactional
-    public DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	Long projectId = dashboardPortalCreate.getProjectId();
     	checkWritePermission(entity, projectId, user, "create");
@@ -175,7 +174,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
     }
     
     @Transactional
-    private void insertDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+    protected void insertDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
 
     	if (dashboardPortalExtendMapper.insertSelective(dashboardPortal) != 1) {
 			throw new ServerException("Create dashboardPortal fail");
@@ -214,7 +213,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 	@Override
 	@Transactional
 	public DashboardPortal updateDashboardPortal(DashboardPortalUpdate dashboardPortalUpdate, User user)
-			throws NotFoundException, UnAuthorizedExecption, ServerException {
+			throws NotFoundException, UnAuthorizedException, ServerException {
 
 		DashboardPortal dashboardPortal = getDashboardPortal(dashboardPortalUpdate.getId());
 		Long projectId = dashboardPortal.getProjectId();
@@ -249,12 +248,12 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 	}
 
 	@Transactional
-	private void updateDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
+	protected void updateDashboardPortal(DashboardPortal dashboardPortal, List<Long> roleIds, User user) {
 		if (dashboardPortalExtendMapper.update(dashboardPortal) != 1) {
 			throw new ServerException("Update dashboardPortal fail");
 		}
 
-		relRolePortalExtendMapper.deleteByProtalId(dashboardPortal.getId());
+		relRolePortalExtendMapper.deleteByPortalId(dashboardPortal.getId());
 
 		if (CollectionUtils.isEmpty(roleIds)) {
 			return;
@@ -287,7 +286,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
 
     @Override
     @Transactional
-    public boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
     	DashboardPortal portal =getDashboardPortal(vizVisibility.getId());
 
@@ -320,7 +319,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
      */
     @Override
     @Transactional
-    public boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+    public boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedException {
 
     	DashboardPortal dashboardPortal = getDashboardPortal(id);
     	checkWritePermission(entity, dashboardPortal.getProjectId(), user, "delete");
@@ -336,7 +335,7 @@ public class DashboardPortalServiceImpl extends VizCommonService implements Dash
         dashboardExtendMapper.deleteByPortalId(id);
 
         if (dashboardPortalExtendMapper.deleteByPrimaryKey(id) == 1) {
-            relRolePortalExtendMapper.deleteByProtalId(dashboardPortal.getId());
+            relRolePortalExtendMapper.deleteByPortalId(dashboardPortal.getId());
             optLogger.info("DashboardPortal({}) is delete by user({})", id, user.getId());
             return true;
         }

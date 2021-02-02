@@ -31,7 +31,7 @@ import { ActionTypes } from './constants'
 import { IQueryConditions } from 'containers/Dashboard/types'
 import { RenderType } from 'containers/Widget/components/Widget'
 import { IWidgetFormed } from 'containers/Widget/types'
-import { ISharePanel, SharePanelType } from 'app/components/SharePanel/type'
+import { ISharePanel, TShareVizsType } from 'app/components/SharePanel/types'
 
 export interface ILayerInfo {
   datasource: {
@@ -55,6 +55,8 @@ interface IDisplayLoading {
 export interface IDisplayState {
   currentDisplayShareToken: string
   currentDisplayAuthorizedShareToken: string
+  currentDisplayPasswordShareToken: string
+  currentDisplayPasswordPassword: string
   currentDisplaySelectOptions: object
 
   currentSlideId: number
@@ -70,7 +72,7 @@ export interface IDisplayState {
   clipboardSlides: ISlideFormed[]
   clipboardLayers: ILayerFormed[]
 
-  lastOperationType: (keyof typeof ActionTypes) | (keyof typeof VizActionTypes)
+  lastOperationType: keyof typeof ActionTypes | keyof typeof VizActionTypes
   lastLayers: ILayerFormed[]
 
   editorBaselines: IBaseline[]
@@ -81,8 +83,9 @@ export interface IDisplayState {
   loading: IDisplayLoading
 }
 
-export interface IDisplaySharePanelState extends Pick<ISharePanel, 'id' | 'type' | 'title'> {
+export interface IDisplaySharePanelState
+  extends Pick<ISharePanel, 'id' | 'type' | 'title'> {
   visible: boolean
 }
 
-export { SharePanelType }
+export { TShareVizsType }

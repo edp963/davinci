@@ -74,7 +74,7 @@ export default class OperatingWidget extends OperateObjectAbstract {
   }
 
   public initGroups() {
-    const widget = this.getWidgetById(this.currentWidgetId)
+    let widget = this.getWidgetById(this.currentWidgetId)
     if (!widget.initGroups) {
       const { rows, cols, color, label } = widget
       const setDefaultEmptyArray = setDefaultReplaceNull((f) => f, [])
@@ -94,7 +94,10 @@ export default class OperatingWidget extends OperateObjectAbstract {
           setDefaultEmptyArray
         )(label)
       ]
-      widget.initGroups = groups
+      widget = {
+        ...widget,
+        initGroups: groups
+      }
       return groups
     }
     return widget.initGroups
@@ -289,8 +292,8 @@ export default class OperatingWidget extends OperateObjectAbstract {
   }
 }
 
-function filterByName(target) {
-  return target.filter((t) => t.name !== '指标名字')
+export function filterByName(target) {
+  return target.filter((t) => t.name !== '指标名称')
 }
 
 function filterByCategory(target) {

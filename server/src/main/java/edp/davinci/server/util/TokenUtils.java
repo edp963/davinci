@@ -19,11 +19,15 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.server.commons.Constants.TOKEN_CREATE_TIME;
-import static edp.davinci.server.commons.Constants.TOKEN_PREFIX;
-import static edp.davinci.server.commons.Constants.TOKEN_USER_NAME;
-import static edp.davinci.server.commons.Constants.TOKEN_USER_PASSWORD;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.model.TokenEntity;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -33,16 +37,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.model.TokenEntity;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import lombok.extern.slf4j.Slf4j;
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.server.commons.Constants.*;
 
 
 @Slf4j
@@ -144,7 +140,7 @@ public class TokenUtils {
                             SignatureAlgorithm.HS512, TOKEN_SECRET.getBytes("UTF-8"))
                     .compact();
         } catch (UnsupportedEncodingException e) {
-            log.warn(e.getMessage(), e);
+            log.warn(e.toString(), e);
             return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(claims.get(TOKEN_USER_NAME).toString())
@@ -200,7 +196,7 @@ public class TokenUtils {
             final Claims claims = getClaims(token);
             username = claims.get(TOKEN_USER_NAME).toString();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return username;
     }
@@ -212,12 +208,12 @@ public class TokenUtils {
      * @return
      */
     public String getPassword(String token) {
-        String password;
+        String password = null;
         try {
             final Claims claims = getClaims(token);
             password = claims.get(TOKEN_USER_PASSWORD).toString();
         } catch (Exception e) {
-            password = null;
+            e.printStackTrace();
         }
         return password;
     }
@@ -238,7 +234,6 @@ public class TokenUtils {
                             token.trim())
                     .getBody();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
             claims = Jwts.parser()
                     .setSigningKey(TOKEN_SECRET)
                     .parseClaimsJws(token.startsWith(TOKEN_PREFIX) ?

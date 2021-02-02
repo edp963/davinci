@@ -29,9 +29,10 @@ import { IRichTextConfig, IBarConfig, IRadarConfig } from '../Workbench/ConfigSe
 import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IViewModel } from 'containers/View/types'
 import { IQueryVariableMap } from 'containers/Dashboard/types'
-import { ILocalControl } from 'app/components/Control/types'
+import { IControl } from 'app/components/Control/types'
 import { RichTextNode } from 'app/components/RichText'
 import { IReference } from '../Workbench/Reference/types'
+import { ControlQueryMode } from 'app/components/Control/constants'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -125,7 +126,7 @@ export interface IPaginationParams {
   withPaging: boolean
 }
 
-interface IWidgetConfigBase {
+export interface IWidgetConfigBase {
   data: object[]
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
@@ -168,10 +169,12 @@ export interface IWidgetProps extends IWidgetConfigBase {
 }
 
 export interface IWidgetConfig extends IWidgetConfigBase {
-  controls: ILocalControl[]
+  controls: IControl[]
+  limit: number
   cache: boolean
   expired: number
   autoLoadData: boolean
+  queryMode: ControlQueryMode
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {

@@ -1,10 +1,10 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import OperatorTypes from 'utils/operatorTypes'
 
 import { Row, Col, Input, InputNumber, DatePicker, Button, Tag, Switch } from 'antd'
-
+import { DEFAULT_DATETIME_FORMAT } from 'app/globalConstants'
 import Styles from './ConditionValuesControl.less'
 
 export type ConditionValueTypes = string | number | boolean
@@ -70,6 +70,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
         break
       case OperatorTypes.Between:
         valuesCount = 2
+        break
       case OperatorTypes.In:
         valuesCount = conditionValues.length
         break
@@ -170,7 +171,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
           <DatePicker
             style={this.controlStyle}
             size={size}
-            format="YYYY-MM-DD HH:mm:ss"
+            format={DEFAULT_DATETIME_FORMAT}
             showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
             value={dateValue}
             onChange={this.localValuesChange(idx)}

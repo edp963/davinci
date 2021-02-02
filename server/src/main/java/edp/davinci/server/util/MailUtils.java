@@ -19,13 +19,11 @@
 
 package edp.davinci.server.util;
 
+import com.google.common.base.Stopwatch;
 import edp.davinci.commons.util.CollectionUtils;
 import edp.davinci.commons.util.StringUtils;
 import edp.davinci.server.exception.ServerException;
 import edp.davinci.server.model.MailContent;
-
-import com.google.common.base.Stopwatch;
-
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +36,6 @@ import org.thymeleaf.context.Context;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -190,7 +187,7 @@ public class MailUtils {
                         }
                     } catch (MessagingException e) {
                         if (customLogger != null) {
-                            log.warn(e.getMessage(), e);
+                            log.warn(e.toString(), e);
                         }
                     }
                 });

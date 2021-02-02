@@ -19,19 +19,25 @@
 
 package edp.davinci.server.util;
 
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.commons.Constants.UNDERLINE;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
+import edp.davinci.server.component.excel.MsgWrapper;
+import edp.davinci.server.enums.ActionEnum;
+import edp.davinci.server.enums.FileTypeEnum;
+import edp.davinci.server.enums.LogNameEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.Image;
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -40,21 +46,8 @@ import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.server.commons.Constants;
-import edp.davinci.server.component.excel.MsgWrapper;
-import edp.davinci.server.enums.ActionEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.commons.Constants.UNDERLINE;
 
 
 @Component
@@ -72,12 +65,12 @@ public class FileUtils {
      * @return
      */
     public boolean isImage(MultipartFile file) {
-        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getOriginalFilename());
+        Matcher matcher = Constants.PATTERN_IMG_FORMAT.matcher(file.getOriginalFilename());
         return matcher.find();
     }
 
     public boolean isImage(File file) {
-        Matcher matcher = Constants.PATTERN_IMG_FROMAT.matcher(file.getName());
+        Matcher matcher = Constants.PATTERN_IMG_FORMAT.matcher(file.getName());
         return matcher.find();
     }
 
@@ -145,7 +138,7 @@ public class FileUtils {
         if (StringUtils.isEmpty(filePath)) {
             return;
         }
-        
+
 		File file = null;
 		if (!filePath.startsWith(fileBasePath)) {
 			file = new File(fileBasePath + filePath);
@@ -198,7 +191,6 @@ public class FileUtils {
      * @return
      */
     public static void deleteDir(File dir) {
-
 		if (dir.isFile() || dir.list().length == 0) {
 			dir.delete();
 		} else {
@@ -249,7 +241,7 @@ public class FileUtils {
     }
 
     /**
-     * 图片压缩，图片比例按原比例输出 
+     * 图片压缩，图片比例按原比例输出
      * tips: 压缩后的图片会替换原有的图片
      * @param filepath
      */
@@ -289,17 +281,17 @@ public class FileUtils {
             scheduleLogger.warn("Final compressed file size {}", imageLength);
 
             return new File(filepath);
-        
+
         } catch (Exception e) {
             scheduleLogger.error("Image compression failed", e);
         }
-        
+
         return null;
     }
 
     /**
      * 计算图片压缩率
-     * 
+     *
      * @param originLength
      * @param compressedLength
      * @return
@@ -308,7 +300,7 @@ public class FileUtils {
         DecimalFormat df = new DecimalFormat("0.000");
         String rate = df.format((float)compressedLength  / originLength);
         float result=  Float.valueOf(rate) * 100;
-        scheduleLogger.info("Compression {}/{}={}%",compressedLength,originLength,result);
+        scheduleLogger.info("Compression {}/{}={}%", compressedLength, originLength, result);
         return result;
     }
 
@@ -339,11 +331,89 @@ public class FileUtils {
         return new File(sb.toString()).getAbsolutePath();
     }
 
+    /**
+     * Read content from file
+     * @param fileName
+     * @return
+     */
+    public static String readFileToString(String fileName, String charset) {
+        File file = new File(fileName);
+        BufferedReader reader = null;
+        StringBuffer sbf = new StringBuffer();
+        try {
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+            String tempStr;
+            while ((tempStr = reader.readLine()) != null) {
+                sbf.append(tempStr);
+            }
+            reader.close();
+            return sbf.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        return sbf.toString();
+    }
+
+    /**
+     * Write content to file
+     * @param path
+     * @param fileName
+     * @param content
+     * @param encoding
+     */
+    public static void writeStringToFile(String path, String fileName, String content, Charset encoding) {
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        try {
+            File f = new File(path);
+            if (!f.exists()){
+                f.mkdirs();
+            }
+            File file = new File(path, fileName);
+            if (!file.exists()){
+                file.createNewFile();
+            }
+
+            fos = new FileOutputStream(file);
+            osw = new OutputStreamWriter(fos, encoding);
+            osw.write(content);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (osw != null){
+                try {
+                    osw.flush();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
     public static boolean delete(String filePath) {
         File file = new File(filePath);
         if (file.exists() && file.isFile()) {
             return file.delete();
         }
         return false;
+    }
+
+    public static int copy(File in, File out) {
+        try {
+            return FileCopyUtils.copy(in, out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }

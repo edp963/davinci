@@ -6,11 +6,11 @@ import { AntTreeNode, AntTreeNodeSelectedEvent, AntTreeNodeExpandedEvent } from 
 const { Search } = Input
 const { Option } = Select
 const { TreeNode } = Tree
-import { SelectProps } from 'antd/lib/select'
 
 import { ISource, IColumn, ISchema } from 'containers/Source/types'
 import { IView } from '../types'
 import { SQL_DATE_TYPES, SQL_NUMBER_TYPES, SQL_STRING_TYPES } from 'app/globalConstants'
+import { filterSelectOption } from 'app/utils/util'
 
 import utilStyles from 'assets/less/util.less'
 import Styles from 'containers/View/View.less'
@@ -53,9 +53,6 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
     onViewChange('sourceId', sourceId)
     onSourceSelect(sourceId)
   }
-
-  private filterSource: SelectProps['filterOption'] = (input, option) =>
-    (option.props.children as string).toLowerCase().includes(input.toLowerCase())
 
   private iconDatabase = <Icon key="iconDatabase" title="数据库" type="database" />
   private iconTable = <Icon key="iconTable" title="数据表" type="table" />
@@ -271,7 +268,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
               style={{width: '100%'}}
               value={sourceId}
               onChange={this.selectSource}
-              filterOption={this.filterSource}
+              filterOption={filterSelectOption}
             >
               {sources.map(({ id, name }) => (<Option key={id.toString()} value={id}>{name}</Option>))}
             </Select>

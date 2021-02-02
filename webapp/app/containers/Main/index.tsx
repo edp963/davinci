@@ -27,9 +27,9 @@ import { createStructuredSelector } from 'reselect'
 
 import Navigator from 'components/Navigator'
 
-import { logged, logout, getLoginUser, loadDownloadList, externalAuthlogout } from '../App/actions'
-import { makeSelectLogged, makeSelectNavigator } from '../App/selectors'
-import { DOWNLOAD_LIST_POLLING_FREQUENCY } from 'app/globalConstants'
+import { logged, logout, loadDownloadList } from '../App/actions'
+import { makeSelectLogged, makeSelectNavigator, makeSelectOauth2Enabled } from '../App/selectors'
+import { DOWNLOAD_LIST_POLLING_FREQUENCY, EXTERNAL_LOG_OUT_URL } from 'app/globalConstants'
 
 import { Project, ProjectList } from 'containers/Projects/Loadable'
 
@@ -53,20 +53,11 @@ import { NoAuthorization } from 'containers/NoAuthorization/Loadable'
 
 const styles = require('./Main.less')
 
-interface IMainProps {
-  logged: boolean
-  navigator: boolean
-  onLogged: (user) => void
-  onLogout: () => void
-  onExternalAuthLogout: () => void
-  onGetLoginUser: (resolve: () => void) => any
-  onLoadDownloadList: () => void
-}
+type MappedStates = ReturnType<typeof mapStateToProps>
+type MappedDispatches = ReturnType<typeof mapDispatchToProps>
+type IMainProps = MappedStates & MappedDispatches & RouteComponentWithParams
 
-export class Main extends React.Component<
-  IMainProps & RouteComponentWithParams,
-  {}
-> {
+export class Main extends React.Component<IMainProps, {}> {
   private downloadListPollingTimer: number
 
   constructor(props: IMainProps & RouteComponentWithParams) {
@@ -88,10 +79,13 @@ export class Main extends React.Component<
   }
 
   private logout = () => {
-    const { history, onLogout , onExternalAuthLogout } = this.props
+    const { history, oauth2Enabled, onLogout } = this.props
     onLogout()
-    onExternalAuthLogout()
-    history.replace('/login')
+    if (oauth2Enabled) {
+      history.replace(EXTERNAL_LOG_OUT_URL)
+    } else {
+      history.replace('/login')
+    }
   }
 
   private renderAccount = () => (
@@ -194,6 +188,7 @@ export class Main extends React.Component<
 
 const mapStateToProps = createStructuredSelector({
   logged: makeSelectLogged(),
+  oauth2Enabled: makeSelectOauth2Enabled(),
   navigator: makeSelectNavigator()
 })
 
@@ -201,13 +196,8 @@ export function mapDispatchToProps(dispatch) {
   return {
     onLogged: (user) => dispatch(logged(user)),
     onLogout: () => dispatch(logout()),
-    onExternalAuthLogout: () => dispatch(externalAuthlogout()),
-    onGetLoginUser: (resolve) => dispatch(getLoginUser(resolve)),
     onLoadDownloadList: () => dispatch(loadDownloadList())
   }
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Main)
+export default connect(mapStateToProps, mapDispatchToProps)(Main)

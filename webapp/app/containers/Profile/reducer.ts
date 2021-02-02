@@ -25,7 +25,7 @@ import {
 } from './constants'
 
 
-const initialState = {
+export const initialState = {
   userProfile: false,
   loading: false
 }

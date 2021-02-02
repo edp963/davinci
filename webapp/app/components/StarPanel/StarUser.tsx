@@ -21,7 +21,7 @@
 import React from 'react'
 import { Modal } from 'antd'
 const styles = require('./Star.less')
-import { IStarUserList } from './type'
+import { IStarUserList } from './types'
 import Avatar from 'components/Avatar'
 import { IStarUser } from 'containers/Projects/types'
 

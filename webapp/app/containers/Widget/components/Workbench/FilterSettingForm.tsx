@@ -7,7 +7,7 @@ import { DEFAULT_DATETIME_FORMAT, DEFAULT_DATE_FORMAT } from 'app/globalConstant
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
 import { Transfer, Radio, Button, DatePicker } from 'antd'
-import { IFilters } from 'app/components/Control/types'
+import { IFilter } from 'app/components/Control/types'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const RangePicker = DatePicker.RangePicker
@@ -238,7 +238,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     const { name, selectedDate, datepickerValue } = this.state
     const today = moment().startOf('day').format(DEFAULT_DATE_FORMAT)
     const yesterday = moment().startOf('day').subtract(1, 'days').format(DEFAULT_DATE_FORMAT)
-    const tml = {
+    const tml: IFilter = {
       name,
       operator: '>=',
       type: 'filter',
@@ -301,7 +301,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
     if (mode === 'value') {
       const sql = target.map((key) => `'${key}'`).join(',')
       const sqlModel = []
-      const filterItem: IFilters = {
+      const filterItem: IFilter = {
         name,
         type: 'filter',
         value: target.map((key) => `'${key}'`),
@@ -388,6 +388,7 @@ export class FilterSettingForm extends PureComponent<IFilterSettingFormProps, IF
       shownBlock = (
         <div className={styles.valueBlock}>
           <Transfer
+            showSearch
             dataSource={list}
             titles={['值列表', '所选值']}
             render={this.transferRender}

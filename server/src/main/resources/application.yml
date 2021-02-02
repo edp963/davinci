@@ -17,10 +17,12 @@
 davinci:
   version: 0.4-beta.0
 
+
 file:
   userfiles-path: ${DAVINCI_HOME}/userfiles/
   web_resources: ${DAVINCI_HOME}/davinci-ui/
   base-path: ${DAVINCI_HOME}/lib/
+
 
 spring:
   main:
@@ -51,8 +53,10 @@ spring:
     check-template-location: true
     template-resolver-order: 1
 
+
 logging:
   config: file:${DAVINCI_HOME}/config/logback.xml
+
 
 springfox:
   documentation:
@@ -60,11 +64,13 @@ springfox:
       v2:
         path: /api-doc
 
+
 pagehelper:
   supportMethodsArguments: true
   reasonable: true
   returnPageInfo: check
   helperDialect: mysql
+
 
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml
@@ -73,11 +79,14 @@ mybatis:
     map-underscore-to-camel-case: true
     use-generated-keys: true
 
+
 mapper:
   identity: MYSQL
   not-empty: false
   mappers: edp.davinci.server.dao
 
-sql_template_delimiter: $
+
+sql-template-delimiter: $
+
 
 custom-database-driver-path: ${DAVINCI_HOME}/config/database_driver.yml

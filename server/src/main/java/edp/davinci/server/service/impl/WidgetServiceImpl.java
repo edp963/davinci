@@ -19,28 +19,41 @@
 
 package edp.davinci.server.service.impl;
 
-import static edp.davinci.commons.Constants.EMPTY;
-import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
+import edp.davinci.commons.util.CollectionUtils;
+import edp.davinci.commons.util.DateUtils;
+import edp.davinci.commons.util.JSONUtils;
+import edp.davinci.commons.util.StringUtils;
+import edp.davinci.core.dao.entity.User;
+import edp.davinci.core.dao.entity.Widget;
+import edp.davinci.server.commons.ErrorMsg;
+import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
+import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
+import edp.davinci.server.dao.ViewExtendMapper;
+import edp.davinci.server.dao.WidgetExtendMapper;
+import edp.davinci.server.dto.project.ProjectDetail;
+import edp.davinci.server.dto.project.ProjectPermission;
+import edp.davinci.server.dto.share.ShareEntity;
+import edp.davinci.server.dto.share.ShareFactor;
+import edp.davinci.server.dto.share.ShareResult;
+import edp.davinci.server.dto.view.SimpleView;
+import edp.davinci.server.dto.view.ViewWithProjectAndSource;
+import edp.davinci.server.dto.view.ViewWithSource;
+import edp.davinci.server.dto.view.WidgetQueryParam;
+import edp.davinci.server.dto.widget.WidgetCreate;
+import edp.davinci.server.dto.widget.WidgetUpdate;
+import edp.davinci.server.dto.widget.WidgetWithViewName;
+import edp.davinci.server.enums.*;
+import edp.davinci.server.exception.NotFoundException;
+import edp.davinci.server.exception.ServerException;
+import edp.davinci.server.exception.UnAuthorizedException;
+import edp.davinci.server.model.PagingWithQueryColumns;
+import edp.davinci.server.model.QueryColumn;
+import edp.davinci.server.service.ProjectService;
+import edp.davinci.server.service.ShareService;
+import edp.davinci.server.service.ViewService;
+import edp.davinci.server.service.WidgetService;
+import edp.davinci.server.util.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -50,55 +63,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edp.davinci.commons.util.CollectionUtils;
-import edp.davinci.commons.util.DateUtils;
-import edp.davinci.commons.util.JSONUtils;
-import edp.davinci.commons.util.StringUtils;
-import edp.davinci.core.dao.entity.RelRoleView;
-import edp.davinci.core.dao.entity.Source;
-import edp.davinci.core.dao.entity.User;
-import edp.davinci.core.dao.entity.Widget;
-import edp.davinci.data.parser.ParserFactory;
-import edp.davinci.data.parser.StatementParser;
-import edp.davinci.data.pojo.Param;
-import edp.davinci.data.pojo.SqlQueryParam;
-import edp.davinci.server.dao.MemDashboardWidgetExtendMapper;
-import edp.davinci.server.dao.MemDisplaySlideWidgetExtendMapper;
-import edp.davinci.server.dao.RelRoleViewExtendMapper;
-import edp.davinci.server.dao.ViewExtendMapper;
-import edp.davinci.server.dao.WidgetExtendMapper;
-import edp.davinci.server.dto.project.ProjectDetail;
-import edp.davinci.server.dto.project.ProjectPermission;
-import edp.davinci.server.dto.view.AuthParamValue;
-import edp.davinci.server.dto.view.ViewWithProjectAndSource;
-import edp.davinci.server.dto.view.ViewWithSource;
-import edp.davinci.server.dto.view.WidgetDistinctParam;
-import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.dto.widget.WidgetCreate;
-import edp.davinci.server.dto.widget.WidgetUpdate;
-import edp.davinci.server.enums.CheckEntityEnum;
-import edp.davinci.server.enums.FileTypeEnum;
-import edp.davinci.server.enums.LogNameEnum;
-import edp.davinci.server.enums.SqlVariableTypeEnum;
-import edp.davinci.server.enums.SqlVariableValueTypeEnum;
-import edp.davinci.server.enums.UserPermissionEnum;
-import edp.davinci.server.exception.NotFoundException;
-import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
-import edp.davinci.server.model.PagingWithQueryColumns;
-import edp.davinci.server.model.QueryColumn;
-import edp.davinci.server.model.SqlVariable;
-import edp.davinci.server.service.ProjectService;
-import edp.davinci.server.service.ShareService;
-import edp.davinci.server.service.ViewService;
-import edp.davinci.server.service.WidgetService;
-import edp.davinci.server.util.BaseLock;
-import edp.davinci.server.util.CsvUtils;
-import edp.davinci.server.util.ExcelUtils;
-import edp.davinci.server.util.FileUtils;
-import edp.davinci.server.util.ScriptUtils;
-import edp.davinci.server.util.ServerUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static edp.davinci.commons.Constants.EMPTY;
+import static edp.davinci.server.util.ScriptUtils.getWidgetQueryParam;
 
 
 @Service("widgetService")
@@ -119,9 +92,6 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     private MemDisplaySlideWidgetExtendMapper memDisplaySlideWidgetExtendMapper;
 
     @Autowired
-    private RelRoleViewExtendMapper relRoleViewExtendMapper;
-
-    @Autowired
     private ShareService shareService;
 
     @Autowired
@@ -135,8 +105,11 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
     @Autowired
     private ProjectService projectService;
-    
-    private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET; 
+
+    private static final CheckEntityEnum entity = CheckEntityEnum.WIDGET;
+
+    @Autowired
+    private String TOKEN_SECRET;
 
     @Override
     public boolean isExist(String name, Long id, Long projectId) {
@@ -155,16 +128,16 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public List<Widget> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public List<WidgetWithViewName> getWidgets(Long projectId, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         ProjectDetail projectDetail = null;
         try {
             projectDetail = projectService.getProjectDetail(projectId, user, false);
-        } catch (UnAuthorizedExecption e) {
+        } catch (UnAuthorizedException e) {
             return null;
         }
 
-        List<Widget> widgets = widgetExtendMapper.getByProject(projectId);
+        List<WidgetWithViewName> widgets = widgetExtendMapper.getByProject(projectId);
 
         if (null != widgets) {
             ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
@@ -186,7 +159,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      * @return
      */
     @Override
-    public Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Widget widget = widgetExtendMapper.selectByPrimaryKey(id);
 
@@ -198,7 +171,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
         ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getWidgetPermission() < UserPermissionEnum.READ.getPermission()) {
-            throw new UnAuthorizedExecption();
+            throw new UnAuthorizedException(ErrorMsg.ERR_PERMISSION);
         }
 
         return widget;
@@ -213,7 +186,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      */
     @Override
     @Transactional
-    public Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Widget createWidget(WidgetCreate widgetCreate, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long projectId = widgetCreate.getProjectId();
         checkWritePermission(entity, projectId, user, "create");
@@ -246,14 +219,14 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             releaseLock(lock);
         }
     }
-    
+
     @Transactional
-	private void insertWidget(Widget widget) {
+	protected void insertWidget(Widget widget) {
 		if (widgetExtendMapper.insert(widget) <= 0) {
 			throw new ServerException("Create widget fail");
 		}
 	}
-    
+
     private void checkView(Long id) {
         if (null == viewExtendMapper.selectByPrimaryKey(id)) {
             log.error("View({}) is not found", id);
@@ -271,7 +244,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     @Override
     @Transactional
     public boolean updateWidget(WidgetUpdate widgetUpdate, User user)
-            throws NotFoundException, UnAuthorizedExecption, ServerException {
+            throws NotFoundException, UnAuthorizedException, ServerException {
 
         Long id = widgetUpdate.getId();
         Widget widget = getWidget(id);
@@ -306,9 +279,9 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             releaseLock(lock);
         }
     }
-    
+
     @Transactional
-	private void updateWidget(Widget widget) {
+	protected void updateWidget(Widget widget) {
 		if (widgetExtendMapper.update(widget) <= 0) {
 			throw new ServerException("Update widget fail");
 		}
@@ -332,7 +305,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      */
     @Override
     @Transactional
-    public boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public boolean deleteWidget(Long id, User user) throws NotFoundException, UnAuthorizedException, ServerException {
 
         Widget widget = getWidget(id);
 
@@ -352,20 +325,29 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
      *
      * @param id
      * @param user
-     * @param username
+     * @param shareEntity
      * @return
      */
     @Override
-    public String shareWidget(Long id, User user, String username) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        
-    	Widget widget = getWidget(id);
+    public ShareResult shareWidget(Long id, User user, ShareEntity shareEntity) throws NotFoundException, UnAuthorizedException, ServerException {
+
+        Widget widget = getWidget(id);
         checkSharePermission(entity, widget.getProjectId(), user);
-        return shareService.generateShareToken(id, username, user.getId());
+        shareService.formatShareParam(widget.getProjectId(), shareEntity);
+        ShareFactor shareFactor = ShareFactor.Builder
+                .shareFactor()
+                .withType(ShareType.WIDGET)
+                .withShareEntity(shareEntity)
+                .withEntityId(id)
+                .withSharerId(user.getId())
+                .build();
+
+        return shareFactor.toShareResult(TOKEN_SECRET);
     }
 
 
     @Override
-    public String generationFile(Long id, WidgetQueryParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
+    public String generationFile(Long id, WidgetQueryParam queryParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedException {
 
         Widget widget = getWidget(id);
 
@@ -376,9 +358,9 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
             alertUnAuthorized(entity, user, "download");
         }
 
-        executeParam.setPageNo(-1);
-        executeParam.setPageSize(-1);
-        executeParam.setLimit(-1);
+        queryParam.setPageNo(-1);
+        queryParam.setPageSize(-1);
+        queryParam.setLimit(-1);
 
         String rootPath = fileUtils.fileBasePath + File.separator + "download" + File.separator
                 + DateUtils.dateFormat(new Date(), "yyyyMMdd") + File.separator + type + File.separator;
@@ -389,7 +371,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                 ViewWithSource viewWithSource = viewExtendMapper.getViewWithSource(widget.getViewId());
                 boolean maintainer = projectService.isMaintainer(projectDetail, user);
                 PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer, viewWithSource,
-                        executeParam, user);
+                        queryParam, user);
                 List<QueryColumn> columns = paging.getColumns();
                 if (!CollectionUtils.isEmpty(columns)) {
                     File file = new File(rootPath);
@@ -409,14 +391,14 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
                 HashSet<Widget> widgets = new HashSet<>();
                 widgets.add(widget);
-                Map<Long, WidgetQueryParam> executeParamMap = new HashMap<>();
-                executeParamMap.put(widget.getId(), executeParam);
+                Map<Long, WidgetQueryParam> queryParamMap = new HashMap<>();
+                queryParamMap.put(widget.getId(), queryParam);
 
                 filePath = rootPath + excelName;
-                writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
+                writeExcel(widgets, projectDetail, queryParamMap, filePath, user, false);
 
             } else {
-                throw new ServerException("Unknow file type");
+                throw new ServerException("Unknown file type");
             }
         } catch (Exception e) {
             throw new ServerException("Generation " + type + " error");
@@ -427,7 +409,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
 
 
     /**
-     * widget列表数据写入指定excle文件
+     * widget列表数据写入指定excel文件
      *
      * @param widgets
      * @param projectDetail
@@ -441,13 +423,13 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
     public File writeExcel(Set<Widget> widgets,
                            ProjectDetail projectDetail, Map<Long, WidgetQueryParam> queryParamMap,
                            String filePath, User user, boolean containType) throws Exception {
- 
+
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("Excel file path is empty");
         }
 
         if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
-            throw new ServerException("Unknow file format");
+            throw new ServerException("Unknown file format");
         }
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
@@ -469,7 +451,19 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     if (null != queryParamMap && queryParamMap.containsKey(widget.getId())) {
                         queryParam = queryParamMap.get(widget.getId());
                     } else {
-                        queryParam = getWidgetQueryParam(null, widget.getConfig(), null);
+
+                        Set<SimpleView> simpleViews = new HashSet<>();
+
+                        // widget controller view
+                        Map<String, Object> widgetConfigMap = JSONUtils.toObject(widget.getConfig(), Map.class);
+                        if (!CollectionUtils.isEmpty(widgetConfigMap)) {
+                            simpleViews.addAll(VizUtils.getControllerViews((List<Map<String, Object>>) widgetConfigMap.get("controls")));
+                        }
+
+                        // widget view
+                        simpleViews.add(viewExtendMapper.getSimpleViewById(widget.getViewId()));
+
+                        queryParam = getWidgetQueryParam(null, widget.getConfig(), simpleViews, null);
                     }
 
                     PagingWithQueryColumns paging = viewService.getDataWithQueryColumns(maintainer,
@@ -479,7 +473,7 @@ public class WidgetServiceImpl extends BaseEntityService implements WidgetServic
                     ExcelUtils.writeSheet(sheet, paging.getColumns(), paging.getResultList(), wb, containType,
                             widget.getConfig(), queryParam.getParams());
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    log.error(e.toString(), e);
                 } finally {
                     sheet = null;
                     countDownLatch.countDown();

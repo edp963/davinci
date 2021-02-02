@@ -22,16 +22,13 @@ import {
   GET_EXTERNAL_AUTH_PROVIDERS,
   GET_EXTERNAL_AUTH_PROVIDERS_SUCESS,
   TRY_EXTERNAL_AUTH,
-  EXTERNAL_AUTH_LOGOUT,
-  GET_VERSION,
-  GET_VERSION_SUCCESS,
-  GET_VERSION_FAIL,
+  GET_SERVER_CONFIGURATIONS,
+  GET_SERVER_CONFIGURATIONS_SUCCESS,
+  GET_SERVER_CONFIGURATIONS_FAIL,
   LOGIN,
   LOGGED,
   LOGIN_ERROR,
   LOGOUT,
-  GET_LOGIN_USER,
-  GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   CHECK_NAME,
@@ -59,12 +56,19 @@ import {
   GET_CAPTCHA_FOR_RESET_PASSWORD_ERROE,
   RESET_PASSWORD_UNLOGGED,
   RESET_PASSWORD_UNLOGGED_ERROR,
-  RESET_PASSWORD_UNLOGGED_SUCCESS
+  RESET_PASSWORD_UNLOGGED_SUCCESS,
+  GET_USER_BY_TOKEN,
+  GET_USER_BY_TOKEN_SUCCESS,
+  GET_USER_BY_TOKEN_FAIL
 } from './constants'
 
-import { IGetgetCaptchaParams, IResetPasswordParams } from '../FindPassword/types'
+import {
+  IGetgetCaptchaParams,
+  IResetPasswordParams
+} from '../FindPassword/types'
 
 import { IReduxActionStruct } from 'utils/types'
+import { IServerConfigurations } from './types'
 
 export function getExternalAuthProviders() {
   return {
@@ -89,11 +93,6 @@ export function tryExternalAuth(resolve) {
     }
   }
 }
-export function externalAuthlogout() {
-  return {
-    type: EXTERNAL_AUTH_LOGOUT
-  }
-}
 
 export function login(username, password, resolve) {
   return {
@@ -106,28 +105,29 @@ export function login(username, password, resolve) {
   }
 }
 
-export function getVersion(resolve?) {
+export function getServerConfigurations() {
   return {
-    type: GET_VERSION,
+    type: GET_SERVER_CONFIGURATIONS
+  }
+}
+
+export function serverConfigurationsGetted(
+  configurations: IServerConfigurations
+) {
+  return {
+    type: GET_SERVER_CONFIGURATIONS_SUCCESS,
     payload: {
-      resolve
+      configurations
     }
   }
 }
 
-export function getVersionSuccess (version) {
+export function getServerConfigurationsFail(error) {
   return {
-    type: GET_VERSION_SUCCESS,
+    type: GET_SERVER_CONFIGURATIONS_FAIL,
     payload: {
-      version
+      error
     }
-  }
-}
-
-export function getVersionFail(err) {
-  return {
-    type: GET_VERSION_FAIL,
-    payload: {err}
   }
 }
 
@@ -200,21 +200,6 @@ export function joinOrganizationSuccess(user) {
 export function joinOrganizationError() {
   return {
     type: JOIN_ORGANIZATION_ERROR
-  }
-}
-
-export function getLoginUser(resolve) {
-  return {
-    type: GET_LOGIN_USER,
-    payload: {
-      resolve
-    }
-  }
-}
-
-export function getLoginUserError() {
-  return {
-    type: GET_LOGIN_USER_ERROR
   }
 }
 
@@ -370,7 +355,7 @@ export function downloadFileFail(error) {
   }
 }
 
-export function getCaptchaforResetPassword (
+export function getCaptchaforResetPassword(
   params: IGetgetCaptchaParams
 ): IReduxActionStruct<IGetgetCaptchaParams> {
   return {
@@ -397,7 +382,7 @@ export function getCaptchaforResetPasswordError(error) {
   }
 }
 
-export function resetPasswordUnlogged (
+export function resetPasswordUnlogged(
   params: IResetPasswordParams
 ): IReduxActionStruct<IResetPasswordParams> {
   return {
@@ -406,7 +391,7 @@ export function resetPasswordUnlogged (
   }
 }
 
-export function resetPasswordUnloggedSuccess (result) {
+export function resetPasswordUnloggedSuccess(result) {
   return {
     type: RESET_PASSWORD_UNLOGGED_SUCCESS,
     payload: {
@@ -415,9 +400,36 @@ export function resetPasswordUnloggedSuccess (result) {
   }
 }
 
-export function resetPasswordUnloggedFail (error) {
+export function resetPasswordUnloggedFail(error) {
   return {
     type: RESET_PASSWORD_UNLOGGED_ERROR,
+    payload: {
+      error
+    }
+  }
+}
+
+export function getUserByToken(token) {
+  return {
+    type: GET_USER_BY_TOKEN,
+    payload: {
+      token
+    }
+  }
+}
+
+export function getUserByTokenSuccess(user) {
+  return {
+    type: GET_USER_BY_TOKEN_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function getUserByTokenFail(error) {
+  return {
+    type: GET_USER_BY_TOKEN_FAIL,
     payload: {
       error
     }

@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import { Button, Modal } from 'antd'
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from 'app/globalConstants'

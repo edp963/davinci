@@ -32,7 +32,7 @@ import WidgetAbstract, {
   ISourceDataFilter
 } from './types'
 
-import { IFilters } from '../Control/types'
+import { IFilter } from '../Control/types'
 
 import { getValidColumnValue } from 'app/components/Control/util'
 
@@ -295,7 +295,6 @@ export const strategiesOfDrillUpNullDrillHistory = (
         target.rows && target.rows.length !== 0
           ? getLastItemValueOfArray(target.rows, 'name')
           : null
-
       return {
         ...drillStragegies,
         filters: mappingFilters(
@@ -478,9 +477,16 @@ function collectKeyValue(sourceDataFilter) {
   }, {})
 }
 
-function mappingFilters(sourceDataFilter, group): IFilters[] {
+function mappingFilters(sourceDataFilter, group): IFilter[] {
+  if (group === '指标名称') {
+    return []
+  }
+  if (!(sourceDataFilter && sourceDataFilter.length)) {
+    return []
+  }
+
   const mappgingSource = sourceDataFilter.map((source) =>
-    source && source[group] ? source[group] : source
+    source && source[group] ? source[group] : ''
   )
   const sqlType = getSqlType(group)
   return [
@@ -501,7 +507,7 @@ function getSqlType(target: string) {
   )(target)
 }
 
-function combineFilters(keyValuds): IFilters[] {
+function combineFilters(keyValuds): IFilter[] {
   return Object.keys(keyValuds).reduce((iteratee, target) => {
     const sqlType = getSqlType(target)
     return iteratee.concat({

@@ -26,7 +26,7 @@ import Login from 'containers/Login'
 import Register from 'containers/Register'
 import { makeSelectVersion } from 'containers/App/selectors'
 import JoinOrganization from 'containers/Register/JoinOrganization'
-import { clientVersion } from 'app/globalConfig'
+import { CLIENT_VERSION } from 'app/globalConstants'
 const styles = require('./Background.less')
 
 export const Background: FC = () => {
@@ -36,7 +36,7 @@ export const Background: FC = () => {
       <p>
         {!version ? (
           ''
-        ) : clientVersion !== version ? (
+        ) : CLIENT_VERSION !== version ? (
           <span className={styles.versionerror}>
             客户端与服务端版本不一致，请更新
           </span>

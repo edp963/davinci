@@ -19,41 +19,45 @@
 
 package edp.davinci.server.service;
 
-import edp.davinci.server.controller.ResultMap;
-import edp.davinci.server.dto.share.ShareDashboard;
-import edp.davinci.server.dto.share.ShareDisplay;
-import edp.davinci.server.dto.share.ShareInfo;
-import edp.davinci.server.dto.share.ShareWidget;
+import edp.davinci.server.dto.share.*;
 import edp.davinci.server.dto.user.UserLogin;
 import edp.davinci.server.dto.view.WidgetDistinctParam;
 import edp.davinci.server.dto.view.WidgetQueryParam;
-import edp.davinci.server.exception.ForbiddenExecption;
+import edp.davinci.server.exception.ForbiddenException;
 import edp.davinci.server.exception.NotFoundException;
 import edp.davinci.server.exception.ServerException;
-import edp.davinci.server.exception.UnAuthorizedExecption;
+import edp.davinci.server.exception.UnAuthorizedException;
 import edp.davinci.server.model.Paging;
 import edp.davinci.core.dao.entity.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 public interface ShareService {
-    ShareWidget getShareWidget(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareWidget getShareWidget(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
     String generateShareToken(Long shareEntityId, String username, Long userId) throws ServerException;
 
-    User shareLogin(String token, UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedExecption;
+    User shareLogin(UserLogin userLogin) throws NotFoundException, ServerException, UnAuthorizedException;
 
-    ShareDisplay getShareDisplay(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDisplay getShareDisplay(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
-    ShareDashboard getShareDashboard(String token, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    ShareDashboard getShareDashboard(User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException;
 
-    Paging<Map<String, Object>> getShareData(String token, WidgetQueryParam executeParam, User user) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption, SQLException;
+    Paging<Map<String, Object>> getShareData(WidgetQueryParam queryParam, User user) throws NotFoundException, ServerException, ForbiddenException, UnAuthorizedException, SQLException;
 
-    String generationShareDataCsv(WidgetQueryParam executeParam, User user, String token) throws NotFoundException, ServerException, ForbiddenExecption, UnAuthorizedExecption;
+    List<Map<String, Object>> getDistinctValue(WidgetDistinctParam param, User user);
 
-    ResultMap getDistinctValue(String token, Long viewId, WidgetDistinctParam param, User user, HttpServletRequest request);
+    void formatShareParam(Long projectId, ShareEntity entity);
 
-    ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenExecption;
+    Map<String, Object> checkShareToken() throws ServerException, ForbiddenException;
+
+    Map<String, Object> getSharePermissions() throws ServerException, ForbiddenException;
+
+    @Deprecated
+    ShareInfo getShareInfo(String token, User user) throws ServerException, ForbiddenException;
+
+    @Deprecated
+    void verifyShareUser(User user, ShareInfo shareInfo) throws ServerException, ForbiddenException;
 }

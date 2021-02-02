@@ -43,7 +43,6 @@ interface ISettingFormProps extends FormComponentProps {
 
 const SettingForm: React.FC<ISettingFormProps> = (props, ref) => {
   const { form, setting, slideId, layerId } = props
-
   useImperativeHandle(ref, () => form)
 
   return (

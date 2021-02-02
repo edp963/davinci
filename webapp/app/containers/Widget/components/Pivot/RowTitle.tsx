@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { DimetionType, IChartStyles } from '../Widget'
 import { IDrawingData } from './Pivot'
 import { getPivotContentTextWidth, getPivotCellHeight, getPivot, getStyleConfig } from '../util'

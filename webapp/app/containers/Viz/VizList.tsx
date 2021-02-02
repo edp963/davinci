@@ -16,7 +16,7 @@ import { makeSelectPortals, makeSelectDisplays } from '../Viz/selectors'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from 'components/Box'
-import Container from 'components/Container'
+import Container, { ContainerTitle, ContainerBody } from 'components/Container'
 import PortalList from './components/PortalList'
 import DisplayList from './components/DisplayList'
 
@@ -63,7 +63,7 @@ interface IVizStates {
 export class VizList extends React.Component<
   IVizProps & RouteComponentWithParams,
   IVizStates
-> {
+  > {
   public state: Readonly<IVizStates> = {
     collapse: {
       dashboard: true,
@@ -93,9 +93,8 @@ export class VizList extends React.Component<
     } = this.props
     const projectId = match.params.projectId
     const isToPreview = vizPermission === 1
-    const path = `/project/${projectId}/display/${displayId}${
-      isToPreview ? '/preview' : ''
-    }`
+    const path = `/project/${projectId}/display/${displayId}${isToPreview ? '/preview' : ''
+      }`
     this.props.history.push(path)
   }
 
@@ -136,27 +135,29 @@ export class VizList extends React.Component<
     return (
       <Container>
         <Helmet title="Viz" />
-        <Container.Title>
+        <ContainerTitle>
           <Row>
-            <Col span={24}>
+            <Col span={24} className={utilStyles.shortcut}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">Viz</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
+              <Link to={`/account/organization/${currentProject.orgId}`}>
+                <i className='iconfont icon-organization' />
+              </Link>
             </Col>
           </Row>
-        </Container.Title>
-        <Container.Body>
+        </ContainerTitle>
+        <ContainerBody>
           <Box>
             <Box.Header>
               <Box.Title>
                 <Row onClick={this.onCollapseChange('dashboard')}>
                   <Col span={20}>
                     <Icon
-                      type={`${
-                        this.state.collapse.dashboard ? 'down' : 'right'
-                      }`}
+                      type={`${this.state.collapse.dashboard ? 'down' : 'right'
+                        }`}
                     />
                     Dashboard
                   </Col>
@@ -206,7 +207,7 @@ export class VizList extends React.Component<
               />
             </div>
           </Box>
-        </Container.Body>
+        </ContainerBody>
       </Container>
     )
   }

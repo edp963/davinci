@@ -28,9 +28,11 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RelRoleSlideExtendMapper extends RelRoleSlideMapper {
 
 	@Insert({
@@ -126,5 +128,13 @@ public interface RelRoleSlideExtendMapper extends RelRoleSlideMapper {
             "left join display d on d.id = ds.display_id ",
             "where d.project_id = #{projectId})"
     })
-    int deleteByProjectId(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({
+            "delete from rel_role_slide where role_id = #{roleId} and slide_id in ",
+            "(select ds.id from display_slide ds ",
+            "left join display d on d.id = ds.display_id ",
+            "where d.project_id = #{projectId})"
+    })
+    int deleteByRoleAndProject(Long roleId, Long projectId);
 }

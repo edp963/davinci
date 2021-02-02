@@ -25,6 +25,7 @@ import {
   DEFAULT_FONT_WEIGHT
 } from 'app/globalConstants'
 import { message } from 'antd'
+import { OptionProps } from 'antd/lib/select'
 
 /**
  * UUID生成器
@@ -106,7 +107,6 @@ export function errorHandler(error) {
     }
   } else if (error.message) {
     message.error(error.message, 3)
-    throw error
   } else {
     throw error
   }
@@ -178,6 +178,29 @@ export function isImagePath(pathname: string) {
   return imageReg.test(pathname)
 }
 
-export function hasProperty<T extends object, U extends keyof T> (obj: T, key: U) {
+export function hasProperty<T extends object, U extends keyof T>(
+  obj: T,
+  key: U
+) {
   return obj[key] ? obj[key] : false
+}
+
+export const tuple = <T extends string[]>(...args: T) => args
+
+export const tupleNum = <T extends number[]>(...args: T) => args
+
+export function filterSelectOption(
+  input: string,
+  option: React.ReactElement<OptionProps>
+): boolean {
+  const text = option.props.children as string
+  return text.toLowerCase().includes(input.toLowerCase())
+}
+
+export function filterTreeSelectOption(
+  input: string,
+  treeNode
+): boolean {
+  const text = treeNode.props.title
+  return text.toLowerCase().includes(input.toLowerCase())
 }

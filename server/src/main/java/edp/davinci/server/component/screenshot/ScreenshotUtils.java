@@ -19,13 +19,13 @@
 
 package edp.davinci.server.component.screenshot;
 
+import edp.davinci.commons.util.DateUtils;
 import edp.davinci.commons.util.StringUtils;
+import edp.davinci.server.commons.Constants;
 import edp.davinci.server.enums.LogNameEnum;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.openqa.selenium.*;
+import edp.davinci.server.util.FileUtils;
 import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -39,10 +39,11 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -53,12 +54,14 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static edp.davinci.server.component.screenshot.BrowserEnum.valueOf;
+
 @Component
 public class ScreenshotUtils {
 	
 	private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
 
-    @Value("${screenshot.default_browser:PHANTOMJS}")
+    @Value("${screenshot.default_browser:CHROME}")
     private String DEFAULT_BROWSER;
 
     @Value("${screenshot.chromedriver_path:}")
@@ -78,14 +81,17 @@ public class ScreenshotUtils {
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
+    @Autowired
+    private FileUtils fileUtils;
+
     public void screenshot(long jobId, List<ImageContent> imageContents, Integer imageWidth) {
-    	scheduleLogger.info("Start screenshot for job({})", jobId);
+    	scheduleLogger.info("Cronjob({}) screenshot start", jobId);
         try {
            	int contentsSize = imageContents.size();
             List<Future> futures = new ArrayList<>(contentsSize);
             final AtomicInteger index = new AtomicInteger(1);
             imageContents.forEach(content -> futures.add(executorService.submit(() -> {
-            	scheduleLogger.info("Cronjob({}) thread({}) for screenshot start, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
+            	scheduleLogger.info("Cronjob({}) thread({}) screenshot start, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                 try {
                     File image = doScreenshot(jobId, content.getUrl(), imageWidth);
                     content.setContent(image);
@@ -93,7 +99,7 @@ public class ScreenshotUtils {
                 	scheduleLogger.error("Cronjob({}) thread({}) screenshot error", jobId, index.get());
                 	scheduleLogger.error(e.getMessage(), e);
                 } finally {
-                    scheduleLogger.info("Cronjob({}) thread({}) for screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
+                    scheduleLogger.info("Cronjob({}) thread({}) screenshot finish, type:{}, id:{}, total:{}", jobId, index.get(), content.getDesc(), content.getCId(), contentsSize);
                     index.incrementAndGet();
                 }
             })));
@@ -111,7 +117,7 @@ public class ScreenshotUtils {
         } catch (Exception e) {
         	scheduleLogger.error(e.getMessage(), e);
         } finally {
-        	scheduleLogger.info("Cronjob({}) finish screenshot", jobId);
+        	scheduleLogger.info("Cronjob({}) screenshot finish", jobId);
         }
     }
 
@@ -119,7 +125,7 @@ public class ScreenshotUtils {
     private File doScreenshot(Long jobId, String url, Integer imageWidth) throws Exception {
         WebDriver driver = generateWebDriver(jobId, imageWidth);
         driver.get(url);
-        scheduleLogger.info("Cronjob({}) do screenshot for url[timeout={}]({}) start", jobId, timeOutSecond, url);
+        scheduleLogger.info("Cronjob({}) do screenshot for url({}) timeout={} start", jobId, url, timeOutSecond);
         try {
             WebDriverWait wait = new WebDriverWait(driver, timeOutSecond);
 
@@ -144,7 +150,17 @@ public class ScreenshotUtils {
             }
             driver.manage().window().setSize(new Dimension(width, height));
             Thread.sleep(2000);
-            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempImage = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File tempDir = new File(fileUtils.fileBasePath + Constants.DIR_TEMP + DateUtils.getNowDateYYYYMMDD());
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+            File image = new File(tempDir.getPath() + File.separator + tempImage.getName());
+            if (FileUtils.copy(tempImage, image) > -1) {
+                tempImage.delete();
+                return image;
+            }
+
         } catch (TimeoutException e) {
             String text = driver.findElements(By.tagName("html")).get(0).getAttribute("innerText");
             scheduleLogger.error("Cronjob({}) do screenshot for url({}) timeout, html text:{}", jobId, url, text);
@@ -152,20 +168,20 @@ public class ScreenshotUtils {
             for (LogEntry entry : logEntries) {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) timeout, " + entry.getLevel() + ":" + entry.getMessage());
             }
-            scheduleLogger.error(e.getMessage(), e);
-        
+            scheduleLogger.error(e.toString(), e);
+
         } catch (InterruptedException e) {
             LogEntries logEntries= driver.manage().logs().get(LogType.BROWSER);
             for (LogEntry entry : logEntries) {
                 scheduleLogger.error("Cronjob({}) do screenshot for url({}) interrupted, " + entry.getLevel() + ":" + entry.getMessage());
             }
-            scheduleLogger.error(e.getMessage(), e);
-        
+            scheduleLogger.error(e.toString(), e);
+
         } finally {
         	scheduleLogger.info("Cronjob({}) do screenshot for url({}) finish", jobId, url);
             driver.quit();
         }
-        
+
         return null;
     }
 
@@ -195,15 +211,14 @@ public class ScreenshotUtils {
 
     private WebDriver generateChromeDriver() throws ExecutionException {
         if (!StringUtils.isEmpty(REMOTE_WEBDRIVER_URL)) {
-            scheduleLogger.info("user RemoteWebDriver ({})", REMOTE_WEBDRIVER_URL);
+            scheduleLogger.info("User RemoteWebDriver({})", REMOTE_WEBDRIVER_URL);
             try {
-                WebDriver driver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
-                return driver;
+                return new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_URL), DesiredCapabilities.chrome());
             } catch (MalformedURLException ex) {
                 scheduleLogger.error(ex.getMessage(), ex);
             }
         }
-        
+
         File file = new File(CHROME_DRIVER_PATH);
         if (!file.canExecute()) {
             if (!file.setExecutable(true)) {
@@ -217,13 +232,13 @@ public class ScreenshotUtils {
         options.addArguments("headless");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
-        options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");
         options.addArguments("ignore-certificate-errors");
-        options.addArguments("silent");
+        options.addArguments("silent-launch");
         options.addArguments("disable-application-cache");
         options.addArguments("disable-web-security");
         options.addArguments("no-proxy-server");
+        options.addArguments("disable-dev-shm-usage");
         return new ChromeDriver(options);
     }
 

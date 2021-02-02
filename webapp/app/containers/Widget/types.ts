@@ -28,6 +28,7 @@ export interface IWidgetBase {
   type: number
   viewId: number
   projectId: number
+  viewName?: string
 }
 
 export interface IWidgetRaw extends IWidgetBase {
@@ -41,9 +42,7 @@ export interface IWidgetFormed extends IWidgetBase {
 
 export interface IWidgetState {
   widgets: IWidgetFormed[]
-  currentWidget: IWidgetRaw
+  currentWidget: IWidgetFormed
   loading: boolean
   dataLoading: boolean
-  columnValueLoading: boolean
-  distinctColumnValues: any[]
 }

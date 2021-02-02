@@ -19,18 +19,18 @@
 
 package edp.davinci.commons.util;
 
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class JSONUtils {
 	
@@ -107,7 +107,7 @@ public class JSONUtils {
 
 	public static <T> T toObject(String jsonString, TypeReference<T> t) {
 
-    	if (null == t || StringUtils.isEmpty(jsonString)) {
+    	if (t == null || StringUtils.isEmpty(jsonString)) {
             return null;
         }
     	
@@ -125,7 +125,7 @@ public class JSONUtils {
 	
     public static <T> T toObject(String jsonString, Class<T> c) {
 
-    	if (null == c || StringUtils.isEmpty(jsonString)) {
+    	if (c == null || StringUtils.isEmpty(jsonString)) {
             return null;
         }
     	
@@ -141,9 +141,27 @@ public class JSONUtils {
         return null;
     }
 
+	public static <T> T toObject(Map jsonMap, Class<T> c) {
+
+		if (c == null || jsonMap == null) {
+			return null;
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+		config(mapper);
+
+		try {
+			return mapper.convertValue(jsonMap, c);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
     public static <T> List<T> toObjectArray(String jsonString, Class<T> c) {
 
-        if (null == c || StringUtils.isEmpty(jsonString)) {
+        if (c == null || StringUtils.isEmpty(jsonString)) {
             return Collections.emptyList();
         }
 

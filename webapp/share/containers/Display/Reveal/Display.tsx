@@ -21,7 +21,11 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { makeSelectSlidesCount, makeSelectWidgets } from '../selectors'
+import {
+  makeSelectFormedViews,
+  makeSelectSlidesCount,
+  makeSelectWidgets
+} from '../selectors'
 
 import { getRequestParamsByWidgetConfig } from 'containers/Viz/util'
 import {
@@ -41,10 +45,11 @@ const Display: React.FC<IDisplayProps> = (props) => {
   const dispatch = useDispatch()
   const slidesCount = useSelector(makeSelectSlidesCount())
   const widgets = useSelector(makeSelectWidgets())
+  const formedViews = useSelector(makeSelectFormedViews())
 
   const layerListContextValue: LayerListContextValue = {
     currentDisplayWidgets: widgets,
-    getWidgetViewModel: (_, widgetId: number) => widgets[widgetId].model,
+    getWidgetViewModel: (viewId, _) => formedViews[viewId].model,
     getChartData: (
       renderType,
       slideNumber,

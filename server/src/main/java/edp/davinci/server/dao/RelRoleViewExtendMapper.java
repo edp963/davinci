@@ -27,9 +27,11 @@ import org.apache.ibatis.annotations.Update;
 
 import edp.davinci.core.dao.RelRoleViewMapper;
 import edp.davinci.core.dao.entity.RelRoleView;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RelRoleViewExtendMapper extends RelRoleViewMapper {
 
 	@Insert({
@@ -111,12 +113,17 @@ public interface RelRoleViewExtendMapper extends RelRoleViewMapper {
     List<RelRoleView> getByUserAndView(@Param("userId") Long userId, @Param("viewId") Long viewId);
 
     @Select({
-           "select * from rel_role_view where  view_id = #{viewId}"
+           "select * from rel_role_view where view_id = #{viewId}"
     })
     List<RelRoleView> getByView(Long viewId);
 
     @Delete({
             "delete from rel_role_view where view_id in (select id from view where project_id = #{projectId})"
     })
-    int deleteByProject(Long projectId);
+	int deleteByProject(Long projectId);
+	
+	@Delete({ 
+		    "delete from rel_role_view where role_id = #{roleId} and view_id in (select id from view where project_id = #{projectId})" 
+	})
+	int deleteByRoleAndProject(Long roleId, Long projectId);
 }

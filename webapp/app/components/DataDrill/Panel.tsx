@@ -95,7 +95,7 @@ const DataDrill: React.FC<IDataDrillProps> = (props: IDataDrillProps) => {
   const drillOtherCategories = useMemo(() => {
     return drillHistoryGroups && drillHistoryGroups.length
       ? modelsfilterDrilledGroup
-          .filter((cate) => !drillHistory.some((his) => his.name === cate))
+          .filter((cate) => !drillHistory.some((his) => his.currentGroup === cate))
           .map((name) => ({
             name,
             modelType: ViewModelTypes.Category,
