@@ -46,6 +46,5 @@ public interface FavoriteMapper {
     })
     Favorite selectById(Long id);
 
-
     int deleteBatch(@Param("list") List<Long> list, @Param("userId") Long userId);
 }

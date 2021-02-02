@@ -278,6 +278,7 @@ public class SqlParseUtils {
         String[] sqls = sqlStr.split(SEMICOLON);
         if (sqls.length > 0) {
             for (String sql : sqls) {
+                sql = sql.trim();
                 boolean select = isQuery(sql);
                 if (isQuery) {
                     if (select) {
@@ -532,7 +533,7 @@ public class SqlParseUtils {
      * @return
      */
     public static String filterAnnotate(String sql) {
-        String temp = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1").replaceAll(NEW_LINE_CHAR, EMPTY).replaceAll("(;" +
+        String temp = PATTERN_SQL_ANNOTATE.matcher(sql).replaceAll("$1").replaceAll(NEW_LINE_CHAR, SPACE).replaceAll("(;" +
                 "+\\s*)+", SEMICOLON);
         return temp;
     }

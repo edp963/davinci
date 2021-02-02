@@ -22,10 +22,12 @@ import edp.davinci.model.RelRoleDashboardWidget;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
+@Component
 public interface RelRoleDashboardWidgetMapper {
 
     int insertBatch(List<RelRoleDashboardWidget> list);

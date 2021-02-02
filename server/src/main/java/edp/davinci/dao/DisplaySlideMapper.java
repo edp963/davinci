@@ -89,6 +89,5 @@ public interface DisplaySlideMapper {
 
     int copySlide(@Param("originDisplayId") Long originDisplayId, @Param("displayId") Long displayId, @Param("userId") Long userId);
 
-
     List<DisplaySlide> queryByDisplayIds(@Param("displayIds") Set<Long> displayIds);
 }

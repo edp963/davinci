@@ -35,7 +35,6 @@ import java.util.Set;
 @Component
 public interface ProjectMapper {
 
-
     List<ProjectWithCreateBy> getProjectsByUser(@Param("userId") Long userId);
 
     List<ProjectWithCreateBy> getFavoriteProjects(@Param("userId") Long userId);

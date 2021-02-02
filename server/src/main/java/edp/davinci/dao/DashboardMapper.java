@@ -28,7 +28,6 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -45,14 +44,11 @@ public interface DashboardMapper {
     @Delete({"delete from dashboard where dashboard_portal_id = #{portalId}"})
     int deleteByPortalId(@Param("portalId") Long portalId);
 
-
     @Select({"select * from dashboard where id = #{id}"})
     Dashboard getById(@Param("id") Long id);
 
-
     @Select({"select id from dashboard where dashboard_portal_id = #{portalId} and `name` = #{name}"})
     Long getByNameWithPortalId(@Param("name") String name, @Param("portalId") Long portalId);
-
 
     @Update({
             "update dashboard",
@@ -68,9 +64,7 @@ public interface DashboardMapper {
     })
     int update(Dashboard record);
 
-
     int updateBatch(List<Dashboard> list);
-
 
     @Select({
             "select * from dashboard where dashboard_portal_id = #{portalId} order by `index`"
@@ -114,7 +108,6 @@ public interface DashboardMapper {
     List<Dashboard> queryByParentIds(@Param("parentIds") Set<Long> parentIds);
 
     Set<Long> getIdSetByIds(@Param("set") Set<Long> dashboardIds);
-
 
     @Select({
             "select * from dashboard where type = 1 and FIND_IN_SET(#{id},full_parent_Id)"

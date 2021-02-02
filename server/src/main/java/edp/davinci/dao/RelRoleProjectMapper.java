@@ -27,10 +27,12 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
+@Component
 public interface RelRoleProjectMapper {
 
     int insert(RelRoleProject record);
@@ -44,7 +46,6 @@ public interface RelRoleProjectMapper {
             "delete from rel_role_project where project_id = #{projectId}"
     })
     int deleteByProjectId(@Param("projectId") Long projectId);
-
 
     @Select({
             "select * from rel_role_project where id = #{id,jdbcType=BIGINT}"
@@ -83,7 +84,6 @@ public interface RelRoleProjectMapper {
             "delete from rel_role_project where role_id = #{roleId}"
     })
     int deleteByRoleId(Long roleId);
-
 
     @Select({
             "select r.id,",

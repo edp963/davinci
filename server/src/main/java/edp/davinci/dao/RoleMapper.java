@@ -25,9 +25,11 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface RoleMapper {
     int insert(Role record);
 
@@ -40,7 +42,6 @@ public interface RoleMapper {
             "select * from `role` where id = #{id,jdbcType=BIGINT}"
     })
     Role getById(Long id);
-
 
     @Select({
             "SELECT a.* " +
@@ -65,19 +66,15 @@ public interface RoleMapper {
     })
     int update(Role record);
 
-
     @Select({
             "select id, `name`, description  from `role` where org_id = #{orgId}"
     })
     List<RoleBaseInfo> getBaseInfoByOrgId(Long orgId);
 
-
     List<Role> selectByIdsAndOrgId(@Param("orgId") Long orgId, @Param("roleIds") List<Long> roleIds);
-
 
     @Delete({"delete from `role` where org_id = #{orgId}"})
     int deleteByOrg(Long orgId);
-
 
     @Select({
             "SELECT DISTINCT r.id FROM role r INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
@@ -86,7 +83,6 @@ public interface RoleMapper {
             "WHERE p.id = #{portalId} and rru.user_id = #{userId}"
     })
     List<Long> getRolesByUserAndPortal(@Param("userId") Long userId, @Param("portalId") Long portalId);
-
 
     @Select({
             "SELECT DISTINCT r.id FROM role r INNER JOIN rel_role_project rrp on rrp.role_id = r.id",
