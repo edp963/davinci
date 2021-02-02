@@ -391,21 +391,21 @@ public class SqlUtils {
         }
     }
 
-    public static String getColumnLabel(Set<String> columnPrefixs, String columnLable) {
-        if (!CollectionUtils.isEmpty(columnPrefixs)) {
-            for (String prefix : columnPrefixs) {
-                if (columnLable.startsWith(prefix)) {
-                    return columnLable.replaceFirst(prefix, EMPTY);
+    public static String getColumnLabel(Set<String> columnPrefixes, String columnLabel) {
+        if (!CollectionUtils.isEmpty(columnPrefixes)) {
+            for (String prefix : columnPrefixes) {
+                if (columnLabel.startsWith(prefix)) {
+                    return columnLabel.replaceFirst(prefix, EMPTY);
                 }
-                if (columnLable.startsWith(prefix.toLowerCase())) {
-                    return columnLable.replaceFirst(prefix.toLowerCase(), EMPTY);
+                if (columnLabel.startsWith(prefix.toLowerCase())) {
+                    return columnLabel.replaceFirst(prefix.toLowerCase(), EMPTY);
                 }
-                if (columnLable.startsWith(prefix.toUpperCase())) {
-                    return columnLable.replaceFirst(prefix.toUpperCase(), EMPTY);
+                if (columnLabel.startsWith(prefix.toUpperCase())) {
+                    return columnLabel.replaceFirst(prefix.toUpperCase(), EMPTY);
                 }
             }
         }
-        return columnLable;
+        return columnLabel;
     }
 
     /**

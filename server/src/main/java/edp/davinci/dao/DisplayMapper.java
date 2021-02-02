@@ -40,10 +40,8 @@ public interface DisplayMapper {
     @Delete({"delete from display where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
 
-
     @Select({"select * from display where id = #{id}"})
     Display getById(@Param("id") Long id);
-
 
     @Update({
             "update display",
@@ -58,7 +56,6 @@ public interface DisplayMapper {
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Display display);
-
 
     @Select({
             "SELECT ",

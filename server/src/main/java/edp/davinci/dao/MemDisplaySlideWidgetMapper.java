@@ -19,16 +19,15 @@
 
 package edp.davinci.dao;
 
-import java.util.List;
-
+import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.model.MemDisplaySlideWidget;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
-import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
-import edp.davinci.model.MemDisplaySlideWidget;
+import java.util.List;
 
 @Component
 public interface MemDisplaySlideWidgetMapper {
@@ -64,13 +63,11 @@ public interface MemDisplaySlideWidgetMapper {
     })
     int update(MemDisplaySlideWidget memDisplaySlideWidget);
 
-
     @Select({"SELECT m.* FROM mem_display_slide_widget m WHERE m.display_slide_id = #{slideId}"})
     List<MemDisplaySlideWidget> getMemDisplaySlideWidgetListBySlideId(@Param("slideId") Long slideId);
 
     @Delete({"delete from mem_display_slide_widget where display_slide_id in (select id from display_slide where display_id = #{displayId})"})
     int deleteByDisplayId(@Param("displayId") Long displayId);
-
 
     @Delete({"delete from mem_display_slide_widget where display_slide_id = #{slideId}"})
     int deleteBySlideId(@Param("slideId") Long slideId);
