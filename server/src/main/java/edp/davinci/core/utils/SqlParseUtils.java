@@ -278,7 +278,6 @@ public class SqlParseUtils {
         String[] sqls = sqlStr.split(SEMICOLON);
         if (sqls.length > 0) {
             for (String sql : sqls) {
-                sql = sql.trim();
                 boolean select = isQuery(sql);
                 if (isQuery) {
                     if (select) {
@@ -297,11 +296,14 @@ public class SqlParseUtils {
     }
 
     private boolean isQuery(String sql) {
+
+        sql = sql.trim();
+
         if (sql.toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH)) {
             return true;
         }
 
-        String temp = filterAnnotate(sql);
+        String temp = filterAnnotate(sql).trim();
         return temp.toLowerCase().startsWith(SELECT) || temp.toLowerCase().startsWith(WITH);
     }
 

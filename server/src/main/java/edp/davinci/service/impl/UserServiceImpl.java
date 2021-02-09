@@ -470,7 +470,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         //校验文件是否图片
         if (!fileUtils.isImage(file)) {
-            return resultMap.failAndRefreshToken(request).message("file format error");
+            return resultMap.failAndRefreshToken(request).message("File format error");
         }
 
         //上传文件
@@ -479,7 +479,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
         try {
             avatar = fileUtils.upload(file, Constants.USER_AVATAR_PATH, fileName);
             if (StringUtils.isEmpty(avatar)) {
-                return resultMap.failAndRefreshToken(request).message("user avatar upload error");
+                return resultMap.failAndRefreshToken(request).message("User avatar upload error");
             }
         } catch (Exception e) {
             log.error("User avatar upload error, username:{}", user.getUsername(), e);
@@ -500,7 +500,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             return resultMap.successAndRefreshToken(request).payload(map);
         }
 
-        return resultMap.failAndRefreshToken(request).message("server error, user avatar update fail");
+        return resultMap.failAndRefreshToken(request).message("Server error, user avatar update fail");
     }
 
 
@@ -518,7 +518,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 
         User tempUser = userMapper.getById(id);
         if (null == tempUser) {
-            return resultMap.failAndRefreshToken(request).message("user not found");
+            return resultMap.failAndRefreshToken(request).message("User not found");
         }
 
         UserProfile userProfile = new UserProfile();
@@ -578,7 +578,7 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
             case USERNAME:
                 String username = ticket.getTicket();
                 if (StringUtils.isEmpty(username)) {
-                    throw new ServerException("username cannot be EMPTY!");
+                    throw new ServerException("Username cannot be EMPTY!");
                 }
                 user = userMapper.selectByUsername(username);
                 if (user == null) {
