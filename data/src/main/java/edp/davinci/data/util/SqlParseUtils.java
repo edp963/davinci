@@ -558,7 +558,14 @@ public class SqlParseUtils {
     }
 
     private static boolean isQuerySql(String sql) {
-        String temp = parseAnnotations(sql);
+
+        sql = sql.trim();
+
+        if (sql.toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH)) {
+            return true;
+        }
+
+        String temp = parseAnnotations(sql).trim();
         return temp.toLowerCase().startsWith(SELECT) || temp.toLowerCase().startsWith(WITH);
     }
 
