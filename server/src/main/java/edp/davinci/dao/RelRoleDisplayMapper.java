@@ -78,5 +78,5 @@ public interface RelRoleDisplayMapper {
     int deleteByProject(Long projectId);
 
     @Delete({"delete from rel_role_display where role_id = #{roleId} and display_id in (select id from display where project_id = #{projectId})"})
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 }

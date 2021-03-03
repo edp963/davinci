@@ -81,5 +81,5 @@ public interface RelRoleViewMapper {
     @Delete({ 
             "delete from rel_role_view where role_id = #{roleId} and view_id in (select id from view where project_id = #{projectId})" 
     })
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 }
