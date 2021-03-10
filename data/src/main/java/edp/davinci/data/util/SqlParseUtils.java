@@ -73,7 +73,7 @@ public class SqlParseUtils {
     public static final Pattern PATTERN_SQL_ANNOTATION = Pattern.compile(REG_SQL_ANNOTATION);
 
     public static String parseAnnotations(String sql) {
-        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replace(NEW_LINE, EMPTY).replaceAll("(;+\\s*)+",
+        return PATTERN_SQL_ANNOTATION.matcher(sql).replaceAll("$1").replace(NEW_LINE, SPACE).replaceAll("(;+\\s*)+",
                 SEMICOLON);
     }
 
@@ -541,6 +541,7 @@ public class SqlParseUtils {
 		if (strArr.length > 0) {
 			list = new ArrayList<>();
 			for (String s : strArr) {
+                s = s.trim();
 				boolean select = isQuerySql(s);
 				if (isQuery) {
 					if (select) {
@@ -558,9 +559,6 @@ public class SqlParseUtils {
     }
 
     private static boolean isQuerySql(String sql) {
-
-        sql = sql.trim();
-
         if (sql.toLowerCase().startsWith(SELECT) || sql.toLowerCase().startsWith(WITH)) {
             return true;
         }

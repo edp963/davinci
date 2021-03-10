@@ -426,12 +426,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                     .pageNo(executeParam.getPageNo()).pageSize(executeParam.getPageSize()).isMaintainer(isMaintainer)
                     .nativeQuery(true).type("query").build();
 
-            statement = parser.parseSystemVars(statement, queryParam, source, user);
-            statement = parser.parseAuthVars(statement, queryParam, null, null, source, user);
-
             Map<String, Object> queryParams = new HashMap<>();
             List<SqlVariable> variables = executeParam.getVariables();
             setQueryVarValue(queryParams, variables, null);
+
+            statement = parser.preParse(statement, queryParam, null, null, source, user);
+            statement = parser.parseSystemVars(statement, queryParam, source, user);
+            statement = parser.parseAuthVars(statement, queryParam, null, null, source, user);
             statement = parser.parseQueryVars(statement, queryParam, queryParams, null, source, user);
 
             List<String> executeStatements = parser.getExecuteStatement(statement, queryParam, source, user);
@@ -446,7 +447,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
 
             if (!CollectionUtils.isEmpty(queryStatements)) {
                 for (String s : queryStatements) {
-                    PagingParam paging = new PagingParam(0, 0, queryParam.getLimit());
+                    PagingParam paging = new PagingParam(queryParam.getPageNo(), queryParam.getPageSize(),
+                            queryParam.getLimit());
                     pagingWithQueryColumns = DataUtils.syncQuery4Paging(source, s, paging, new HashSet<String>(), user);
                 }
             }
@@ -469,18 +471,18 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             String varName = var.getName().trim();
             Object value = null;
             if (!CollectionUtils.isEmpty(params)) {
-                Param param = params.stream().filter(p -> p.getName().equals(varName)).findFirst().get();
-                value = SqlVariableValueTypeEnum.getValue(var.getValueType(), param.getValue(), var.isUdf());
+                Param param = null;
+                Optional<Param> optional = params.stream().filter(p -> p.getName().equals(varName)).findFirst();
+                if (optional.isPresent()) {
+                    param = optional.get();
+                    value = SqlVariableValueTypeEnum.getValue(var.getValueType(), param.getValue(), var.isUdf());
+                }
             }
 
             if (value == null) {
                 queryParams.put(varName,
                         SqlVariableValueTypeEnum.getValues(var.getValueType(), var.getDefaultValues(), var.isUdf()));
                 return;
-            }
-
-            if (value instanceof List && ((List) value).size() > 0) {
-                value = ((List) value).stream().collect(Collectors.joining(COMMA)).toString();
             }
 
             queryParams.put(varName, value);
@@ -568,14 +570,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                                             .aggregators(param.getAggregators())
                                             .groups(param.getGroups())
                                             .filters(param.getFilters())
+                                            .orders(param.getOrders())
                                             .type(param.getType())
                                             .build();
             
             if("distinct".equals(param.getType())) {
                 sqlQueryParam.setColumns(((WidgetDistinctParam)param).getColumns());
             }
-
-            String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
 
             Map<String, List<String>> authParams = new HashMap<>();
             if (isMaintainer) {
@@ -587,7 +588,8 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
             Map<String, Object> queryParams = new HashMap<>();
             setQueryVarValue(queryParams, variables, params);
 
-            // parse auth var first
+            statement = parser.preParse(statement, sqlQueryParam, authParams, queryParams, source, user);
+            String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
             String sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, authParams, queryParams, source, user);
             String sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
 
@@ -1147,14 +1149,13 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
                                         .aggregators(queryParam.getAggregators())
                                         .groups(queryParam.getGroups())
                                         .filters(queryParam.getFilters())
+                                        .orders(queryParam.getOrders())
                                         .type(queryParam.getType())
                                         .build();
         
         if("distinct".equals(queryParam.getType())) {
             sqlQueryParam.setColumns(((WidgetDistinctParam)queryParam).getColumns());
         }
-
-        String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
 
         Map<String, List<String>> authParams = new HashMap<>();
         if (isMaintainer) {
@@ -1166,9 +1167,9 @@ public class ViewServiceImpl extends BaseEntityService implements ViewService {
         Map<String, Object> queryParams = new HashMap<>();
         setQueryVarValue(queryParams, variables, params);
 
-        // parse auth var first
+        statement = parser.preParse(statement, sqlQueryParam, authParams, queryParams, source, user);
+        String sWithSysVar = parser.parseSystemVars(statement, sqlQueryParam, source, user);
         String sWithAuthVar = parser.parseAuthVars(sWithSysVar, sqlQueryParam, authParams, queryParams, source, user);
-        
         String sWithQueryVar = parser.parseQueryVars(sWithAuthVar, sqlQueryParam, queryParams, authParams, source, user);
 
         List<String> executeStatements = parser.getExecuteStatement(sWithQueryVar, sqlQueryParam, source, user);

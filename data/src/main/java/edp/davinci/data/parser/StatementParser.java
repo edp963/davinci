@@ -19,16 +19,21 @@
 
 package edp.davinci.data.parser;
 
-import java.util.List;
-import java.util.Map;
-
 import edp.davinci.core.dao.entity.Source;
 import edp.davinci.core.dao.entity.User;
 import edp.davinci.data.pojo.SqlQueryParam;
 
+import java.util.List;
+import java.util.Map;
+
 public abstract class StatementParser {
 
     public abstract String getParserType();
+
+    /**
+     * prepare parse, you can do something before parse
+     */
+    public abstract String preParse(String statement, SqlQueryParam queryParam, Map<String, List<String>> authParams, Map<String, Object> queryParams, Source source, User user);
     
     /**
      * parse view sql with system vars
@@ -36,16 +41,16 @@ public abstract class StatementParser {
     public abstract String parseSystemVars(String statement, SqlQueryParam queryParam, Source source, User user);
 
     /**
-     * parse view sql with query vars
-     */
-    public abstract String parseQueryVars(String statement, SqlQueryParam queryParam, Map<String, Object> queryParams, Map<String, List<String>> authParams, Source source, User user);
-
-    /**
      * parse view sql with auth vars
      * if authParams is null, means no permission is needed
      * if authParams is empty, means no permission
      */
     public abstract String parseAuthVars(String statement, SqlQueryParam queryParam, Map<String, List<String>> authParams, Map<String, Object> queryParams, Source source, User user);
+
+    /**
+     * parse view sql with query vars
+     */
+    public abstract String parseQueryVars(String statement, SqlQueryParam queryParam, Map<String, Object> queryParams, Map<String, List<String>> authParams, Source source, User user);
 
     /**
      * get execute statement from parsed statement to do execute
