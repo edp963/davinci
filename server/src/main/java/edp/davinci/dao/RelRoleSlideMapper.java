@@ -92,5 +92,5 @@ public interface RelRoleSlideMapper {
         "left join display d on d.id = ds.display_id ",
         "where d.project_id = #{projectId})"
     })
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 }

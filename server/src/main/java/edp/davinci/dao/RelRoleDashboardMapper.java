@@ -90,5 +90,5 @@ public interface RelRoleDashboardMapper {
         "select d.id from dashboard d left join dashboard_portal p on p.id = d.dashboard_portal_id ",
         "where p.project_id = #{projectId})"
     })
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 }

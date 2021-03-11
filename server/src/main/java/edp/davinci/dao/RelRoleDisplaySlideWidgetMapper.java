@@ -84,7 +84,7 @@ public interface RelRoleDisplaySlideWidgetMapper {
         "INNER JOIN display d ON d.id = ds.display_id " +
         "WHERE d.project_id = #{projectId} " +
         ") "})
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
     int copyRoleSlideWidgetRelation(@Param("relSlideCopies") List<RelModelCopy> memCopies, @Param("userId") Long userId);
 }

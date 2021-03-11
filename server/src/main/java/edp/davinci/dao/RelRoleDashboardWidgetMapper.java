@@ -83,6 +83,6 @@ public interface RelRoleDashboardWidgetMapper {
             "INNER JOIN dashboard_portal dp ON dp.id = d.dashboard_portal_id " +
             "WHERE dp.project_id = #{projectId} " +
             ") "})
-    int deleteByRoleAndProject(Long roleId, Long projectId);
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
 }
