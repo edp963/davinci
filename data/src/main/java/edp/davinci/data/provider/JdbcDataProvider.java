@@ -118,8 +118,8 @@ public class JdbcDataProvider extends DataProvider {
 				jdbcTemplate.setFetchSize(Integer.MIN_VALUE);
 			}
 
-			int pageNo = Math.max(paging.getPageNo(), 1);
-			int pageSize = Math.max(paging.getPageSize(), 10);
+			int pageNo = paging.getPageNo();
+			int pageSize = paging.getPageSize();
 			int startRow = (pageNo - 1) * pageSize;
 			
 			// query by paging
@@ -305,7 +305,13 @@ public class JdbcDataProvider extends DataProvider {
 		List<TableType> tables = new ArrayList<TableType>();
 		try (Connection con = dataSource.getConnection();) {
 			DatabaseMetaData metaData = con.getMetaData();
-			String schema = metaData.getConnection().getSchema();
+			String schema = null;
+			try {
+				schema = metaData.getConnection().getSchema();
+			} catch (Throwable t) {
+				// ignore
+			}
+
 			res = con.getMetaData().getTables(database, getSchemaPattern(config, schema), "%", TABLE_TYPES);
 			while (res.next()) {
 				String name = res.getString("TABLE_NAME");

@@ -35,6 +35,9 @@ import org.stringtemplate.v4.STGroupFile;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static edp.davinci.commons.Constants.COMMA;
 
 @Component
 public class JdbcParser extends StatementParser {
@@ -45,31 +48,14 @@ public class JdbcParser extends StatementParser {
     }
 
     @Override
-    public String parseSystemVars(String sql, SqlQueryParam param, Source source, User user) {
-        return SqlParseUtils.parseSystemVars(sql, param.isMaintainer(), user);
+    public String preParse(String statement, SqlQueryParam queryParam, Map<String, List<String>> authParams, Map<String, Object> queryParams, Source source, User user) {
+//        return SqlParseUtils.parseAnnotations(statement);
+        return statement;
     }
 
     @Override
-    public String parseQueryVars(String sql, SqlQueryParam param, Map<String, Object> queryParams,
-            Map<String, List<String>> authParams, Source source, User user) {
-        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(JdbcSourceUtils.getSourceConfig(source).getProperties());
-        char c = sqlTempDelimiter.charAt(0);
-        ST st = new ST(sql, c, c);
-        if (!CollectionUtils.isEmpty(authParams)) {
-            authParams.forEach((k, v) -> {
-                List values = authParams.get(k);
-                if (CollectionUtils.isEmpty(values)
-                        || (values.size() == 1 && values.get(0).toString().contains(Constants.NO_AUTH_PERMISSION))) {
-                    st.add(k, false);
-                } else {
-                    st.add(k, true);
-                }
-            });
-        }
-        if (!CollectionUtils.isEmpty(queryParams)) {
-            queryParams.forEach(st::add);
-        }
-        return st.render();
+    public String parseSystemVars(String sql, SqlQueryParam param, Source source, User user) {
+        return SqlParseUtils.parseSystemVars(sql, param.isMaintainer(), user);
     }
 
     @Override
@@ -87,6 +73,26 @@ public class JdbcParser extends StatementParser {
             }
         }
         return str;
+    }
+
+    @Override
+    public String parseQueryVars(String sql, SqlQueryParam param, Map<String, Object> queryParams,
+                                 Map<String, List<String>> authParams, Source source, User user) {
+        String sqlTempDelimiter = SqlUtils.getSqlTempDelimiter(JdbcSourceUtils.getSourceConfig(source).getProperties());
+        char c = sqlTempDelimiter.charAt(0);
+        ST st = new ST(sql, c, c);
+        if (!CollectionUtils.isEmpty(queryParams)) {
+            queryParams.forEach((k, v) -> {
+                if (v instanceof List && ((List) v).size() > 0) {
+                    st.add(k, ((List) v).stream().collect(Collectors.joining(COMMA)).toString());
+                    return;
+                }
+
+                st.add(k, v);
+            });
+        }
+
+        return st.render();
     }
 
     @Override
