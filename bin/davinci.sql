@@ -27,8 +27,8 @@ CREATE TABLE `cron_job`
     `is_folder`       tinyint(1)                                   DEFAULT NULL,
     `index`           int(5)                                       DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    UNIQUE KEY `name_UNIQUE` (`name`) USING BTREE
-) ENGINE = MyISAM
+    UNIQUE KEY `idx_name_project` (`name`,`project_id`) USING BTREE
+) ENGINE = InnoDB
   DEFAULT CHARSET = utf8
   COLLATE = utf8_unicode_ci;
 
@@ -51,7 +51,7 @@ CREATE TABLE `dashboard`
     `update_by`           bigint(20)            DEFAULT NULL,
     `update_time`         datetime              DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `idx_dashboard_id` (`dashboard_portal_id`) USING BTREE,
+    KEY `idx_portal_id` (`dashboard_portal_id`) USING BTREE,
     KEY `idx_parent_id` (`parent_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
@@ -173,7 +173,7 @@ CREATE TABLE `mem_dashboard_widget`
     `update_by`    bigint(20)          DEFAULT NULL,
     `update_time`  datetime            DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `idx_protal_id` (`dashboard_id`) USING BTREE,
+    KEY `idx_dashboard_id` (`dashboard_id`) USING BTREE,
     KEY `idx_widget_id` (`widget_Id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
@@ -222,7 +222,10 @@ CREATE TABLE `organization`
     `create_by`            bigint(20)   NOT NULL DEFAULT '0',
     `update_time`          timestamp    NULL,
     `update_by`            bigint(20)            DEFAULT NULL,
-    PRIMARY KEY (`id`) USING BTREE
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_allow_create_project` (`allow_create_project`),
+    KEY `idx_member_permission` (`member_permission`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
@@ -268,7 +271,10 @@ CREATE TABLE `project`
     `create_time`    datetime              DEFAULT NULL,
     `update_by`      bigint(20)            DEFAULT NULL,
     `update_time`    datetime              DEFAULT NULL,
-    PRIMARY KEY (`id`) USING BTREE
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_org_id` (`org_id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_visibility` (`visibility`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
@@ -434,7 +440,8 @@ CREATE TABLE `rel_user_organization`
     `update_by`   bigint(20)   DEFAULT NULL,
     `update_time` datetime     DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    UNIQUE KEY `idx_org_user` (`org_id`, `user_id`) USING BTREE
+    UNIQUE KEY `idx_org_user` (`org_id`, `user_id`) USING BTREE,
+    KEY `idx_role` (`role`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
@@ -454,7 +461,7 @@ CREATE TABLE `role`
     `update_time` datetime     DEFAULT NULL,
     `avatar`      varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `idx_orgid` (`org_id`) USING BTREE
+    KEY `idx_org_id` (`org_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
 
@@ -520,7 +527,9 @@ CREATE TABLE `user`
     `create_by`   bigint(20)   NOT NULL DEFAULT '0',
     `update_time` timestamp    NULL,
     `update_by`   bigint(20)            DEFAULT NULL,
-    PRIMARY KEY (`id`) USING BTREE
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_email` (`email`),
+    KEY `idx_username` (`username`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
