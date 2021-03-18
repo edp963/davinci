@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edp.davinci.commons.util.JSONUtils;
 import lombok.Data;
@@ -31,7 +30,6 @@ import lombok.ToString;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -86,7 +84,7 @@ public class ExcelHeader {
     private int rowspan;
     private int colspan;
     private int[] range;
-    private List style;
+//    private List style;
 
     @JsonDeserialize(using = FormatDeserialize.class)
     private FieldFormat format;
@@ -127,7 +125,7 @@ public class ExcelHeader {
         this.range = range;
     }
 
-    public void setStyle(List<String> style) {
-        this.style = style;
-    }
+//    public void setStyle(List<String> style) {
+//        this.style = style;
+//    }
 }

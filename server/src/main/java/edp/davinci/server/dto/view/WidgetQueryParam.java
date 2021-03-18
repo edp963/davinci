@@ -19,9 +19,6 @@
 
 package edp.davinci.server.dto.view;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import edp.davinci.commons.util.JSONUtils;
 import edp.davinci.data.pojo.Aggregator;
 import edp.davinci.data.pojo.Filter;
@@ -29,6 +26,9 @@ import edp.davinci.data.pojo.Order;
 import edp.davinci.data.pojo.Param;
 import lombok.Data;
 import lombok.ToString;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @ToString(callSuper = true)
@@ -53,6 +53,18 @@ public class WidgetQueryParam extends ConcurrencyStrategy {
 
     }
 
+    /**
+     * for json deserialization
+     *
+     * @param groups
+     * @param aggregators
+     * @param orders
+     * @param filters
+     * @param params
+     * @param cache
+     * @param expired
+     * @param nativeQuery
+     */
     public WidgetQueryParam(List<String> groups,
                             List<Aggregator> aggregators,
                             List<Order> orders,
