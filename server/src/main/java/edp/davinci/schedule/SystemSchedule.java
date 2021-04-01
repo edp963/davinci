@@ -67,7 +67,7 @@ public class SystemSchedule {
     private static final int THREAD_POOL_QUEUE_ALARM_SIZE=2000;
     private static final ExecutorService CLEAR_TEMPDIR_THREADPOOL = Executors.newFixedThreadPool(3);
 
-    @Scheduled(cron = "0/5 * * * * *")
+    @Scheduled(cron = "0 0 1 * * *")
     public void clearTempDir() {
         checkThreadPoolExecutorStatus();
         // 下载内容文件默认保留7天，记录保留1月，在月初和月末大数据量导出情况下部分文件删除IO异常失败，导致磁盘空间撑满

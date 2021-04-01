@@ -26,6 +26,8 @@ import edp.davinci.core.enums.ActionEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.service.excel.MsgWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,10 +40,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
@@ -51,6 +56,7 @@ import static edp.core.consts.Consts.*;
 
 
 @Component
+@Slf4j
 public class FileUtils {
 
     private static final Logger scheduleLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SCHEDULE.getName());
@@ -153,6 +159,7 @@ public class FileUtils {
                     response.reset();
                     response.addHeader("Content-Disposition", "attachment;filename=" + new String(file.getName().getBytes(), "UTF-8"));
                     response.addHeader("Content-Length", EMPTY + file.length());
+                    // todo 通过ZipOutputStream压缩后传输
                     os = new BufferedOutputStream(response.getOutputStream());
                     response.setContentType("application/octet-stream;charset=UTF-8");
                     os.write(buffer);
@@ -194,7 +201,12 @@ public class FileUtils {
      */
     public static void deleteDir(File dir) {
 
-        if (dir.isFile() || dir.list().length == 0) {
+        if(!dir.exists()){
+            // 减少因手动删除文件导致的日志错误报警
+            log.info("文件路径不存在或已被删除dir:[{}]",dir.getPath());
+            return;
+        }
+        if(dir.isFile() || dir.list().length == 0) {
             dir.delete();
         }
         else {
@@ -204,7 +216,25 @@ public class FileUtils {
             dir.delete();
         }
     }
+    /**
+     * NIO删除文件夹及其下文件
+     *
+     * @param dir
+     * @return
+     */
+    public static void deleteDirByNio(File dir) throws IOException {
 
+        if (dir.isFile() || dir.list().length == 0) {
+            Path path = Paths.get(dir.getPath());
+            Files.deleteIfExists(path);
+        }
+        else {
+            for (File f : dir.listFiles()) {
+                deleteDirByNio(f);
+            }
+            dir.delete();
+        }
+    }
     /**
      * 格式化文件目录
      *
