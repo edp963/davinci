@@ -36,7 +36,11 @@ module.exports = options => ({
       },
       {
         test: /\.js$/, // Transform all .js files required somewhere with Babel
-        use: 'happypack/loader?id=js'
+        exclude: [
+          /\bcore-js\b/,
+          /\bwebpack\/buildin\b/
+        ],
+        use: 'happypack/loader?id=js',
       },
       {
         // Do not transform vendor's CSS with CSS-modules
