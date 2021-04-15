@@ -45,7 +45,8 @@ module.exports = require('./webpack.base.babel')({
     {
       loader: 'ts-loader',
       options: {
-        transpileOnly: true
+        transpileOnly: true,
+        happyPackMode: true
       }
     }
   ],
