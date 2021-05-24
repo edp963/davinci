@@ -698,7 +698,7 @@ export function getPivotTooltipLabel(
             ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
             : record[`${mc.agg}(${decodedName})`]
           : 0
-        return `${decodedName}: ${value}`
+        return `${decodedName}: ${getFormattedValue(value, mc.format)}`
       })
       .concat(
         dimetionColumns.map((dc) => {
@@ -707,7 +707,7 @@ export function getPivotTooltipLabel(
               ? record[0][dc]
               : record[dc]
             : ''
-          return `${dc}: ${value}`
+          return `${dc}: ${getFormattedValue(value, dc.format)}`
         })
       )
       .join('<br/>')
