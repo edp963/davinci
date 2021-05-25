@@ -4,6 +4,7 @@ import { ILegend } from './Pivot'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { DEFAULT_SPLITER } from 'app/globalConstants'
 import { decodeMetricName } from 'containers/Widget/components/util'
+import { getFormattedValue } from '../Config/Format';
 
 const styles = require('./Pivot.less')
 
@@ -113,7 +114,7 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
             className={styles.cellContent}
             style={{...styleColor}}
           >
-            {d[`${m.agg}(${decodedMetricName})`]}
+            {getFormattedValue(d[`${m.agg}(${decodedMetricName})`], m.format)}
           </p>
         )
       })
