@@ -144,6 +144,10 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
         const seriesIndex = series[index] ? series[index].split('&')[0] : null
         return seriesData[seriesIndex] ? seriesData[seriesIndex][item] : []
       }
+      // 当是地图的时候，获取正确的数据用来关联其他widget
+      if (selectedChart === 7 && params?.data.originIndex != undefined) {
+        return data[params.data.originIndex]
+      }
       return data[item]
     })
     const brushed = [{ 0: Object.values(resultData) }]
