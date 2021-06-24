@@ -418,6 +418,7 @@ export class DashboardItem extends React.PureComponent<
   }
 
   private drillUp = (name: string) => {
+    //  a group name by drill
     this.receiveWidgetId()
     const { sourceDataOfBrushed } = this.state
     const isHasDrillHistory = this.isHasDrillHistory()
