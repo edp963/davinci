@@ -1,4 +1,4 @@
-@import "~assets/less/variable";
+@import '~assets/less/variable';
 
 .wrapper {
   flex: 1;
@@ -52,8 +52,8 @@
       .rowBody {
         flex-shrink: 0;
         overflow-y: auto;
-        display: flex;
-        flex-direction: row;
+        // display: flex;
+        // flex-direction: row;
         .hideScrollbar;
       }
     }
@@ -142,7 +142,7 @@
 
     p {
       max-width: 200px;
-      margin: 0 auto;     // 单th 100%
+      margin: 0 auto; // 单th 100%
       .ellipsis;
 
       &.colContent {
@@ -211,7 +211,8 @@
 .rowBody,
 .columnBody {
   &.raw {
-    th, td {
+    th,
+    td {
       border: 1px;
     }
   }
