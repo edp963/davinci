@@ -116,7 +116,7 @@ export default function (chartProps: IChartProps) {
   const agg = metrics[0].agg
   const metricName = decodeMetricName(metrics[0].name)
 
-  data.forEach((record) => {
+  data.forEach((record, index) => {
     let areaVal
     const group = []
 
@@ -135,6 +135,7 @@ export default function (chartProps: IChartProps) {
             dataTree[provinceName] = {
               lon: area.lon,
               lat: area.lat,
+              originIndex: index,
               value,
               children: {}
             }
@@ -151,6 +152,7 @@ export default function (chartProps: IChartProps) {
               dataTree[parentName] = {
                 lon: area.lon,
                 lat: area.lat,
+                originIndex: index,
                 value: 0,
                 children: {}
               }
@@ -161,6 +163,7 @@ export default function (chartProps: IChartProps) {
               dataTree[areaVal] = {
                 lon: area.lon,
                 lat: area.lat,
+                originIndex: index,
                 value,
                 children: {}
               }
@@ -200,9 +203,10 @@ export default function (chartProps: IChartProps) {
         mapType: 'china',
         roam,
         data: Object.keys(dataTree).map((key, index) => {
-          const { lon, lat, value } = dataTree[key]
+          const { lon, lat, value, originIndex } = dataTree[key]
           return {
             name: key,
+            originIndex,
             value: [lon, lat, value]
           }
         }),
@@ -215,9 +219,10 @@ export default function (chartProps: IChartProps) {
         type: 'scatter',
         coordinateSystem: 'geo',
         data: Object.keys(dataTree).map((key, index) => {
-          const { lon, lat, value } = dataTree[key]
+          const { lon, lat, value, originIndex } = dataTree[key]
           return {
             name: key,
+            originIndex,
             value: [lon, lat, value],
             symbolSize: getSymbolSize(sizeRate, value) / 2
           }
@@ -232,9 +237,10 @@ export default function (chartProps: IChartProps) {
         type: 'heatmap',
         coordinateSystem: 'geo',
         data: Object.keys(dataTree).map((key, index) => {
-          const { lon, lat, value } = dataTree[key]
+          const { lon, lat, value, originIndex } = dataTree[key]
           return {
             name: key,
+            originIndex,
             value: [lon, lat, value],
             symbolSize: getSymbolSize(sizeRate, value) / 2
           }

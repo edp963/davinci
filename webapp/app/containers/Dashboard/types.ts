@@ -81,10 +81,18 @@ export interface IQueryVariableMap {
   [key: string]: string | number
 }
 
+export interface IGlobalFiltersItem {
+  name: string,
+  value: string,
+  operator: string,
+  sqlType: string,
+  type: string
+}
+
 export interface IQueryConditions {
   tempFilters: string[] // @TODO combine widget static filters with local filters
   linkageFilters: string[]
-  globalFilters: string[]
+  globalFilters: IGlobalFiltersItem[]
   variables: QueryVariable
   linkageVariables: QueryVariable
   globalVariables: QueryVariable
@@ -104,7 +112,7 @@ export interface IDataRequestParams {
   filters: string[]
   tempFilters: string[]
   linkageFilters: string[]
-  globalFilters: string[]
+  globalFilters: IGlobalFiltersItem[]
   variables: QueryVariable
   linkageVariables: QueryVariable
   globalVariables: QueryVariable
