@@ -33,7 +33,8 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
       renderType,
       getDataDrillDetail,
       isDrilling,
-      onError
+      onError,
+      queryVariables
     } = props
 
     if (renderType === 'loading') {
@@ -65,6 +66,7 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
             instance: this.instance,
             isDrilling,
             getDataDrillDetail,
+            queryVariables,
             selectedItems: this.props.selectedItems,
             callback: (seriesData) => {
               this.instance.off('click')

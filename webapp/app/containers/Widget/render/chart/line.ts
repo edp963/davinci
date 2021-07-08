@@ -41,7 +41,7 @@ const defaultTheme = require('assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
-  const { data, cols, chartStyles, color, tip, references } = chartProps
+  const { data, cols, chartStyles, color, tip, references, queryVariables } = chartProps
   const metrics = getCartesianChartMetrics(chartProps.metrics)
   const { spec, xAxis, yAxis, splitLine, label, legend } = chartStyles
 
@@ -255,7 +255,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         cols,
         metrics,
         color,
-        tip
+        tip,
+        queryVariables
       })
     },
     legend: getLegendOption(legend, seriesNames),

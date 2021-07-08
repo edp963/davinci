@@ -715,7 +715,7 @@ export function getPivotTooltipLabel(
 }
 
 export function getChartTooltipLabel(type, seriesData, options) {
-  const { cols, metrics, color, size, scatterXAxis, tip } = options
+  const { cols, metrics, color, size, scatterXAxis, tip, queryVariables = {} } = options
   let dimentionColumns: any[] = cols
   let metricColumns = [...metrics]
   if (color) {
@@ -777,7 +777,7 @@ export function getChartTooltipLabel(type, seriesData, options) {
               : record[dc.name]
             : ''
           value = getFormattedValue(value, dc.format)
-          return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
+          return `${getFieldAlias(dc.field, queryVariables) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
         })
       )
 
@@ -793,7 +793,7 @@ export function getChartTooltipLabel(type, seriesData, options) {
               : record[`${mc.agg}(${decodedName})`]
             : 0
           value = getFormattedValue(value, mc.format)
-          return `${getFieldAlias(mc.field, {}) || decodedName}: ${value}`
+          return `${getFieldAlias(mc.field, queryVariables) || decodedName}: ${value}`
         })
       )
 
