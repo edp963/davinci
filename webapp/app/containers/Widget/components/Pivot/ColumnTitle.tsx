@@ -5,8 +5,13 @@ import { getPivotCellWidth, getPivot, getStyleConfig } from '../util'
 
 const styles = require('./Pivot.less')
 
+interface IColProps {
+  name: string,
+  alias: string
+}
+
 interface IColumnTitleProps {
-  cols: string[]
+  cols: IColProps[]
   colKeys: string[][]
   colTree: object
   chartStyles: IChartStyles
@@ -18,6 +23,14 @@ export function ColumnTitle (props: IColumnTitleProps) {
   const { cols, colKeys, colTree, chartStyles, drawingData, dimetionAxis } = props
   const { elementSize, unitMetricWidth } = drawingData
   const { color: fontColor } = getStyleConfig(chartStyles).pivot
+
+  const content = cols.map(col => {
+    if (col.alias) {
+      return col.alias
+    } else {
+      return col.name
+    }
+  })
 
   let tableWidth = 0
 
@@ -37,7 +50,7 @@ export function ColumnTitle (props: IColumnTitleProps) {
         color: fontColor
       }}
     >
-      {cols.join(`  /  `)}
+      {content.join(`  /  `)}
     </div>
   )
 }

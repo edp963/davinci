@@ -5,8 +5,13 @@ import { getPivotContentTextWidth, getPivotCellHeight, getPivot, getStyleConfig 
 
 const styles = require('./Pivot.less')
 
+interface IRowProps {
+  name: string,
+  alias: string
+}
+
 interface IRowTitleProps {
-  rows: string[]
+  rows: IRowProps[]
   rowKeys: string[][]
   chartStyles: IChartStyles
   drawingData: IDrawingData
@@ -27,7 +32,15 @@ export function RowTitle (props: IRowTitleProps) {
     tableHeight = rowKeys.length * getPivotCellHeight()
   }
 
-  const content = rows.join(`  /  `)
+  const content = rows
+  .map(row => {
+    if (row.alias) {
+      return row.alias
+    } else {
+      return row.name
+    }
+  })
+  .join(`  /  `)
   const contentLength = getPivotContentTextWidth(content)
 
   return (

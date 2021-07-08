@@ -589,6 +589,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     const { legendSelected, renderType } = this.state
     const rowNames = rows.map((r) => r.name)
     const colNames = cols.map((c) => c.name)
+    const colNamesWithAlias = cols.map((c) => ({ name: c.name, alias: c.fields.alias }))
+    const rowNamesWithAlias = rows.map(r => ({ name: r.name, alias: r.fields.alias }))
     const hasMetricNameDimension = [rows, cols].some((items) => items.findIndex((item) => item.name === '指标名称') >= 0)
 
     return (
@@ -603,7 +605,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           />
           <div className={styles.rowHeader}>
             <RowTitle
-              rows={rowNames}
+              rows={rowNamesWithAlias}
               rowKeys={this.rowKeys}
               chartStyles={chartStyles}
               drawingData={this.drawingData}
@@ -630,7 +632,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         </div>
         <div className={styles.rightSide}>
           <ColumnTitle
-            cols={colNames}
+            cols={colNamesWithAlias}
             colKeys={this.colKeys}
             colTree={this.colTree}
             chartStyles={chartStyles}
