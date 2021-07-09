@@ -1079,9 +1079,18 @@ public class SqlUtils {
         return this.jdbcSourceInfo.getJdbcUrl();
     }
 
-    public static String formatSql(String sql) {
+    public String formatSql(String sql) {
         try {
-            return SQLUtils.formatMySql(sql);
+            switch (dataTypeEnum) {
+                case ORACLE:
+                    return SQLUtils.formatOracle(sql);
+                case MYSQL:
+                    return SQLUtils.formatMySql(sql);
+                case HIVE2:
+                    return SQLUtils.formatHive(sql);
+                default:
+                    return sql;
+            }
         } catch (Exception e) {
             // ignore
         }

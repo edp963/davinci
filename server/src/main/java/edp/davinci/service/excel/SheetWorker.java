@@ -89,7 +89,7 @@ public class SheetWorker<T> extends AbstractSheetWriter implements Callable {
             Set<String> queryFromsAndJoins = SqlUtils.getQueryFromsAndJoins(sql);
             if (log) {
                 logger.info("Task({}) sheet worker(name:{}, sheetNo:{}, sheetName:{}) query start sql:{}, md5:{}",
-                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), SqlUtils.formatSql(sql), md5);
+                        context.getTaskKey(), context.getName(), context.getSheetNo(), context.getSheet().getSheetName(), utils.formatSql(sql), md5);
             }
 
             final AtomicInteger count = new AtomicInteger(0);
