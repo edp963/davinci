@@ -4,6 +4,7 @@ import { IDrawingData } from './Pivot'
 import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { spanSize, getPivotCellWidth, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
 import { DEFAULT_SPLITER } from 'app/globalConstants'
+import {pivotOnRenderColHeader} from './aggregateUtil'
 
 const styles = require('./Pivot.less')
 
@@ -87,6 +88,17 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
             } else {
               colContent = ck[i]
             }
+            
+            // highlight aggregated fields's color, for example in "blue"
+            let cellStyle = {"backgroundColor": headerBackgroundColor, 
+                  "color": fontColor,
+                  "fontFamily": fontFamily,
+                  "fontSize": fontSize,
+                  "borderColor": lineColor,
+                  "borderStyle": lineStyle}
+            
+            pivotOnRenderColHeader(this.props, ck, cellStyle)
+            
             header.push(
               <th
                 key={flatColKey}
@@ -94,12 +106,12 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
                 className={columnClass}
                 style={{
                   ...(!!cellWidth && {width: cellWidth}),
-                  ...!dimetionAxis && {backgroundColor: headerBackgroundColor},
-                  color: fontColor,
-                  fontSize: Number(fontSize),
-                  fontFamily,
-                  borderColor: lineColor,
-                  borderStyle: lineStyle
+                  ...!dimetionAxis && {backgroundColor: cellStyle.backgroundColor},
+                  color: cellStyle.color,
+                  fontSize: Number(cellStyle.fontSize),
+                  fontFamily: cellStyle.fontFamily,
+                  borderColor: cellStyle.lineColor,
+                  borderStyle: cellStyle.lineStyle
                 }}
               >
                 <p
