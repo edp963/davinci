@@ -448,10 +448,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       columns,
       nativeIndex
     )
-    return array.filter(
-      (arr) =>
-        arr['index'] < array[start]['index'] || arr.index > array[end]['index']
-    )
+    return array.filter((_, index) => index < start || index > end);
   }
 
   private collectCell = (target, index, dataIndex: string) => (event) => {
