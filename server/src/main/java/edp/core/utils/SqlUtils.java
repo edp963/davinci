@@ -235,7 +235,11 @@ public class SqlUtils {
             if (this.dataTypeEnum == MYSQL) {
                 sql = sql + " LIMIT " + startRow + ", " + pageSize;
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
-            } else {
+            } else if (this.dataTypeEnum == KYLIN) {
+                sql = sql + " LIMIT " + pageSize + " OFFSET "+ startRow;
+                getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, -1);
+            }
+            else {
                 getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate, excludeColumns, startRow);
             }
         }
