@@ -315,15 +315,7 @@ public class JdbcDataSource {
             }
 
             // druid wall filter not support some database so set type mysql
-            if (DataTypeEnum.MOONBOX == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.MONGODB == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.ELASTICSEARCH == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.CASSANDRA == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.VERTICA == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.KYLIN == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.HANA == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.IMPALA == DataTypeEnum.urlOf(jdbcUrl) ||
-                    DataTypeEnum.TDENGINE == DataTypeEnum.urlOf(jdbcUrl)) {
+            if (DataTypeEnum.hasMysqlFeature(jdbcUrl)) {
                 wallFilter.setDbType(DataTypeEnum.MYSQL.getFeature());
             }
 
