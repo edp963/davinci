@@ -58,7 +58,7 @@ Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/
 ## Get Help
 The fastest way to get response from our developers is to join our WeChat group for online discussion.
 
-[![](https://github.com/edp963/edp-resource/raw/master/WeChat.jpg)](https://github.com/edp963/edp-resource/raw/master/WeChat.jpg)
+[![](https://github.com/edp963/edp-resource/raw/master/WeChat.jpg)](https://github.com/edp963/edp-resource/raw/master/WeChat.jpeg)
 
 ## License
 Please refer to [LICENSE](https://github.com/edp963/davinci/blob/master/LICENSE) file.
