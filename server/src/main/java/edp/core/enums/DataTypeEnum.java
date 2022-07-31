@@ -22,6 +22,9 @@ package edp.core.enums;
 import edp.core.consts.Consts;
 import edp.core.exception.SourceException;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum DataTypeEnum {
 
     MYSQL("mysql", "mysql", "com.mysql.cj.jdbc.Driver", "`", "`", "'", "'"),
@@ -56,7 +59,9 @@ public enum DataTypeEnum {
 
     IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", "", "", "'", "'"),
 
-    TDENGINE("TAOS", "TAOS", "com.taosdata.jdbc.TSDBDriver", "'", "'", "\"", "\"");
+    TDENGINE("TAOS", "TAOS", "com.taosdata.jdbc.TSDBDriver", "'", "'", "\"", "\""),
+
+    ODPS("odps", "odps", "com.aliyun.odps.jdbc.OdpsDriver", "", "", "`", "`");
 
     private String feature;
     private String desc;
@@ -76,6 +81,9 @@ public enum DataTypeEnum {
         this.aliasSuffix = aliasSuffix;
     }
 
+    private static Set<DataTypeEnum> mysqlTypeDBs = EnumSet.of(MOONBOX, MONGODB, ELASTICSEARCH,
+            CASSANDRA, VERTICA, KYLIN, HANA, IMPALA, TDENGINE, ODPS);
+
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase().trim();
         for (DataTypeEnum dataTypeEnum : values()) {
@@ -84,6 +92,14 @@ public enum DataTypeEnum {
             }
         }
         return null;
+    }
+
+    public static boolean hasMysqlFeature(String jdbcUrl) throws SourceException {
+        DataTypeEnum dataTypeEnum = urlOf(jdbcUrl);
+        if (dataTypeEnum != null && mysqlTypeDBs.contains(dataTypeEnum)) {
+            return true;
+        }
+        return false;
     }
 
     public String getFeature() {
