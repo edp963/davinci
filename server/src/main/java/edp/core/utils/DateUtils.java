@@ -143,6 +143,19 @@ public class DateUtils {
         return formatter.format(calendar.getTime());
     }
 
+    /**
+     * 文件保留天数可配置
+     * @param amount
+     * @return
+     */
+    public static String getTheDayBeforeAWeekYYYYMMDD(int amount) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate());
+        calendar.add(Calendar.DAY_OF_MONTH, amount);
+
+        return formatter.format(calendar.getTime());
+    }
     public static String getNowDateFormatCustom(String format) {
         SimpleDateFormat formatter = new SimpleDateFormat(format);
 
