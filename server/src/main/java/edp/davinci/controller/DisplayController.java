@@ -524,7 +524,7 @@ public class DisplayController extends BaseController {
      * @return
      */
     @ApiOperation(value = "upload avatar")
-    @PostMapping(value = "/upload/coverImage", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/upload/coverImage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity uploadAvatar(@RequestParam("coverImage") MultipartFile file,
                                        HttpServletRequest request) {
 
