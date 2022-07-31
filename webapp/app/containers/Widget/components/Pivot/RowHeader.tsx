@@ -19,6 +19,7 @@ import {
   getStyleConfig
 } from '../util'
 import { PIVOT_LINE_HEIGHT, DEFAULT_SPLITER } from 'app/globalConstants'
+import {pivotOnRenderRowHeader} from './aggregateUtil'
 
 const styles = require('./Pivot.less')
 
@@ -146,6 +147,17 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
             } else {
               colContent = txt
             }
+            
+            // highlight aggregated fields's header color, for example in "blue"
+            let cellStyle = {"backgroundColor": headerBackgroundColor, 
+                    "color": fontColor,
+                    "fontFamily": fontFamily,
+                    "fontSize": fontSize,
+                    "borderColor": lineColor,
+                    "borderStyle": lineStyle}
+					
+            pivotOnRenderRowHeader(this.props, rk, cellStyle, styles)
+            
             header.push(
               <th
                 key={`${txt}${j}`}
@@ -157,13 +169,13 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
                   width: getPivotCellWidth(rowWidths[j]),
                   ...(!!cellHeight && { height: cellHeight }),
                   ...(!dimetionAxis && {
-                    backgroundColor: headerBackgroundColor
+                    backgroundColor: cellStyle.backgroundColor
                   }),
-                  color: fontColor,
-                  fontSize: Number(fontSize),
-                  fontFamily,
-                  borderColor: lineColor,
-                  borderStyle: lineStyle
+                  color: cellStyle.color,
+                  fontSize: Number(cellStyle.fontSize),
+                  fontFamily: cellStyle.fontFamily,
+                  borderColor: cellStyle.lineColor,
+                  borderStyle: cellStyle.lineStyle
                 }}
               >
                 <p

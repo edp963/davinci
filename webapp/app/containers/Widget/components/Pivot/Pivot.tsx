@@ -34,6 +34,7 @@ import ColumnFooter from './ColumnFooter'
 import Legend from './Legend'
 import { RenderType, IWidgetProps } from '../Widget'
 import PivotTypes from '../../config/pivot/PivotTypes'
+import {pivotOnGetRenderData, pivotOnRender} from './aggregateUtil'
 
 const styles = require('./Pivot.less')
 
@@ -199,6 +200,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   private getRenderData = (props) => {
+    pivotOnGetRenderData(props)
+    
     const {
       width,
       height,
@@ -777,6 +780,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     const hasMetricNameDimension = [rows, cols].some(
       (items) => items.findIndex((item) => item.name === '指标名称') >= 0
     )
+
+    pivotOnRender(this.props, this.rowHeaderWidths, this.rowNames, this.rowKeys, this.rowTree, this.colNames, this.colKeys, this.colTree, this.tree)
 
     return (
       <div className={styles.block}>
