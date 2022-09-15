@@ -27,15 +27,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.mail.Authenticator;
 import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +51,7 @@ import static edp.davinci.core.common.Constants.EMAIL_DEFAULT_TEMPLATE;
 public class MailUtils {
 
     @Autowired
-    private JavaMailSender javaMailSender;
+    private JavaMailSenderImpl javaMailSender;
 
     @Autowired
     private TemplateEngine templateEngine;
@@ -148,6 +150,15 @@ public class MailUtils {
 
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
+            Authenticator auth = new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    // mail username and password
+                    return new PasswordAuthentication(javaMailSender.getUsername(), javaMailSender.getPassword());
+                }
+            };
+            Session session = Session.getInstance(javaMailSender.getJavaMailProperties(),auth);
+            javaMailSender.setSession(session);
             MimeMessageHelper messageHelper = new MimeMessageHelper(message, multipart);
 
             messageHelper.setFrom(from, displayName);
@@ -193,7 +204,6 @@ public class MailUtils {
                     }
                 });
             }
-
             javaMailSender.send(message);
             if (customLogger != null) {
                 customLogger.info("Email sending content:{}, cost:{}", mailContent.toString(), watch.elapsed(TimeUnit.MILLISECONDS));
