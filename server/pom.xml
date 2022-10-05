@@ -20,7 +20,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <skipTests>true</skipTests>
-        <elasticsearch.version>7.6.1</elasticsearch.version>
+        <elasticsearch.version>7.14.0</elasticsearch.version>
         <graalvm.version>20.0.0</graalvm.version>
     </properties>
 
