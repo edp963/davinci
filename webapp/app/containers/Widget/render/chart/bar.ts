@@ -438,7 +438,7 @@ export default function (chartProps: IChartProps, drillOptions) {
   const metricAxisOption = getMetricAxisOption(
     yAxis,
     yAxisSplitLineConfig,
-    metrics.map((m) => decodeMetricName(m.name)).join(` / `),
+    metrics.map((m) => (m.field && m.field.alias) || decodeMetricName(m.name)).join(` / `),
     'x',
     percentage
   )
