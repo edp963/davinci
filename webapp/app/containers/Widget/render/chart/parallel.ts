@@ -210,13 +210,19 @@ export default function (chartProps: IChartProps) {
       type: 'category',
       data: dimensionsData.map((d) => d[idx]).filter((d, dIdx, arr) => arr.indexOf(d) === dIdx)
     })),
-    ...metrics.map((m, idx) => ({
-      dim: axisDimensions.length + idx,
-      name: showTitleAndUnit ? decodeMetricName(m.name) : '',
-      axisLabel: {
-        formatter: showLabel ? metricAxisLabelFormatter : ''
+    ...metrics.map((m, idx) => {
+      let name = showTitleAndUnit ? decodeMetricName(m.name)  : ''
+      if (!!m.field.alias) {
+        name = m.field.alias
       }
-    }))
+      return {
+        dim: axisDimensions.length + idx,
+        name: name,
+        axisLabel: {
+          formatter: showLabel ? metricAxisLabelFormatter : ''
+        }
+      }
+    })
   ]
 
   const legendOption = getLegendOption(legend, legendData)
