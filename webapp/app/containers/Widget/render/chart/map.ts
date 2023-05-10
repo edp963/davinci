@@ -245,6 +245,29 @@ export default function (chartProps: IChartProps) {
       break
   }
 
+  if (serieObj.data.length && serieObj.mapType ==='china'){
+    let item =serieObj.data.find(i=>i.name ==='宁夏回族')
+    if (item){
+      serieObj.data.push({
+        ...item,
+        name:'宁夏'
+      })
+    }
+    item =serieObj.data.find(i=>i.name ==='广西壮族')
+    if (item){
+      serieObj.data.push({
+        ...item,
+        name:'广西'
+      })
+    }
+    item =serieObj.data.find(i=>i.name ==='新疆维吾尔')
+    if (item){
+      serieObj.data.push({
+        ...item,
+        name:'新疆'
+      })
+    }
+  }
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
