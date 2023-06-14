@@ -34,8 +34,38 @@ const ShareDisplayReveal: React.FC = () => {
   const {
     config: { displayParams }
   } = useSelector(makeSelectDisplay())
-  const { autoPlay, autoSlide, transitionStyle, transitionSpeed } =
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed, needScroll, scrollWaitTime } =
     displayParams || DefaultDisplayParams
+
+  let timer = null;
+  if (window.timerList) {
+    for (let i = 0; i < window.timerList.length; i++) {
+      clearInterval(window.timerList[i])
+    }
+  }
+  window.timerList = [];
+  
+
+  const taskScroll = (i) => {
+    if (document.querySelectorAll('.ant-table-body')[i].scrollTop 
+    >= document.querySelectorAll('.ant-table-tbody')[i].offsetHeight 
+    - document.querySelectorAll('.ant-table-body')[i].clientHeight) {
+      document.querySelectorAll('.ant-table-body')[i].scrollTop = 0;
+    }
+    else {
+      document.querySelectorAll('.ant-table-body')[i].scrollTop += 50;
+    }
+  }
+  
+  setTimeout(() => {
+    const len = document.querySelectorAll('.ant-table-body').length
+    if (needScroll) {
+      for (let i = 0; i < len; i++) {
+        timer = setInterval(() => taskScroll(i), scrollWaitTime * 1000);
+        window.timerList.push(timer)
+      }
+    }
+  }, 5000)
 
   const slidesCount = useSelector(makeSelectSlidesCount())
   const slideNumberParam = new URLSearchParams(window.location.search).get('p')

@@ -38,9 +38,17 @@ const DisplayReveal: React.FC = () => {
   const currentDisplay = useSelector(makeSelectCurrentDisplay())
 
   useStatistic(currentProject, currentDisplay)
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed, needScroll, scrollWaitTime } =
+  currentDisplay.config.displayParams || DefaultDisplayParams
 
-  const { autoPlay, autoSlide, transitionStyle, transitionSpeed } =
-    currentDisplay.config.displayParams || DefaultDisplayParams
+  let timer = null;
+  if (window.timerList) {
+    for (let i = 0; i < window.timerList.length; i++) {
+      clearInterval(window.timerList[i])
+    }
+  }
+  window.timerList = [];
+
 
   useEffect(() => {
     Reveal.initialize({
@@ -68,6 +76,32 @@ const DisplayReveal: React.FC = () => {
       plugins: [RevealZoom]
     })
   }, [])
+
+  const taskScroll = (i) => {
+    console.log('scrollTop ', document.querySelectorAll('.ant-table-body')[i].scrollTop );
+    console.log('offsetHeight ', document.querySelectorAll('.ant-table-body')[i].offsetHeight );
+    console.log('clientHeight ', document.querySelectorAll('.ant-table-body')[i].clientHeight );
+    if (document.querySelectorAll('.ant-table-body')[i].scrollTop 
+    >= document.querySelectorAll('.ant-table-tbody')[i].offsetHeight 
+    - document.querySelectorAll('.ant-table-body')[i].clientHeight) {
+      document.querySelectorAll('.ant-table-body')[i].scrollTop = 0;
+    }
+    else {
+      document.querySelectorAll('.ant-table-body')[i].scrollTop += 50;
+    }
+  }
+
+  setTimeout(() => {
+    const len = document.querySelectorAll('.ant-table-body').length
+    if (needScroll) {
+      for (let i = 0; i < len; i++) {
+        timer = setInterval(() => taskScroll(i), scrollWaitTime * 1000);
+        window.timerList.push(timer)
+      }
+    }
+    console.log('window.timerList', window.timerList)
+  }, 5000)
+
 
   const slideChanged = useCallback((e) => {
     const { indexh: slideIdx } = e
