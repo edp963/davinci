@@ -27,5 +27,8 @@ export const DefaultDisplayParams: IDisplayParams = {
   autoSlide: 10,
   transitionStyle: 'none',
   transitionSpeed: 'default',
-  grid: [DisplayDefaultGridSize, DisplayDefaultGridSize]
+  grid: [DisplayDefaultGridSize, DisplayDefaultGridSize],
+  needScroll: true,
+  scrollWaitTime: 1,
+
 }

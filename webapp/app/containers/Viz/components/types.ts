@@ -47,7 +47,9 @@ export interface IDisplayParams {
   autoSlide: number
   transitionStyle: 'none' | 'fade' | 'slide' | 'convex' | 'concave' | 'zoom'
   transitionSpeed: 'default' | 'fast' | 'slow'
-  grid: [number, number]
+  grid: [number, number],
+  needScroll: boolean
+  scrollWaitTime: number
 }
 
 export interface IDisplayFormed extends IDisplayBase {

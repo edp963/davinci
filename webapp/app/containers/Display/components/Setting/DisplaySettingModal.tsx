@@ -85,7 +85,7 @@ const formItemStyle: Partial<FormItemProps> = {
 const DisplaySettingModal: React.FC<IDisplaySettingModalProps> = (props) => {
   const { visible, displayParams, form, onCancel, onOk } = props
   const { getFieldDecorator } = form
-  const { autoPlay, autoSlide, transitionStyle, transitionSpeed, grid } =
+  const { autoPlay, autoSlide, transitionStyle, transitionSpeed, grid, needScroll, scrollWaitTime } =
     displayParams || DefaultDisplayParams
 
   const ok = useCallback(() => {
@@ -109,6 +109,21 @@ const DisplaySettingModal: React.FC<IDisplaySettingModalProps> = (props) => {
         <Row gutter={8}>
           <Col span={10}>
             <Card title="全局播放设置" size="small">
+            <FormItem label="表格滚动" {...formItemStyle}>
+                {getFieldDecorator<IDisplayParams>('needScroll', {
+                  initialValue: needScroll,
+                  valuePropName: 'checked'
+                })(<Checkbox />)}
+              </FormItem>
+              {form.getFieldValue('needScroll') === true && (
+                <FormItem label="表格滚动停留时间（秒）" {...formItemStyle}>
+                  {getFieldDecorator<IDisplayParams>('scrollWaitTime', {
+                    initialValue: scrollWaitTime,
+                    validateFirst: true,
+                    rules: [{ required: true, message: '请输入数字' }]
+                  })(<InputNumber min={1} />)}
+                </FormItem>
+              )}
               <FormItem label="自动播放" {...formItemStyle}>
                 {getFieldDecorator<IDisplayParams>('autoPlay', {
                   initialValue: autoPlay,
